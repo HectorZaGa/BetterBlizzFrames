@@ -1,3 +1,11 @@
+# BetterBlizzFrames 1.9.9g
+## General
+### Tweak
+- Tweak party frame getter for party castbar position for Grid2
+## Midnight
+### Bugfix
+- Fix secret errors from TRP3 functions. By keyboardturner @ GitHub. Thank you for your contribution!
+
 # BetterBlizzFrames 1.9.9f
 ## Midnight
 ### Bugfix

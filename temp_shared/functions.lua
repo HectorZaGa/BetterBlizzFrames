@@ -155,7 +155,13 @@ function BBF.FindPartyFrame(i)
     elseif C_AddOns.IsAddOnLoaded("Cell") then
         return _G["CellPartyFrameHeaderUnitButton" .. i]
     elseif C_AddOns.IsAddOnLoaded("Grid2") then
-        return _G["Grid2LayoutHeader1UnitButton" .. i]
+        for h = 1, 8 do
+            local header = _G["Grid2LayoutHeader" .. h]
+            if not header then break end
+            if header:IsShown() then
+                return _G["Grid2LayoutHeader" .. h .. "UnitButton" .. i]
+            end
+        end
     elseif C_AddOns.IsAddOnLoaded("VuhDo") then
         return _G["Vd1H" .. i]
     elseif (C_AddOns.IsAddOnLoaded("ShadowedUnitFrames") and ShadowUF and ShadowUF.db) then
