@@ -775,6 +775,23 @@ local function InitializeFontString(frame)
 
     -- Hide original
     name:SetAlpha(0)
+    C_Timer.After(1, function()
+        if C_AddOns.IsAddOnLoaded("HealthBarColor") then
+            hooksecurefunc(name, "SetTextColor", function(self)
+                self:SetAlpha(0)
+            end)
+            hooksecurefunc(name, "SetVertexColor", function(self)
+                self:SetAlpha(0)
+            end)
+            hooksecurefunc(name, "SetAlpha", function(self)
+                if self.bbfForcingAlpha then return end
+                self.bbfForcingAlpha = true
+                self:SetAlpha(0)
+                self.bbfForcingAlpha = false
+            end)
+        end
+        name:SetAlpha(0)
+    end)
 end
 
 local frames = {
