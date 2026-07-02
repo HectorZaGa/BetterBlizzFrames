@@ -7,11 +7,7 @@ local MANABAR_HEIGHT = 10
 local BAR_GAP = 1
 local HEALTHBAR_HEIGHT_GROWN = HEALTHBAR_HEIGHT + BAR_GAP + MANABAR_HEIGHT -- 30
 local MASK_HEIGHT = 34
-local MASK_HEIGHT_GROWN = 45 -- 30 + (34-19) = 45
-
--- noPortrait's vehicle art anchors the mask top only +5 above the bar (vs +9 for
--- player), clipping the grown bar's top, so we re-centre it on the grown bar.
-local MASK_GROWN_Y = (MASK_HEIGHT_GROWN - HEALTHBAR_HEIGHT_GROWN) / 2
+local MASK_HEIGHT_GROWN = 50
 
 local function GetHealthBits()
     local hpContainer = PlayerFrame_GetHealthBarContainer()
@@ -22,30 +18,26 @@ local function IsEnabled()
     return BetterBlizzFramesDB.bigPlayerHealthbar and BetterBlizzFramesDB.noPortraitModes
 end
 
-local function GrowBar(isVehicle)
+local function GrowBar()
     local _, healthBar, mask = GetHealthBits()
-    if not healthBar or not mask then
-        return
-    end
     healthBar:SetHeight(HEALTHBAR_HEIGHT_GROWN)
     mask:SetHeight(MASK_HEIGHT_GROWN)
-
-    local x = isVehicle and -34 or -33 -- from noPortrait.lua
-    mask:ClearAllPoints()
-    mask:SetPoint("TOPLEFT", healthBar, "TOPLEFT", x, MASK_GROWN_Y)
 end
 
 local function RestoreBar()
     local _, healthBar, mask = GetHealthBits()
-    if not healthBar or not mask then
-        return
-    end
-
     healthBar:SetHeight(HEALTHBAR_HEIGHT)
     mask:SetHeight(MASK_HEIGHT)
 end
-
-local function Apply(isVehicle)
+local function PlayerMaskOffset()
+    local _, healthBar, mask = GetHealthBits()
+    mask:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -33, 11)
+end
+local function VehicleMaskOffset()
+    local _, healthBar, mask = GetHealthBits()
+    mask:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -34, 10)
+end
+local function Apply()
     if not IsEnabled() then
         return
     end
@@ -54,7 +46,8 @@ local function Apply(isVehicle)
         return
     end
     BBF.UpdateNoPortraitManaVisibility()
-    GrowBar(isVehicle)
+    GrowBar()
+    PlayerMaskOffset()
     BBF.UpdateNoPortraitText(PlayerFrame, "player")
 end
 
@@ -71,7 +64,8 @@ local function EnsureHooks()
     end)
     hooksecurefunc("PlayerFrame_ToPlayerArt", Apply)
     hooksecurefunc("PlayerFrame_ToVehicleArt", function()
-        Apply(true)
+        Apply()
+        VehicleMaskOffset()
     end)
 end
 
