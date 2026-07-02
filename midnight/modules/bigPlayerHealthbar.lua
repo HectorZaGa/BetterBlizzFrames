@@ -1,9 +1,17 @@
 -- Big Healthbar (No Portrait): the PlayerFrame health bar takes over the mana slot.
 
-local HEALTHBAR_HEIGHT = 20
-local HEALTHBAR_HEIGHT_GROWN = 30
+-- Blizzard's player-bars heights: health 19, mana 10, 1px gap.
+-- Mask is noPortrait's portrait-off mask (uipartyframeportraitoffhealthmask, 190x34);
+local HEALTHBAR_HEIGHT = 19
+local MANABAR_HEIGHT = 10
+local BAR_GAP = 1
+local HEALTHBAR_HEIGHT_GROWN = HEALTHBAR_HEIGHT + BAR_GAP + MANABAR_HEIGHT -- 30
 local MASK_HEIGHT = 34
-local MASK_HEIGHT_GROWN = 48
+local MASK_HEIGHT_GROWN = 45 -- 30 + (34-19) = 45
+
+-- noPortrait's vehicle art anchors the mask top only +5 above the bar (vs +9 for
+-- player), clipping the grown bar's top, so we re-centre it on the grown bar.
+local MASK_GROWN_Y = (MASK_HEIGHT_GROWN - HEALTHBAR_HEIGHT_GROWN) / 2 -- 7.5
 
 local function GetHealthBits()
     local hpContainer = PlayerFrame_GetHealthBarContainer()
@@ -21,6 +29,11 @@ local function GrowBar()
     end
     healthBar:SetHeight(HEALTHBAR_HEIGHT_GROWN)
     mask:SetHeight(MASK_HEIGHT_GROWN)
+
+    local point, relTo, relPoint, x = mask:GetPoint(1)
+    if point then
+        mask:SetPoint(point, relTo, relPoint, x, MASK_GROWN_Y)
+    end
 end
 
 local function RestoreBar()
