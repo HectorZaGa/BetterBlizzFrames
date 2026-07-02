@@ -11,7 +11,7 @@ local MASK_HEIGHT_GROWN = 45 -- 30 + (34-19) = 45
 
 -- noPortrait's vehicle art anchors the mask top only +5 above the bar (vs +9 for
 -- player), clipping the grown bar's top, so we re-centre it on the grown bar.
-local MASK_GROWN_Y = (MASK_HEIGHT_GROWN - HEALTHBAR_HEIGHT_GROWN) / 2 -- 7.5
+local MASK_GROWN_Y = (MASK_HEIGHT_GROWN - HEALTHBAR_HEIGHT_GROWN) / 2
 
 local function GetHealthBits()
     local hpContainer = PlayerFrame_GetHealthBarContainer()
@@ -22,7 +22,7 @@ local function IsEnabled()
     return BetterBlizzFramesDB.bigPlayerHealthbar and BetterBlizzFramesDB.noPortraitModes
 end
 
-local function GrowBar()
+local function GrowBar(isVehicle)
     local _, healthBar, mask = GetHealthBits()
     if not healthBar or not mask then
         return
@@ -30,10 +30,9 @@ local function GrowBar()
     healthBar:SetHeight(HEALTHBAR_HEIGHT_GROWN)
     mask:SetHeight(MASK_HEIGHT_GROWN)
 
-    local point, relTo, relPoint, x = mask:GetPoint(1)
-    if point then
-        mask:SetPoint(point, relTo, relPoint, x, MASK_GROWN_Y)
-    end
+    local x = isVehicle and -34 or -33 -- from noPortrait.lua
+    mask:ClearAllPoints()
+    mask:SetPoint("TOPLEFT", healthBar, "TOPLEFT", x, MASK_GROWN_Y)
 end
 
 local function RestoreBar()
@@ -46,7 +45,7 @@ local function RestoreBar()
     mask:SetHeight(MASK_HEIGHT)
 end
 
-local function Apply()
+local function Apply(isVehicle)
     if not IsEnabled() then
         return
     end
@@ -55,7 +54,7 @@ local function Apply()
         return
     end
     BBF.UpdateNoPortraitManaVisibility()
-    GrowBar()
+    GrowBar(isVehicle)
     BBF.UpdateNoPortraitText(PlayerFrame, "player")
 end
 
@@ -71,7 +70,9 @@ local function EnsureHooks()
         end
     end)
     hooksecurefunc("PlayerFrame_ToPlayerArt", Apply)
-    hooksecurefunc("PlayerFrame_ToVehicleArt", Apply)
+    hooksecurefunc("PlayerFrame_ToVehicleArt", function()
+        Apply(true)
+    end)
 end
 
 function BBF.UpdateBigPlayerHealthbar()
