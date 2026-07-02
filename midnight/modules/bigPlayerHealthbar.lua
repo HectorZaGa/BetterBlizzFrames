@@ -58,6 +58,7 @@ local function EnsureHooks()
         end
     end)
     hooksecurefunc("PlayerFrame_ToPlayerArt", Apply)
+    hooksecurefunc("PlayerFrame_ToVehicleArt", Apply)
 end
 
 function BBF.UpdateBigPlayerHealthbar()

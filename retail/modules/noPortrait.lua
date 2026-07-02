@@ -62,10 +62,6 @@ local function UpdateTextureVariables()
         if altBarShown then
             playerAltTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Large.tga"
             playerDefaultTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Large.tga"
-            if db.bigPlayerHealthbar then
-                playerAltTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Large-Unified.tga"
-                playerDefaultTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Large-Unified.tga"
-            end
         else
             playerAltTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Minus.tga"
             playerDefaultTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Minus.tga"
@@ -118,7 +114,7 @@ local function GetPlayerBackgroundYOffset()
     local db = BetterBlizzFramesDB
     if not db then return -11 end
 
-    if (db.hideUnitFramePlayerMana or db.bigPlayerHealthbar) and db.hideUnitFramePlayerSecondResource then
+    if (db.hideUnitFramePlayerMana) and db.hideUnitFramePlayerSecondResource then
         return 0  -- Both hidden
     elseif db.hideUnitFramePlayerSecondResource then
         return -11  -- Only 2nd resource hidden
