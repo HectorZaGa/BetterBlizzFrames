@@ -33,7 +33,7 @@ local function ApplyPRDBarMask(bar, container)
         bar.bbfPRDMask = bar:CreateMaskTexture()
     end
     local mask = bar.bbfPRDMask
-    mask:SetTexture("Interface\\AddOns\\BetterBlizzPlates\\media\\midnightNpMask.tga")
+    mask:SetTexture("Interface\\AddOns\\BetterBlizzFrames\\media\\midnightNpMask.tga")
     mask:ClearAllPoints()
     mask:SetPoint("TOPLEFT", container, "TOPLEFT", -0.5, 1)
     mask:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 0.5, -1)
@@ -44,20 +44,76 @@ BBF.ApplyPRDBarMask = ApplyPRDBarMask
 
 local function ApplyPRDMasks()
     if BetterBlizzFramesDB.prdLegacyLook then return end
+    local db = BetterBlizzFramesDB
     local prd = PersonalResourceDisplayFrame
     local healthBar = prd.HealthBarsContainer.healthBar
-    ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
 
-    if healthBar.totalAbsorb and not healthBar.totalAbsorb:IsForbidden() then
-        if not healthBar.totalAbsorb.bbfPRDMasked then
-            ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
-            healthBar.totalAbsorb:AddMaskTexture(healthBar.bbfPRDMask)
-            healthBar.totalAbsorb.bbfPRDMasked = true
+    local hpTextureActive   = db.changePrdTextures and db.useCustomTextureForSelf
+    local manaTextureActive = db.changePrdTextures and db.useCustomTextureForSelfMana
+
+    if hpTextureActive then
+        ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
+        if healthBar.totalAbsorb and not healthBar.totalAbsorb:IsForbidden() then
+            if not healthBar.totalAbsorb.bbfPRDMasked then
+                ApplyPRDBarMask(healthBar, prd.HealthBarsContainer)
+                healthBar.totalAbsorb:AddMaskTexture(healthBar.bbfPRDMask)
+                healthBar.totalAbsorb.bbfPRDMasked = true
+            end
+        end
+    else
+        if healthBar.bbfPRDMask then
+            healthBar.bbfPRDMask:Hide()
         end
     end
-    ApplyPRDBarMask(prd.PowerBar, prd.PowerBar)
-    if prd.AlternatePowerBar and prd.AlternatePowerBar:IsShown() then
-        ApplyPRDBarMask(prd.AlternatePowerBar, prd.AlternatePowerBar)
+
+    if manaTextureActive then
+        ApplyPRDBarMask(prd.PowerBar, prd.PowerBar)
+        if prd.AlternatePowerBar and prd.AlternatePowerBar:IsShown() then
+            ApplyPRDBarMask(prd.AlternatePowerBar, prd.AlternatePowerBar)
+        end
+    else
+        if prd.PowerBar.bbfPRDMask then
+            prd.PowerBar.bbfPRDMask:Hide()
+        end
+        if prd.AlternatePowerBar and prd.AlternatePowerBar.bbfPRDMask then
+            prd.AlternatePowerBar.bbfPRDMask:Hide()
+        end
+    end
+end
+
+local function applyExtraBarTexture(tex, setting)
+    if not tex then return end
+    if not tex.bbfTextureHooked then
+        tex.bbfTextureHooked = true
+        hooksecurefunc(tex, "SetTexture", function(self)
+            if self.changingTexture then return end
+            if self.bbfTexture then
+                self.changingTexture = true
+                self:SetTexture(self.bbfTexture)
+                self.changingTexture = false
+            end
+        end)
+    end
+    tex.bbfTexture = setting
+    tex.changingTexture = true
+    tex:SetTexture(setting)
+    tex.changingTexture = false
+end
+
+local function textureExtraBars(frame, setting)
+    local extraBars = BetterBlizzFramesDB.useCustomTextureForExtraBars
+    if extraBars then
+        applyExtraBarTexture(frame.otherHealPrediction, setting)
+        applyExtraBarTexture(frame.myHealPrediction, setting)
+        applyExtraBarTexture(frame.totalAbsorb, setting)
+        applyExtraBarTexture(frame.ManaCostPredictionBar, setting)
+        if frame.FeedbackFrame then
+            applyExtraBarTexture(frame.FeedbackFrame.BarTexture, setting)
+            applyExtraBarTexture(frame.FeedbackFrame.GainGlowTexture, setting)
+            applyExtraBarTexture(frame.FeedbackFrame.LossGlowTexture, setting)
+        end
+        applyExtraBarTexture(frame.myHealAbsorb, setting)
+        -- applyExtraBarTexture(frame.totalAbsorbOverlay, setting)
     end
 end
 
@@ -67,26 +123,26 @@ function BBF.TexturePRD()
 
     local frame = PersonalResourceDisplayFrame
     if not frame then return end
-    if BetterBlizzFramesDB.useCustomTextureForBars and BetterBlizzFramesDB.useCustomTextureForSelf then
+    if BetterBlizzFramesDB.changePrdTextures and BetterBlizzFramesDB.useCustomTextureForSelf then
         frame.changedPrdHealthTexture = true
         frame.HealthBarsContainer.healthBar:SetStatusBarTexture(customTextureSelf)
-        BBF.textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
+        textureExtraBars(frame.HealthBarsContainer.healthBar, customTextureSelf)
     elseif frame.changedPrdHealthTexture then
         frame.HealthBarsContainer.healthBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        BBF.textureExtraBars(frame.HealthBarsContainer.healthBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        textureExtraBars(frame.HealthBarsContainer.healthBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.changedPrdHealthTexture = nil
     end
-    if BetterBlizzFramesDB.useCustomTextureForBars and BetterBlizzFramesDB.useCustomTextureForSelfMana then
+    if BetterBlizzFramesDB.changePrdTextures and BetterBlizzFramesDB.useCustomTextureForSelfMana then
         frame.changedPrdManaTexture = true
         frame.PowerBar:SetStatusBarTexture(customTextureSelfMana)
         frame.AlternatePowerBar:SetStatusBarTexture(customTextureSelfMana)
-        BBF.textureExtraBars(frame.PowerBar, customTextureSelfMana)
-        BBF.textureExtraBars(frame.AlternatePowerBar, customTextureSelfMana)
+        textureExtraBars(frame.PowerBar, customTextureSelfMana)
+        textureExtraBars(frame.AlternatePowerBar, customTextureSelfMana)
     elseif frame.changedPrdManaTexture then
         frame.PowerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        BBF.textureExtraBars(frame.PowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        textureExtraBars(frame.PowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.AlternatePowerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-        BBF.textureExtraBars(frame.AlternatePowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+        textureExtraBars(frame.AlternatePowerBar, "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
         frame.changedPrdManaTexture = nil
     end
 
@@ -169,7 +225,7 @@ function BBF.FancyPRDAltTexture()
             altAtlas = fancyPRDAltBarClassAtlasMap[playerClass]
         end
     end
-    local customTextureActive = db.useCustomTextureForBars and db.useCustomTextureForSelfMana
+    local customTextureActive = db.changePrdTextures and db.useCustomTextureForSelfMana
 
     -- PowerBar
     if not atlas then
@@ -252,9 +308,9 @@ function BBF.LegacyPRDLook()
                 local customTextureActive
                 local db = BetterBlizzFramesDB
                 if frame == hpBar then
-                    customTextureActive = db.useCustomTextureForBars and db.useCustomTextureForSelf
+                    customTextureActive = db.changePrdTextures and db.useCustomTextureForSelf
                 else
-                    customTextureActive = db.useCustomTextureForBars and db.useCustomTextureForSelfMana
+                    customTextureActive = db.changePrdTextures and db.useCustomTextureForSelfMana
                 end
                 if not customTextureActive then
                     frame:SetStatusBarTexture("UI-HUD-CoolDownManager-Bar")
@@ -285,9 +341,9 @@ function BBF.LegacyPRDLook()
         end
         local customTextureActive
         if frame == hpBar then
-            customTextureActive = db.useCustomTextureForBars and db.useCustomTextureForSelf
+            customTextureActive = db.changePrdTextures and db.useCustomTextureForSelf
         else
-            customTextureActive = db.useCustomTextureForBars and db.useCustomTextureForSelfMana
+            customTextureActive = db.changePrdTextures and db.useCustomTextureForSelfMana
         end
         if not customTextureActive then
             frame:SetStatusBarTexture(137014)
@@ -484,5 +540,12 @@ function BBF.LegacyPRDLook()
 
     hooksecurefunc(PersonalResourceDisplayMixin, "UpdatePowerBarAnchor", TweakPowerBarAnchor)
     hooksecurefunc(PersonalResourceDisplayMixin, "UpdateAdditionalBarAnchors", TweakAdditionalBarAnchors)
+    hooksecurefunc(EditModeManagerFrame, "ExitEditMode", function()
+        C_Timer.After(0, function()
+            UpdatePRDBorderLayout()
+            TweakPowerBarAnchor(PersonalResourceDisplayFrame)
+            TweakAdditionalBarAnchors(PersonalResourceDisplayFrame)
+        end)
+    end)
     BBF.FancyPRDAltTexture()
 end

@@ -1443,13 +1443,15 @@ local function GetArenaUnitName(unit)
     return nil
 end
 
-local function SetArenaNameUnitFrame(frame, unit, textObject)
+local function SetArenaNameUnitFrame(frame, unit, textObject, tot)
     local unitID = GetArenaUnitName(unit)
     local specName = GetSpecName(unit)
     local nameText
 
+    local UnitChecker = tot and UnitIsProbablyUnit or UnitIsUnit
+
     -- Check if the unit is the player or a party member
-    if UnitIsUnit(unit, "player") or not UnitIsPlayer(unit) then
+    if UnitChecker(unit, "player") or not UnitIsPlayer(unit) then
         nameText = UnitName(unit) -- Show default target name
     elseif targetAndFocusArenaNamePartyOverride and unitID and string.match(unitID, "Party") then
         nameText = unitID -- Show "Party 1" or "Party 2"
@@ -1688,9 +1690,9 @@ local function TargetFrameToTNameChanges(frame)
     if not changeUnitFrameFont then
         frame.bbfName:SetFont(frame.name:GetFont())
     end
-    -- if targetAndFocusArenaNames and IsActiveBattlefieldArena() then
-    --     SetArenaNameUnitFrame(frame, unit, frame.bbfName)
-    -- else
+    if targetAndFocusArenaNames and IsActiveBattlefieldArena() then
+        SetArenaNameUnitFrame(frame, unit, frame.bbfName, true)
+    else
         if hideTargetToTName then
             frame.bbfName:SetText("")
             return
@@ -1720,7 +1722,7 @@ local function TargetFrameToTNameChanges(frame)
         if classColorTargetNames or customColorTargetNames then
             ClassColorName(frame.bbfName, unit)
         end
-    --end
+    end
 end
 
 hooksecurefunc(TargetFrame.totFrame.Name, "SetText", function()
@@ -1734,9 +1736,9 @@ local function FocusFrameToTNameChanges(frame)
     if not changeUnitFrameFont then
         frame.bbfName:SetFont(frame.name:GetFont())
     end
-    -- if targetAndFocusArenaNames and IsActiveBattlefieldArena() then
-    --     SetArenaNameUnitFrame(frame, unit, frame.bbfName)
-    -- else
+    if targetAndFocusArenaNames and IsActiveBattlefieldArena() then
+        SetArenaNameUnitFrame(frame, unit, frame.bbfName, true)
+    else
         if hideFocusToTName then
             frame.bbfName:SetText("")
             return
@@ -1766,7 +1768,7 @@ local function FocusFrameToTNameChanges(frame)
         if classColorTargetNames or customColorTargetNames then
             ClassColorName(frame.bbfName, unit)
         end
-    --end
+    end
 end
 
 hooksecurefunc(FocusFrame.totFrame.Name, "SetText", function()

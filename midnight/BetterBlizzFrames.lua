@@ -68,6 +68,9 @@ local defaultSettings = {
     cdManagerBlacklist = {},
     cdManagerPriorityList = {},
     kickPopupFontOutline = "OUTLINE",
+    prdSplitLines = true,
+    maxTargetFocusBuffs = 20,
+    maxTargetFocusDebuffs = 20,
 
     rpNames = true,
     rpNamesFirst = true,
@@ -2013,32 +2016,6 @@ end
 
 
 
-
-if not BBF.combatQueue then
-    BBF.combatQueue = {}
-end
-local combatCheck = CreateFrame("Frame")
-function BBF.RunAfterCombat(func)
-    if not InCombatLockdown() then
-        func()
-        return
-    end
-
-    table.insert(BBF.combatQueue, func)
-
-    if not combatCheck:IsEventRegistered("PLAYER_REGEN_ENABLED") then
-        combatCheck:RegisterEvent("PLAYER_REGEN_ENABLED")
-        combatCheck:SetScript("OnEvent", function(self, event)
-            if event == "PLAYER_REGEN_ENABLED" then
-                for _, queuedFunc in ipairs(BBF.combatQueue) do
-                    pcall(queuedFunc)
-                end
-                BBF.combatQueue = {}
-                self:UnregisterEvent(event)
-            end
-        end)
-    end
-end
 
 function BBF.ArenaOptimizer(disable, noPrint)
     local db = BetterBlizzFramesDB
@@ -5311,6 +5288,12 @@ First:SetScript("OnEvent", function(_, event, addonName)
                 AlternatePowerBar:SetParent(hiddenFrame)
             end
         end
+
+        C_Timer.After(0.95, function()
+            BBF.HidePersonalManabarFX()
+            BBF.TexturePRD()
+            BBF.LegacyPRDLook()
+        end)
 
         C_Timer.After(1, function()
             BBF.ActionBarCDNumberSize()
