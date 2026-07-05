@@ -1,3 +1,11 @@
+# BetterBlizzFrames 2.0.0b
+## Midnight
+### Tweak
+- OCD Tweaks: Change the position of level text slightly for Player/Target/FocusFrame. Should hopefully be properly positioned for everyone now.
+## The Burning Crusade
+### Tweak
+- Add a fix for Blizzards sloppy code that positions FocusFrame healthbar center statusbar text wrong if the frame was small (Large Frame disabled in Edit Mode).
+
 # BetterBlizzFrames 2.0.0
 ## Midnight
 ### New
