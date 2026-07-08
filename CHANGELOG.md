@@ -1,3 +1,8 @@
+# BetterBlizzFrames 2.0.0c
+## The Burning Crusade
+### Bugfix
+- Fix some errors and do some early adjustments for the new TBC patch. Please report issues.
+
 # BetterBlizzFrames 2.0.0b
 ## Midnight
 ### Tweak

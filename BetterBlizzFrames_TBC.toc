@@ -35,4 +35,4 @@ temp_cata\modules\queueTimer.lua
 temp_tbc\modules\loc.lua
 
 temp_cata\gui.lua
-temp_tbc\BetterBlizzFrames.lua
+temp_cata\BetterBlizzFrames.lua
