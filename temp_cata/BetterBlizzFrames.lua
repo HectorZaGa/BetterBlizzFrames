@@ -3227,8 +3227,8 @@ PlayerEnteringWorld:SetScript("OnEvent", function()
     BBF.DarkmodeFrames()
     BBF.ClickthroughFrames()
     BBF.CheckForAuraBorders()
-    if BBF.isMoP then
-        BBF.HookAndUpdatePartyFrameRangeAlpha()
+    if BBF.isMoP or BBF.isTBC then
+        BBF.HookAndUpdatePartyFrameRangeAlpha(true)
     end
     if BBF.RepositionBuffFrame then
         BBF.RepositionBuffFrame()
