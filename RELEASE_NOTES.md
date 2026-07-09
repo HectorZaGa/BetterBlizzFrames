@@ -1,3 +1,8 @@
+# BetterBlizzFrames 2.0.0d
+## The Burning Crusade
+### Bugfix
+- Fix party frame alpha setting not sticking on reloads. (This needs a few more tweaks, for pet frames etc, need to look at blizz code)
+
 # BetterBlizzFrames 2.0.0c
 ## The Burning Crusade
 ### Bugfix
