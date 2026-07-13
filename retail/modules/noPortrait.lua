@@ -24,7 +24,7 @@ local focusFlashNoLvl = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\
 local petFlashNoLvl = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Large.tga"
 
 local minusTex = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\UI-HUD-UnitFrame-Player-PortraitOff-Minus.tga"
-
+BBF.UpdateResourcePositionNoPortrait = function()end -- filled in later but due to all the mess could potentially get called when nil
 
 local function UpdateTextureVariables()
     local db = BetterBlizzFramesDB
