@@ -67,6 +67,9 @@ local function EnsureHooks()
         Apply()
         VehicleMaskOffset()
     end)
+    PlayerFrame:UnregisterEvent("UNIT_ENTERED_VEHICLE")
+    PlayerFrame:UnregisterEvent("UNIT_EXITING_VEHICLE")
+    PlayerFrame:UnregisterEvent("UNIT_EXITED_VEHICLE")
 end
 
 function BBF.UpdateBigPlayerHealthbar()
