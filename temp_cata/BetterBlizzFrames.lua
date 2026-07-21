@@ -688,7 +688,7 @@ end
 
 function BBF.ScaleUnitFrames()
     local db = BetterBlizzFramesDB
-    if not BBF.isMoP and not BBF.isTBC then
+    if not BBF.isMoP and not BBF.isTBC and not BBF.isEra then
         PlayerFrame:SetScale(db.playerFrameScale)
         TargetFrame:SetScale(db.targetFrameScale)
         FocusFrame:SetScale(db.focusFrameScale)
@@ -1238,8 +1238,8 @@ end
 
 function BBF.MoveToTFrames()
     if not InCombatLockdown() then
-        local xVal = BBF.isTBC and 17 or 35
-        local yVal = BBF.isTBC and 15 or 10
+        local xVal = (BBF.isTBC or BBF.isEra) and 17 or 35
+        local yVal = (BBF.isTBC or BBF.isEra) and 15 or 10
         TargetFrameToT:ClearAllPoints()
         if BetterBlizzFramesDB.targetToTAnchor == "BOTTOMRIGHT" then
             --TargetFrameToT:SetPoint(BBF.GetOppositeAnchor(BetterBlizzFramesDB.targetToTAnchor),TargetFrame,BetterBlizzFramesDB.targetToTAnchor,BetterBlizzFramesDB.targetToTXPos - 108,BetterBlizzFramesDB.targetToTYPos + 10)
@@ -2071,12 +2071,6 @@ end
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
-LSM:Register("statusbar", "Blizzard DF", [[Interface\TargetingFrame\UI-TargetingFrame-BarFill]])
-LSM:Register("statusbar", "Blizzard CF", [[Interface\AddOns\BetterBlizzFrames\media\ui-statusbar-cf]])
-LSM:Register("statusbar", "Blizzard Retail Bar", [[Interface\AddOns\BetterBlizzFrames\media\blizzTex\BlizzardRetailBar]])
-LSM:Register("statusbar", "Blizzard Retail Bar Crop", [[Interface\AddOns\BetterBlizzFrames\media\blizzTex\BlizzardRetailBarCrop]])
-LSM:Register("statusbar", "Blizzard Retail Bar Crop 2", [[Interface\AddOns\BetterBlizzFrames\media\blizzTex\BlizzardRetailBarCrop2]])
-LSM:Register("statusbar", "Smooth", [[Interface\Addons\BetterBlizzFrames\media\smooth]])
 local texture = "Interface\\Addons\\BetterBlizzPlates\\media\\DragonflightTextureHD"
 local manaTexture = "Interface\\Addons\\BetterBlizzPlates\\media\\blizzTex\\BlizzardRetailBarCrop2"
 local raidHpTexture = "Interface\\Addons\\BetterBlizzPlates\\media\\DragonflightTextureHD"
@@ -2268,7 +2262,7 @@ local function HookRaidFrameTextures()
     end
 end
 
-if BBF.isMoP or BBF.isTBC then
+if BBF.isMoP or BBF.isTBC or BBF.isEra then
     function BBF.HookAndUpdatePartyFrameRangeAlpha(toggle)
         if not BetterBlizzFramesDB.changePartyFrameRangeAlpha then return end
         local function UpdateRangeAlpha(frame)
@@ -2567,7 +2561,7 @@ if BBF.isMoP then
         end
     end
 elseif EJMicroButton then
-    if BBF.isTBC then
+    if BBF.isTBC or BBF.isEra then
         function BBF.FixStupidBlizzPTRShit()
             if BetterBlizzFramesDB.playerFrameOCD then
                 if C_AddOns.IsAddOnLoaded("DragonflightUI") then
@@ -3256,7 +3250,7 @@ PlayerEnteringWorld:SetScript("OnEvent", function()
     BBF.DarkmodeFrames()
     BBF.ClickthroughFrames()
     BBF.CheckForAuraBorders()
-    if BBF.isMoP or BBF.isTBC then
+    if BBF.isMoP or BBF.isTBC or BBF.isEra then
         BBF.HookAndUpdatePartyFrameRangeAlpha(true)
     end
     if BBF.RepositionBuffFrame then
