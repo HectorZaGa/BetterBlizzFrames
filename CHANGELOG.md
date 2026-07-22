@@ -1,3 +1,8 @@
+# BetterBlizzFrames 2.0.1b
+## Classic Era/SoD
+### Tweak
+- Remove Era Player Castbar Moving in BetterBlizzFrames since it now exists in Edit Mode. Use Edit Mode instead.
+
 # BetterBlizzFrames 2.0.1
 ## Midnight
 ### Bugfix
