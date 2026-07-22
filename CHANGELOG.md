@@ -2,6 +2,7 @@
 ## Classic Era/SoD
 ### Tweak
 - Remove Era Player Castbar Moving in BetterBlizzFrames since it now exists in Edit Mode. Use Edit Mode instead.
+- Add some tweaks to OCD Tweaks setting that fixes Blizzards position of ToT and Pet Health/Manabars and Portrait.
 
 # BetterBlizzFrames 2.0.1
 ## Midnight
