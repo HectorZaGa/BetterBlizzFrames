@@ -2576,12 +2576,31 @@ elseif EJMicroButton then
                 BBF.hotkeyCancel = nil
 
                 local a,b,c,d,e = TargetFrameToTPortrait:GetPoint()
-                TargetFrameToTPortrait:SetPoint(a,b,c,5,-5)
-                TargetFrameToTPortrait:SetSize(36,36)
+                TargetFrameToTPortrait:SetPoint(a,b,c,3,-3.5)
+                TargetFrameToTPortrait:SetSize(39,39)
+                TargetFrameToTBackground:SetWidth(48)
+                TargetFrameToTHealthBar:SetWidth(47)
+                local a,b,c,d,e = TargetFrameToTHealthBar:GetPoint()
+                TargetFrameToTHealthBar:SetPoint(a,b,c,-3,e)
+                local a,b,c,d,e = TargetFrameToTManaBar:GetPoint()
+                TargetFrameToTManaBar:SetPoint(a,b,c,-3,e)
 
                 local a,b,c,d,e = FocusFrameToTPortrait:GetPoint()
-                FocusFrameToTPortrait:SetPoint(a,b,c,5,-5)
-                FocusFrameToTPortrait:SetSize(36,36)
+                FocusFrameToTPortrait:SetPoint(a,b,c,3,-3.5)
+                FocusFrameToTPortrait:SetSize(39,39)
+                FocusFrameToTBackground:SetWidth(48)
+                FocusFrameToTHealthBar:SetWidth(47)
+                local a,b,c,d,e = FocusFrameToTHealthBar:GetPoint()
+                FocusFrameToTHealthBar:SetPoint(a,b,c,-3,e)
+                local a,b,c,d,e = FocusFrameToTManaBar:GetPoint()
+                FocusFrameToTManaBar:SetPoint(a,b,c,-3,e)
+
+                local a,b,c,d,e = PetFrameHealthBar:GetPoint()
+                PetFrameHealthBar:SetPoint(a,b,c,45,e)
+                PetFrameHealthBar:SetWidth(70)
+                PetPortrait:SetSize(38,38)
+                local a,b,c,d,e = PetPortrait:GetPoint()
+                PetPortrait:SetPoint(a,b,c,5.5,-6)
             else
                 -- BBF.hotkeyCancel = true
                 -- ChangeHotkeyWidth(28)
