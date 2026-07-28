@@ -1620,4 +1620,6 @@ L["Tooltip_Dark_Mode_Nameplate_Resource"] = "Enable dark mode for nameplate reso
 L["Tooltip_Normal_Evoker_Empowered_Castbar"] = "Use the normal castbar for Evoker empowered casts instead of the custom one."
 L["Tooltip_OCD_Skip_Bars"] = "Skip the OCD texture replacement for status bars."
 L["Dark_Mode_Settings"] = "Dark Mode Settings"
+L["Crowd_Control"] = "Crowd Control"
+
 

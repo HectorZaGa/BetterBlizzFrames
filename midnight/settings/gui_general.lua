@@ -141,7 +141,7 @@ function guiGeneralTab()
         sf:Hide()
 
         local cf = CreateFrame("Frame", nil, sf)
-        cf:SetSize(435, 1200)
+        cf:SetSize(435, 1300)
         sf:SetScrollChild(cf)
 
         categoryFrames[cat.id] = sf
@@ -273,18 +273,24 @@ function guiGeneralTab()
     -- CATEGORY 1: General
     -------------------------------------------------------
     local cfGen = categoryFrames["general"].contentFrame
+
+    -- Card 1: General Settings
     local cardGen = CreateOptionCard(cfGen, L["General_Settings"], nil, -10)
-    
     AddCardCheckbox(cardGen, "hideArenaFrames", L["Hide_Arena_Frames"], L["Tooltip_Hide_Arena_Frames"], BBF.HideArenaFrames)
     AddCardCheckbox(cardGen, "hideBossFrames", L["Hide_Boss_Frames"], L["Tooltip_Hide_Boss_Frames"], BBF.HideArenaFrames)
     AddCardCheckbox(cardGen, "playerFrameOCD", L["OCD_Tweaks"], L["Tooltip_OCD_Tweaks_Retail"], BBF.FixStupidBlizzPTRShit)
     AddCardCheckbox(cardGen, "removeRealmNames", L["Hide_Realm"], L["Tooltip_Hide_Realm_Indicator_Desc"])
-    AddCardCheckbox(cardGen, "hideLossOfControlFrameBg", L["Hide_CC_Background"], L["Tooltip_Hide_CC_Background"], BBF.HideFrames)
-    AddCardCheckbox(cardGen, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"], L["Tooltip_Hide_CC_Red_Lines"], BBF.HideFrames)
-    AddCardSlider(cardGen, "lossOfControlScale", L["CC_Scale"], L["Tooltip_LossOfControlScale_Desc"], 0.4, 1.4, 0.01)
 
-    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], cardGen, -20)
+    -- Card 2: Crowd Control
+    local cardCC = CreateOptionCard(cfGen, L["Crowd_Control"], cardGen, -20)
+    AddCardCheckbox(cardCC, "hideLossOfControlFrameBg", L["Hide_CC_Background"], L["Tooltip_Hide_CC_Background"], BBF.HideFrames)
+    AddCardCheckbox(cardCC, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"], L["Tooltip_Hide_CC_Red_Lines"], BBF.HideFrames)
+    AddCardSlider(cardCC, "lossOfControlScale", L["CC_Scale"], L["Tooltip_LossOfControlScale_Desc"], 0.4, 1.4, 0.01)
+
+    -- Card 3: Dark Mode Settings
+    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], cardCC, -20)
     AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"], L["Tooltip_Dark_Mode"], function() BBF.DarkmodeFrames(true) end)
+    AddCardSlider(cardDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value_Desc"], 0, 1, 0.01)
     AddCardCheckbox(cardDark, "darkModeCastbars", L["Castbars"], L["Tooltip_Dark_Mode_Castbars"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeActionBars", L["ActionBars"], L["Tooltip_Dark_Mode_ActionBars"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeUiAura", L["Auras"], L["Tooltip_Dark_Mode_Auras_Desc"], function() BBF.DarkmodeFrames(true) end)
@@ -293,7 +299,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardDark, "darkModeGameTooltip", L["Tooltip"], L["Tooltip_Dark_Mode_GameTooltip_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeObjectiveFrame", L["Objectives"], L["Tooltip_Dark_Mode_Objectives_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeVigor", L["Vigor"], L["Tooltip_Dark_Mode_Vigor_Desc"], function() BBF.DarkmodeFrames(true) end)
-    AddCardSlider(cardDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value_Desc"], 0, 1, 0.01)
+    AddCardCheckbox(cardDark, "darkModeEliteTexture", L["Elite_Texture"], L["Tooltip_Dark_Mode_Elite_Texture_Desc"], function() BBF.DarkmodeFrames(true) end)
 
     -------------------------------------------------------
     -- CATEGORY 2: Player Frame
