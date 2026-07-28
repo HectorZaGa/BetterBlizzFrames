@@ -3260,3 +3260,19 @@ BBF.swatchFunc = swatchFunc
 BBF.updateBackgroundColors = updateBackgroundColors
 BBF.updateColors = updateColors
 BBF.updateRowPreview = updateRowPreview
+
+
+-- Import cross-tab functions from BBF namespace
+local guiProfiles = function(...) if BBF.guiProfiles then return BBF.guiProfiles(...) end end
+local guiGeneralTab = function(...) if BBF.guiGeneralTab then return BBF.guiGeneralTab(...) end end
+local guiPositionAndScale = function(...) if BBF.guiPositionAndScale then return BBF.guiPositionAndScale(...) end end
+local guiFrameAuras = function(...) if BBF.guiFrameAuras then return BBF.guiFrameAuras(...) end end
+local guiFrameLook = function(...) if BBF.guiFrameLook then return BBF.guiFrameLook(...) end end
+local guiCastbars = function(...) if BBF.guiCastbars then return BBF.guiCastbars(...) end end
+local guiImportAndExport = function(...) if BBF.guiImportAndExport then return BBF.guiImportAndExport(...) end end
+local guiMisc = function(...) if BBF.guiMisc then return BBF.guiMisc(...) end end
+local guiChatFrame = function(...) if BBF.guiChatFrame then return BBF.guiChatFrame(...) end end
+local guiCooldownManager = function(...) if BBF.guiCooldownManager then return BBF.guiCooldownManager(...) end end
+local guiCustomCode = function(...) if BBF.guiCustomCode then return BBF.guiCustomCode(...) end end
+local guiSupport = function(...) if BBF.guiSupport then return BBF.guiSupport(...) end end
+local guiMidnight = function(...) if BBF.guiMidnight then return BBF.guiMidnight(...) end end
