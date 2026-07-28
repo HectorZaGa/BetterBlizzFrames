@@ -168,7 +168,6 @@ function guiGeneralTab()
         btn.Text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         btn.Text:SetPoint("LEFT", iconTex, "RIGHT", 6, 0)
         btn.Text:SetText(cat.label)
-        btn.Text:SetFont(fontMedium, 11)
         btn.Text:SetTextColor(0.8, 0.8, 0.8)
 
         btn:SetScript("OnClick", function() SelectCategory(cat.id) end)
@@ -187,7 +186,7 @@ function guiGeneralTab()
     end
 
     -------------------------------------------------------
-    -- DYNAMIC CARD & ROW HELPERS (PREVENTS OVERLAPPING)
+    -- NATIVE WOW FONT OBJECT HELPERS
     -------------------------------------------------------
     local function CreateOptionCard(parentFrame, titleText, anchorFrame, yOffset, cardWidth)
         cardWidth = cardWidth or 430
@@ -226,7 +225,6 @@ function guiGeneralTab()
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -2)
         title:SetText(titleStr)
-        title:SetFont(fontMedium, 13)
         title:SetWidth(340)
         title:SetJustifyH("LEFT")
 
@@ -235,7 +233,6 @@ function guiGeneralTab()
             local desc = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
             desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
             desc:SetText(descStr)
-            desc:SetTextColor(0.65, 0.65, 0.65)
             desc:SetWidth(340)
             desc:SetJustifyH("LEFT")
 
@@ -261,7 +258,6 @@ function guiGeneralTab()
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -2)
         title:SetText(titleStr)
-        title:SetFont(fontMedium, 13)
         title:SetWidth(250)
         title:SetJustifyH("LEFT")
 
@@ -270,7 +266,6 @@ function guiGeneralTab()
             local desc = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
             desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
             desc:SetText(descStr)
-            desc:SetTextColor(0.65, 0.65, 0.65)
             desc:SetWidth(250)
             desc:SetJustifyH("LEFT")
 
