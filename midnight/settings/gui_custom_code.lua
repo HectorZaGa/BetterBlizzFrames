@@ -1,6 +1,7 @@
 local BBF = _G.BBF
 if not BBF or not BBF.isMidnight then return end
 local L = BBF.L
+local LSM = BBF.LSM or LibStub:GetLibrary('LibSharedMedia-3.0', true) or LibStub('LibSharedMedia-3.0', true)
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
 local fontSmall, fontMedium, fontLarge = BBF.fontSmall, BBF.fontMedium, BBF.fontLarge
