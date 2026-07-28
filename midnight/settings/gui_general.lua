@@ -103,18 +103,18 @@ function guiGeneralTab()
     contentParent:SetPoint("BOTTOMRIGHT", BetterBlizzFrames, "BOTTOMRIGHT", -15, 15)
 
     local categoryList = {
-        { id = "general",     label = L["General"] or "General",                 icon = "Interface\\Icons\\INV_Gizmo_02" },
-        { id = "player",      label = L["Player_Frame"] or "Player Frame",       icon = "Interface\\Icons\\Achievement_GuildPerk_MobileBanking" },
-        { id = "party",       label = L["Party_Frame"] or "Party Frame",         icon = "Interface\\Icons\\Achievement_GuildPerk_EverybodysFriend" },
-        { id = "all",         label = L["All_Frames"] or "All Frames",           icon = "Interface\\Icons\\Ability_Warrior_ShieldWall" },
-        { id = "target",      label = L["Target_Frame"] or "Target Frame",       icon = "Interface\\Icons\\Ability_Tracking" },
-        { id = "tot",         label = L["Target_of_Target"] or "Target of Target",icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "chat",        label = L["Chat_Frame"] or "Chat Frame",           icon = "Interface\\Icons\\UI_Chat" },
-        { id = "extra",       label = L["Extra_Features"] or "Extra Features",   icon = "Interface\\Icons\\Spell_Holy_PowerInfusion" },
-        { id = "arenaNames",  label = L["Arena_Names"] or "Arena Names",         icon = "Interface\\Icons\\Achievement_Arena_3v3_7" },
-        { id = "focus",       label = L["Focus_Frame"] or "Focus Frame",         icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "focusToT",    label = L["Focus_ToT"] or "Focus ToT",             icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "pet",         label = L["Pet_Frame"] or "Pet Frame",             icon = "Interface\\Icons\\Ability_Hunter_Pet_Raptor" },
+        { id = "general",     label = L["General"] or L["General_Settings"],     icon = "Interface\\Icons\\INV_Gizmo_02" },
+        { id = "player",      label = L["Player_Frame"],                         icon = "Interface\\Icons\\Achievement_GuildPerk_MobileBanking" },
+        { id = "party",       label = L["Party_Frame"],                          icon = "Interface\\Icons\\Achievement_GuildPerk_EverybodysFriend" },
+        { id = "all",         label = L["All_Frames"],                            icon = "Interface\\Icons\\Ability_Warrior_ShieldWall" },
+        { id = "target",      label = L["Target_Frame"],                          icon = "Interface\\Icons\\Ability_Tracking" },
+        { id = "tot",         label = L["Target_of_Target"],                     icon = "Interface\\Icons\\Spell_Holy_MindVision" },
+        { id = "chat",        label = L["Chat_Frame"],                           icon = "Interface\\Icons\\UI_Chat" },
+        { id = "extra",       label = L["Extra_Features"],                       icon = "Interface\\Icons\\Spell_Holy_PowerInfusion" },
+        { id = "arenaNames",  label = L["Arena_Names"],                          icon = "Interface\\Icons\\Achievement_Arena_3v3_7" },
+        { id = "focus",       label = L["Focus_Frame"],                          icon = "Interface\\Icons\\Spell_Holy_MindVision" },
+        { id = "focusToT",    label = L["Focus_ToT"],                            icon = "Interface\\Icons\\Spell_Holy_MindVision" },
+        { id = "pet",         label = L["Pet_Frame"],                            icon = "Interface\\Icons\\Ability_Hunter_Pet_Raptor" },
     }
 
     local categoryFrames = {}
@@ -186,7 +186,7 @@ function guiGeneralTab()
     end
 
     -------------------------------------------------------
-    -- CARD UI CREATION HELPERS (MATCHING IMAGE 1)
+    -- CARD UI CREATION HELPERS (DYNAMIC LOCALE BASED)
     -------------------------------------------------------
     local function CreateOptionCard(parentFrame, titleText, yOffset, cardWidth)
         cardWidth = cardWidth or 460
@@ -264,36 +264,41 @@ function guiGeneralTab()
     end
 
     -------------------------------------------------------
-    -- CATEGORY 1: General
+    -- CATEGORY 1: General (3 Cards: General, CC, Dark Mode)
     -------------------------------------------------------
     local cfGen = categoryFrames["general"].contentFrame
-    local cardGen = CreateOptionCard(cfGen, L["General_Settings"] or "General Settings", -10)
     
-    AddCardCheckbox(cardGen, "hideArenaFrames", L["Hide_Arena_Frames"] or "Hide Arena Frames", L["Tooltip_Hide_Arena_Frames"] or "Hides default Blizzard Arena Frames.", BBF.HideArenaFrames)
-    AddCardCheckbox(cardGen, "hideBossFrames", L["Hide_Boss_Frames"] or "Hide Boss Frames", L["Tooltip_Hide_Boss_Frames"] or "Hides default Boss Frames in Raids/Dungeons.", BBF.HideArenaFrames)
-    AddCardCheckbox(cardGen, "playerFrameOCD", L["OCD_Tweaks"] or "OCD Tweaks", L["Tooltip_OCD_Tweaks_Retail"] or "Fixes micro pixel alignment issues on frames.", BBF.FixStupidBlizzPTRShit)
-    AddCardCheckbox(cardGen, "removeRealmNames", L["Hide_Realm"] or "Remove Realm Names", L["Tooltip_Hide_Realm_Indicator_Desc"] or "Hides realm names next to character names.")
-    AddCardCheckbox(cardGen, "hideLossOfControlFrameBg", L["Hide_CC_Background"] or "Hide CC Background", L["Tooltip_Hide_CC_Background"] or "Hides loss of control frame background.", BBF.HideFrames)
-    AddCardCheckbox(cardGen, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"] or "Hide CC Red-lines", L["Tooltip_Hide_CC_Red_Lines"] or "Hides loss of control frame red lines.", BBF.HideFrames)
-    AddCardSlider(cardGen, "lossOfControlScale", L["CC_Scale"] or "Loss of Control Scale", L["Tooltip_LossOfControlScale_Desc"] or "Adjust scale of loss of control frame.", 0.4, 1.4, 0.01)
+    -- Card 1: General Settings
+    local cardGen = CreateOptionCard(cfGen, L["General_Settings"], -10)
+    AddCardCheckbox(cardGen, "hideArenaFrames", L["Hide_Arena_Frames"], L["Tooltip_Hide_Arena_Frames"], BBF.HideArenaFrames)
+    AddCardCheckbox(cardGen, "hideBossFrames", L["Hide_Boss_Frames"], L["Tooltip_Hide_Boss_Frames"], BBF.HideArenaFrames)
+    AddCardCheckbox(cardGen, "playerFrameOCD", L["OCD_Tweaks"], L["Tooltip_OCD_Tweaks"], BBF.FixStupidBlizzPTRShit)
 
-    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode"] or "Dark Mode Options", -cardGen:GetHeight() - 35)
-    AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"] or "Dark Mode UI", L["Tooltip_Dark_Mode"] or "Applies sleek dark textures to frames.", function() BBF.DarkmodeFrames(true) end)
+    -- Card 2: Crowd Control
+    local cardCC = CreateOptionCard(cfGen, L["Crowd_Control_Settings"], -cardGen:GetHeight() - 35)
+    AddCardCheckbox(cardCC, "hideLossOfControlFrameBg", L["Hide_CC_Background"], L["Tooltip_Hide_CC_Background"], BBF.HideFrames)
+    AddCardCheckbox(cardCC, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"], L["Tooltip_Hide_CC_Red_Lines"], BBF.HideFrames)
+    AddCardSlider(cardCC, "lossOfControlScale", L["CC_Scale"], L["Tooltip_LossOfControlScale_Desc"], 0.4, 1.4, 0.01)
+
+    -- Card 3: Dark Mode Settings
+    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], -cardGen:GetHeight() - cardCC:GetHeight() - 60)
+    AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"], L["Tooltip_Dark_Mode"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeCastbars", L["Castbars"], L["Tooltip_Dark_Mode_Castbars"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeActionBars", L["ActionBars"], L["Tooltip_Dark_Mode_ActionBars"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeUiAura", L["Auras"], L["Tooltip_Dark_Mode_Auras_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeMinimap", L["Minimap"], L["Dark_Mode_Minimap"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeNameplateResource", L["Nameplate_Resource"], L["Dark_Mode_Nameplate_Resource"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeGameTooltip", L["Tooltip"], L["Tooltip_Dark_Mode_GameTooltip_Desc"], function() BBF.DarkmodeFrames(true) end)
+    AddCardCheckbox(cardDark, "darkModeGameTooltip", L["Tooltip"], L["Tooltip_Dark_Mode_Tooltip_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeObjectiveFrame", L["Objectives"], L["Tooltip_Dark_Mode_Objectives_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeVigor", L["Vigor"], L["Tooltip_Dark_Mode_Vigor_Desc"], function() BBF.DarkmodeFrames(true) end)
-    AddCardSlider(cardDark, "darkModeColor", L["Darkness"] or "Darkness Level", L["Tooltip_Dark_Mode_Value_Desc"] or "Adjust the darkness scale value.", 0, 1, 0.01)
+    AddCardCheckbox(cardDark, "darkModeEliteTexture", L["Elite_Texture"], L["Tooltip_Dark_Mode_Elite_Texture_Desc"], function() BBF.DarkmodeFrames(true) end)
+    AddCardSlider(cardDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value_Desc"], 0, 1, 0.01)
 
     -------------------------------------------------------
     -- CATEGORY 2: Player Frame
     -------------------------------------------------------
     local cfPlayer = categoryFrames["player"].contentFrame
-    local cardPlayer = CreateOptionCard(cfPlayer, L["Player_Frame"] or "Player Frame", -10)
+    local cardPlayer = CreateOptionCard(cfPlayer, L["Player_Frame"], -10)
     AddCardCheckbox(cardPlayer, "playerFrameHidden", L["Hide_Frame"], L["Tooltip_Hide_Player_Frame"], function() BBF.HidePlayerFrame() end)
     AddCardCheckbox(cardPlayer, "playerFrameClickthrough", L["Clickthrough"], L["Tooltip_Clickthrough"])
     AddCardCheckbox(cardPlayer, "playerReputationColor", L["Add_Reputation_Color"], L["Tooltip_Add_Reputation_Color"], BBF.PlayerReputationColor)
@@ -321,7 +326,7 @@ function guiGeneralTab()
     -- CATEGORY 3: Party Frame
     -------------------------------------------------------
     local cfParty = categoryFrames["party"].contentFrame
-    local cardParty = CreateOptionCard(cfParty, L["Party_Frame"] or "Party Frame", -10)
+    local cardParty = CreateOptionCard(cfParty, L["Party_Frame"], -10)
     AddCardCheckbox(cardParty, "showPartyCastbar", L["Party_Castbars"], L["Tooltip_Show_Party_Castbar"], BBF.UpdateCastbars)
     AddCardCheckbox(cardParty, "hidePartyRoles", L["Hide_Role_Icons"], L["Tooltip_Hide_Party_Role_Icons"], function() BBF.PartyNameChange() end)
     AddCardCheckbox(cardParty, "hidePartyFramesInArena", L["Hide_Party_in_Arena"], L["Tooltip_Hide_Party_in_Arena_GEX"], BBF.HidePartyInArena)
@@ -344,7 +349,7 @@ function guiGeneralTab()
     -- CATEGORY 4: All Frames
     -------------------------------------------------------
     local cfAll = categoryFrames["all"].contentFrame
-    local cardAll = CreateOptionCard(cfAll, L["All_Frames"] or "All Frames", -10)
+    local cardAll = CreateOptionCard(cfAll, L["All_Frames"], -10)
     AddCardCheckbox(cardAll, "classicFrames", L["Classic_Frames"], L["Tooltip_Classic_Frames_Desc"])
     AddCardCheckbox(cardAll, "noPortraitModes", L["No_Portrait"], L["Tooltip_No_Portrait_Desc"])
     AddCardCheckbox(cardAll, "noPortraitPixelBorder", L["NP_PixelBorder"], L["Tooltip_No_Portrait_PixelBorder_Desc"])
@@ -369,7 +374,7 @@ function guiGeneralTab()
     -- CATEGORY 5: Target Frame
     -------------------------------------------------------
     local cfTarget = categoryFrames["target"].contentFrame
-    local cardTarget = CreateOptionCard(cfTarget, L["Target_Frame"] or "Target Frame", -10)
+    local cardTarget = CreateOptionCard(cfTarget, L["Target_Frame"], -10)
     AddCardCheckbox(cardTarget, "targetFrameClickthrough", L["Clickthrough"], L["Tooltip_Target_Clickthrough"], BBF.ClickthroughFrames)
     AddCardCheckbox(cardTarget, "hideTargetName", L["Hide_Names"], L["Tooltip_Hide_Target_Name"], BBF.UpdateNameSettings)
     AddCardCheckbox(cardTarget, "hideTargetLeaderIcon", L["Hide_Leader_Icon"], L["Tooltip_Hide_Target_Leader_Icon"], BBF.HideFrames)
@@ -380,7 +385,7 @@ function guiGeneralTab()
     -- CATEGORY 6: Target of Target
     -------------------------------------------------------
     local cfToT = categoryFrames["tot"].contentFrame
-    local cardToT = CreateOptionCard(cfToT, L["Target_of_Target"] or "Target of Target", -10)
+    local cardToT = CreateOptionCard(cfToT, L["Target_of_Target"], -10)
     AddCardCheckbox(cardToT, "hideTargetToT", L["Hide_Frame"], L["Tooltip_Hide_ToT_Frame"], BBF.HideFrames)
     AddCardCheckbox(cardToT, "hideTargetToTName", L["Hide_Names"], L["Tooltip_Hide_ToT_Name"])
     AddCardCheckbox(cardToT, "hideTargetToTDebuffs", L["Hide_ToT_Debuffs"], L["Tooltip_Hide_ToT_Debuffs"], BBF.HideFrames)
@@ -392,7 +397,7 @@ function guiGeneralTab()
     -- CATEGORY 7: Chat Frame
     -------------------------------------------------------
     local cfChat = categoryFrames["chat"].contentFrame
-    local cardChat = CreateOptionCard(cfChat, L["Chat_Frame"] or "Chat Frame", -10)
+    local cardChat = CreateOptionCard(cfChat, L["Chat_Frame"], -10)
     AddCardCheckbox(cardChat, "hideChatButtons", L["Hide_Chat_Buttons"], L["Tooltip_Hide_Chat_Buttons"], BBF.HideFrames)
     AddCardCheckbox(cardChat, "hideChatBackground", L["Hide_Chat_Background"], L["Tooltip_Hide_Chat_Background"], BBF.HideFrames)
     AddCardCheckbox(cardChat, "filterGladiusSpam", L["Gladius_Spam"], L["Tooltip_Filter_Gladius_Spam"], BBF.ChatFilterCaller)
@@ -406,7 +411,7 @@ function guiGeneralTab()
     -- CATEGORY 8: Extra Features
     -------------------------------------------------------
     local cfExtra = categoryFrames["extra"].contentFrame
-    local cardExtra = CreateOptionCard(cfExtra, L["Extra_Features"] or "Extra Features", -10)
+    local cardExtra = CreateOptionCard(cfExtra, L["Extra_Features"], -10)
     AddCardCheckbox(cardExtra, "combatIndicator", L["Combat_Indicator"], L["Tooltip_Combat_Indicator_Desc"], function() BBF.CombatIndicatorCaller() end)
     AddCardCheckbox(cardExtra, "healerIndicator", L["Healer_Indicator"], L["Tooltip_Healer_Indicator_Desc"], function() BBF.HealerIndicatorCaller() end)
     AddCardCheckbox(cardExtra, "absorbIndicator", L["Absorb_Indicator"], L["Tooltip_Absorb_Indicator_Desc"], BBF.AbsorbCaller)
@@ -422,7 +427,7 @@ function guiGeneralTab()
     -- CATEGORY 9: Arena Names
     -------------------------------------------------------
     local cfArena = categoryFrames["arenaNames"].contentFrame
-    local cardArena = CreateOptionCard(cfArena, L["Arena_Names"] or "Arena Names", -10)
+    local cardArena = CreateOptionCard(cfArena, L["Arena_Names"], -10)
     AddCardCheckbox(cardArena, "targetAndFocusArenaNames", L["Target_And_Focus_Arena_Names"], L["Tooltip_Arena_Names_Target_Focus_Desc"])
     AddCardCheckbox(cardArena, "partyArenaNames", L["Party"], L["Tooltip_Arena_Names_Desc"])
     AddCardCheckbox(cardArena, "showSpecName", L["Show_Spec_Name"], L["Tooltip_Show_Spec_Name_Desc"])
@@ -433,7 +438,7 @@ function guiGeneralTab()
     -- CATEGORY 10: Focus Frame
     -------------------------------------------------------
     local cfFocus = categoryFrames["focus"].contentFrame
-    local cardFocus = CreateOptionCard(cfFocus, L["Focus_Frame"] or "Focus Frame", -10)
+    local cardFocus = CreateOptionCard(cfFocus, L["Focus_Frame"], -10)
     AddCardCheckbox(cardFocus, "focusFrameClickthrough", L["Clickthrough"], L["Tooltip_Focus_Clickthrough"], BBF.ClickthroughFrames)
     AddCardCheckbox(cardFocus, "hideFocusName", L["Hide_Names"], L["Tooltip_Hide_Focus_Name"], BBF.UpdateNameSettings)
     AddCardCheckbox(cardFocus, "hideFocusLeaderIcon", L["Hide_Leader_Icon"], L["Tooltip_Hide_Focus_Leader_Icon"], BBF.HideFrames)
@@ -444,7 +449,7 @@ function guiGeneralTab()
     -- CATEGORY 11: Focus ToT
     -------------------------------------------------------
     local cfFToT = categoryFrames["focusToT"].contentFrame
-    local cardFToT = CreateOptionCard(cfFToT, L["Focus_ToT"] or "Focus ToT", -10)
+    local cardFToT = CreateOptionCard(cfFToT, L["Focus_ToT"], -10)
     AddCardCheckbox(cardFToT, "hideFocusToT", L["Hide_Frame"], L["Tooltip_Hide_FocusToT_Frame"], BBF.HideFrames)
     AddCardCheckbox(cardFToT, "hideFocusToTName", L["Hide_Names"], L["Tooltip_Hide_FocusToT_Name"])
     AddCardCheckbox(cardFToT, "hideFocusToTDebuffs", L["Hide_FocusToT_Debuffs"], L["Tooltip_Hide_ToT_Debuffs"], BBF.HideFrames)
@@ -456,7 +461,7 @@ function guiGeneralTab()
     -- CATEGORY 12: Pet Frame
     -------------------------------------------------------
     local cfPet = categoryFrames["pet"].contentFrame
-    local cardPet = CreateOptionCard(cfPet, L["Pet_Frame"] or "Pet Frame", -10)
+    local cardPet = CreateOptionCard(cfPet, L["Pet_Frame"], -10)
     AddCardCheckbox(cardPet, "hidePetFrame", L["Hide_Pet_Frame"], L["Tooltip_Hide_Pet_Frame_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardPet, "petCastbar", L["Pet_Castbar"], L["Tooltip_Pet_Castbar"], BBF.UpdatePetCastbar)
     AddCardCheckbox(cardPet, "hidePetName", L["Hide_Pet_Name"], L["Tooltip_Hide_Pet_Name_Desc"], function() BBF.AllNameChanges() end)
