@@ -1,7 +1,5 @@
-if not BBF.isMidnight then return end
-local addonName, BBF = ...
-if not BBF.isMidnight then return end
-BetterBlizzFrames = nil
+local BBF = _G.BBF
+if not BBF or not BBF.isMidnight then return end
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 local L = BBF.L
 --local anchorPoints = {"CENTER", "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}

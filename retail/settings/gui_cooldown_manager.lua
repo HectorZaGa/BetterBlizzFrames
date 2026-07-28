@@ -1,5 +1,5 @@
-if BBF.isMidnight then return end
-local addonName, BBF = ...
+local BBF = _G.BBF
+if not BBF or BBF.isMidnight then return end
 local L = BBF.L
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
