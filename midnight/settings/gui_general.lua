@@ -267,9 +267,9 @@ function guiGeneralTab()
         titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 314), rowHeight)
 
         local cb = CreateCheckbox(dbKey, "", parentCb or row, nil, callback)
-        cb:SetParent(row)
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+
 
         if descStr and descStr ~= "" then
             CreateTooltipTwo(titleFrame, titleStr, descStr)
@@ -329,7 +329,6 @@ function guiGeneralTab()
         titleFrame1:SetSize(title1:GetStringWidth() + 6, rowHeight)
 
         local cb1 = CreateCheckbox(dbKey1, "", parentCb or row, nil)
-        cb1:SetParent(row)
         cb1:SetSize(24, 24)
         cb1:SetPoint("LEFT", title1, "RIGHT", 6, 0)
 
@@ -348,9 +347,9 @@ function guiGeneralTab()
         titleFrame2:SetSize(title2:GetStringWidth() + 6, rowHeight)
 
         local cb2 = CreateCheckbox(dbKey2, "", parentCb or row, nil)
-        cb2:SetParent(row)
         cb2:SetSize(24, 24)
         cb2:SetPoint("LEFT", title2, "RIGHT", 6, 0)
+
 
         if descStr2 and descStr2 ~= "" then
             CreateTooltipTwo(titleFrame2, titleStr2, descStr2)

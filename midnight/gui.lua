@@ -1907,6 +1907,40 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
     table.insert(checkBoxList, {checkbox = checkBox, label = label})
 
+    if parent and parent:GetObjectType() == "CheckButton" then
+        checkBox.parentCheckButton = parent
+        parent.childrenCheckButtons = parent.childrenCheckButtons or {}
+        table.insert(parent.childrenCheckButtons, checkBox)
+    end
+
+    local function UpdateEnabledState()
+        local parentCB = checkBox.parentCheckButton
+        local isParentDisabled = false
+        if parentCB then
+            if not parentCB:GetChecked() or not parentCB:IsEnabled() then
+                isParentDisabled = true
+            end
+        end
+
+        if isParentDisabled then
+            checkBox:Disable()
+            checkBox:SetAlpha(0.5)
+        else
+            checkBox:Enable()
+            checkBox:SetAlpha(1)
+        end
+
+        if checkBox.childrenCheckButtons then
+            for _, child in ipairs(checkBox.childrenCheckButtons) do
+                if child.UpdateEnabledState then
+                    child:UpdateEnabledState()
+                end
+            end
+        end
+    end
+
+    checkBox.UpdateEnabledState = UpdateEnabledState
+
     local function UpdateOption(value)
         if option == 'friendlyFrameClickthrough' and BBF.checkCombatAndWarn() then
             return
@@ -1924,15 +1958,7 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         end
         SetChecked()
 
-        local grandparent = parent:GetParent()
-
-        if parent:GetObjectType() == "CheckButton" and (parent:GetChecked() == false or (grandparent:GetObjectType() == "CheckButton" and grandparent:GetChecked() == false)) then
-            checkBox:Disable()
-            checkBox:SetAlpha(0.5)
-        else
-            checkBox:Enable()
-            checkBox:SetAlpha(1)
-        end
+        UpdateEnabledState()
 
         if extraFunc and not BetterBlizzFramesDB.wasOnLoadingScreen and BetterBlizzFrames.guiLoaded then
             extraFunc(option, value)
@@ -1952,9 +1978,11 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
     checkBox:HookScript("OnClick", function(_, _, _)
         UpdateOption(checkBox:GetChecked())
+        UpdateEnabledState()
     end)
 
     return checkBox
+
 end
 
 
