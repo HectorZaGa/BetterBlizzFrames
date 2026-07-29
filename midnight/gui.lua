@@ -1866,10 +1866,15 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
 end
 
 local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
-    local checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
+    local checkBox = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
+    if not checkBox.Text then
+        checkBox.Text = checkBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        checkBox.Text:SetPoint("LEFT", checkBox, "RIGHT", 4, 0)
+    end
     checkBox.Text:SetText(label)
     checkBox:SetSize(23,23)
-    checkBox.Text:SetFont(fontSmall, 12)
+
+
 
     local category
     if parent.name then
