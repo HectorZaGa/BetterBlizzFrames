@@ -138,11 +138,10 @@ function guiGeneralTab()
     for i, cat in ipairs(categoryList) do
         local sf = CreateFrame("ScrollFrame", "BBF_MidnightCat_" .. cat.id, contentParent, "ScrollFrameTemplate")
         sf:SetAllPoints(contentParent)
-
         sf:Hide()
 
         local cf = CreateFrame("Frame", nil, sf)
-        cf:SetSize(435, 1300)
+        cf:SetSize(435, 1400)
         sf:SetScrollChild(cf)
 
         categoryFrames[cat.id] = sf
@@ -186,14 +185,14 @@ function guiGeneralTab()
     end
 
     -------------------------------------------------------
-    -- CARD HELPERS WITH TOOLTIPS
+    -- CARD HELPERS WITH TOOLTIPS & EXPANDED SPACING
     -------------------------------------------------------
     local function CreateOptionCard(parentFrame, titleText, anchorFrame, yOffset, cardWidth)
         cardWidth = cardWidth or 430
         
         local header = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         if anchorFrame then
-            header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, yOffset or -20)
+            header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, yOffset or -22)
         else
             header:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2, yOffset or -10)
         end
@@ -213,7 +212,7 @@ function guiGeneralTab()
         card:SetBackdropBorderColor(0.2, 0.2, 0.25, 0.8)
 
         card.header = header
-        card.currentY = -8
+        card.currentY = -10
         card.cardWidth = cardWidth
         return card
     end
@@ -222,16 +221,17 @@ function guiGeneralTab()
         local row = CreateFrame("Frame", nil, card)
         row:SetPoint("TOPLEFT", card, "TOPLEFT", 12, card.currentY)
 
-        local rowHeight = 28
+        local rowHeight = 34
         row:SetSize(card.cardWidth - 24, rowHeight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("LEFT", row, "LEFT", 0, 0)
         title:SetText(titleStr)
-        title:SetWidth(340)
+        title:SetWidth(330)
         title:SetJustifyH("LEFT")
 
         local cb = CreateCheckbox(dbKey, "", row, nil, callback)
+        cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
         if descStr and descStr ~= "" then
@@ -239,8 +239,8 @@ function guiGeneralTab()
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
-        card.currentY = card.currentY - rowHeight - 2
-        card:SetHeight(-card.currentY + 4)
+        card.currentY = card.currentY - rowHeight - 8
+        card:SetHeight(-card.currentY + 6)
         return cb
     end
 
@@ -248,7 +248,7 @@ function guiGeneralTab()
         local row = CreateFrame("Frame", nil, card)
         row:SetPoint("TOPLEFT", card, "TOPLEFT", 12, card.currentY)
 
-        local rowHeight = 36
+        local rowHeight = 40
         row:SetSize(card.cardWidth - 24, rowHeight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -265,8 +265,8 @@ function guiGeneralTab()
             CreateTooltipTwo(slider, titleStr, descStr)
         end
 
-        card.currentY = card.currentY - rowHeight - 4
-        card:SetHeight(-card.currentY + 4)
+        card.currentY = card.currentY - rowHeight - 10
+        card:SetHeight(-card.currentY + 6)
         return slider
     end
 
@@ -283,13 +283,13 @@ function guiGeneralTab()
     AddCardCheckbox(cardGen, "removeRealmNames", L["Hide_Realm"], L["Tooltip_Hide_Realm_Indicator_Desc"])
 
     -- Card 2: Crowd Control
-    local cardCC = CreateOptionCard(cfGen, L["Crowd_Control"], cardGen, -20)
+    local cardCC = CreateOptionCard(cfGen, L["Crowd_Control"], cardGen, -22)
     AddCardCheckbox(cardCC, "hideLossOfControlFrameBg", L["Hide_CC_Background"], L["Tooltip_Hide_CC_Background"], BBF.HideFrames)
     AddCardCheckbox(cardCC, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"], L["Tooltip_Hide_CC_Red_Lines"], BBF.HideFrames)
     AddCardSlider(cardCC, "lossOfControlScale", L["CC_Scale"], L["Tooltip_LossOfControlScale_Desc"], 0.4, 1.4, 0.01)
 
     -- Card 3: Dark Mode Settings
-    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], cardCC, -20)
+    local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], cardCC, -22)
     AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"], L["Tooltip_Dark_Mode"], function() BBF.DarkmodeFrames(true) end)
     AddCardSlider(cardDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value_Desc"], 0, 1, 0.01)
     AddCardCheckbox(cardDark, "darkModeCastbars", L["Castbars"], L["Tooltip_Dark_Mode_Castbars"], function() BBF.DarkmodeFrames(true) end)
