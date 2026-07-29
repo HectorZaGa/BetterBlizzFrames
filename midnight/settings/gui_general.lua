@@ -249,7 +249,40 @@ function guiGeneralTab()
         return cb
     end
 
+    local function AddCardChildCheckbox(card, parentCb, dbKey, titleStr, descStr, callback)
+        local row = CreateFrame("Frame", nil, card)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 28, card.currentY)
+
+        local rowHeight = 34
+        row:SetSize(card.cardWidth - 40, rowHeight)
+
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title:SetText(titleStr)
+        title:SetWidth(314)
+        title:SetJustifyH("LEFT")
+
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 314), rowHeight)
+
+        local cb = CreateCheckbox(dbKey, "", parentCb or row, nil, callback)
+        cb:SetParent(row)
+        cb:SetSize(28, 28)
+        cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+
+        if descStr and descStr ~= "" then
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
+            CreateTooltipTwo(cb, titleStr, descStr)
+        end
+
+        card.currentY = card.currentY - rowHeight - 8
+        card:SetHeight(-card.currentY + 6)
+        return cb
+    end
+
     local function AddCardSlider(card, dbKey, titleStr, descStr, minVal, maxVal, stepVal, callback)
+
         local row = CreateFrame("Frame", nil, card)
         row:SetPoint("TOPLEFT", card, "TOPLEFT", 12, card.currentY)
 
@@ -480,8 +513,8 @@ function guiGeneralTab()
     AddCardCheckbox(cardAllDisp, "centerNames", L["Center_Name"], L["Center_Names"], BBF.SetCenteredNamesCaller)
     AddCardCheckbox(cardAllDisp, "classColorTargetNames", L["Class_Color_Names"], L["Tooltip_Class_Color_Names_Desc"])
     AddCardCheckbox(cardAllDisp, "removeRealmNames", L["Hide_Realm"], L["Tooltip_Hide_Realm_Indicator_Desc"])
-    AddCardCheckbox(cardAllDisp, "formatStatusBarText", L["Format_Numbers"], L["Tooltip_Format_Numbers_Desc"], BBF.HookStatusBarText)
-    AddCardCheckbox(cardAllDisp, "singleValueStatusBarText", L["No_Max"], L["Tooltip_No_Max_Value_Desc"])
+    local cbFormatNum = AddCardCheckbox(cardAllDisp, "formatStatusBarText", L["Format_Numbers"], L["Tooltip_Format_Numbers_Desc"], BBF.HookStatusBarText)
+    AddCardChildCheckbox(cardAllDisp, cbFormatNum, "singleValueStatusBarText", L["No_Max"], L["Tooltip_No_Max_Value_Desc"])
     AddCardCheckbox(cardAllDisp, "hideLevelText", L["Hide_Max_Level_Text"], L["Tooltip_Hide_Max_Level_Text"], BBF.HideFrames)
 
     -- Card 3: Colors, Icons & FX
@@ -524,8 +557,8 @@ function guiGeneralTab()
     -------------------------------------------------------
     local cfChat = categoryFrames["chat"].contentFrame
     local cardChat = CreateOptionCard(cfChat, L["Chat_Frame"], nil, -10)
-    AddCardCheckbox(cardChat, "hideChatButtons", L["Hide_Chat_Buttons"], L["Tooltip_Hide_Chat_Buttons"], BBF.HideFrames)
-    AddCardCheckbox(cardChat, "hideChatBackground", L["Hide_Chat_Background"], L["Tooltip_Hide_Chat_Background"], BBF.HideFrames)
+    local cbChatBtns = AddCardCheckbox(cardChat, "hideChatButtons", L["Hide_Chat_Buttons"], L["Tooltip_Hide_Chat_Buttons"], BBF.HideFrames)
+    AddCardChildCheckbox(cardChat, cbChatBtns, "hideChatBackground", L["Hide_Chat_Background"], L["Tooltip_Hide_Chat_Background"], BBF.HideFrames)
     AddCardCheckbox(cardChat, "filterGladiusSpam", L["Gladius_Spam"], L["Tooltip_Filter_Gladius_Spam"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterNpcArenaSpam", L["Arena_Npc_Talk"], L["Tooltip_Filter_Arena_Npc_Talk"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterTalentSpam", L["Talent_Spam"], L["Tooltip_Filter_Talent_Spam"], BBF.ChatFilterCaller)
@@ -533,6 +566,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardChat, "filterSystemMessages", L["System_Messages"], L["Tooltip_Filter_System_Messages"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterMiscInfo", L["Misc_Info"], L["Tooltip_Filter_Misc_Info"], BBF.ChatFilterCaller)
     FinalizeCardLayout(cfChat, cardChat)
+
 
     -------------------------------------------------------
     -- CATEGORY 8: Extra Features
