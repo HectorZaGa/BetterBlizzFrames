@@ -325,38 +325,43 @@ function guiGeneralTab()
     -------------------------------------------------------
     local cfPlayer = categoryFrames["player"].contentFrame
 
-    -- Card 1: Player Frame
-    local cardPlayer = CreateOptionCard(cfPlayer, L["Player_Frame"], nil, -10)
-    AddCardCheckbox(cardPlayer, "playerFrameHidden", L["Hide_Frame"], L["Tooltip_Hide_Player_Frame"], function() BBF.HidePlayerFrame() end)
-    AddCardCheckbox(cardPlayer, "playerFrameClickthrough", L["Clickthrough"], L["Tooltip_Clickthrough"])
-    AddCardCheckbox(cardPlayer, "playerEliteFrame", L["Elite_Texture"], L["Tooltip_Elite_Texture_Desc"], function() if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end end)
-    AddCardCheckbox(cardPlayer, "playerReputationColor", L["Add_Reputation_Color"], L["Tooltip_Add_Reputation_Color"], BBF.PlayerReputationColor)
-    AddCardCheckbox(cardPlayer, "playerReputationClassColor", L["Class_Color_Combo"], L["Tooltip_Class_Color_Reputation"], BBF.PlayerReputationColor)
+    -- Card 1: Frame & Layout
+    local cardPlayerLayout = CreateOptionCard(cfPlayer, L["Frame_Layout"], nil, -10)
+    AddCardCheckbox(cardPlayerLayout, "playerFrameHidden", L["Hide_Frame"], L["Tooltip_Hide_Player_Frame"], function() BBF.HidePlayerFrame() end)
+    AddCardCheckbox(cardPlayerLayout, "playerFrameClickthrough", L["Clickthrough"], L["Tooltip_Clickthrough"])
+    AddCardCheckbox(cardPlayerLayout, "symmetricPlayerFrame", L["Mirror_TargetFrame"], L["Tooltip_Mirror_TargetFrame_Desc"])
+    AddCardCheckbox(cardPlayerLayout, "hideTotemFrame", L["Hide_Totem_Frame"], L["Tooltip_Hide_Totem_Frame"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerLayout, "playerReputationClassColor", L["Class_Color_Combo"], L["Tooltip_Class_Color_Reputation"], BBF.PlayerReputationColor)
+    AddCardCheckbox(cardPlayerLayout, "playerReputationColor", L["Add_Reputation_Color"], L["Tooltip_Add_Reputation_Color"], BBF.PlayerReputationColor)
+    AddCardCheckbox(cardPlayerLayout, "playerEliteFrame", L["Elite_Texture"], L["Tooltip_Elite_Texture_Desc"], function() if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end end)
 
-    -- Card 2: Visibility
-    local cardPlayerVis = CreateOptionCard(cfPlayer, L["Visibility"], cardPlayer, -22)
-    AddCardCheckbox(cardPlayerVis, "hidePlayerName", L["Hide_Names"], L["Tooltip_Hide_Player_Name"], function() BBF.SetCenteredNamesCaller() end)
-    AddCardCheckbox(cardPlayerVis, "symmetricPlayerFrame", L["Mirror_TargetFrame"], L["Tooltip_Mirror_TargetFrame_Desc"])
-    AddCardCheckbox(cardPlayerVis, "hidePlayerPower", L["Hide_Resource_Power"], L["Tooltip_Hide_Resource_Power_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerVis, "hideResourceTooltip", L["Hide_Resource_Tooltip"], L["Tooltip_Hide_Resource_Tooltip_Desc"], BBF.HideClassResourceTooltip)
-    AddCardCheckbox(cardPlayerVis, "hideManaFeedback", L["Hide_Mana_Feedback"], L["Tooltip_Hide_Mana_Feedback_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerVis, "hidePlayerRestAnimation", L["Hide_Zzz_Rest_Animation"], L["Tooltip_Hide_Zzz_Rest"], BBF.HideFrames)
+    -- Card 2: Display & Resources
+    local cardPlayerDispRes = CreateOptionCard(cfPlayer, L["Display_Resources"], cardPlayerLayout, -22)
+    AddCardCheckbox(cardPlayerDispRes, "hidePlayerName", L["Hide_Names"], L["Tooltip_Hide_Player_Name"], function() BBF.SetCenteredNamesCaller() end)
+    AddCardCheckbox(cardPlayerDispRes, "hidePlayerPower", L["Hide_Resource_Power"], L["Tooltip_Hide_Resource_Power_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerDispRes, "hideResourceTooltip", L["Hide_Resource_Tooltip"], L["Tooltip_Hide_Resource_Tooltip_Desc"], BBF.HideClassResourceTooltip)
+    AddCardCheckbox(cardPlayerDispRes, "hideManaFeedback", L["Hide_Mana_Feedback"], L["Tooltip_Hide_Mana_Feedback_Desc"], BBF.HideFrames)
 
-    -- Card 3: Icons
-    local cardPlayerIcons = CreateOptionCard(cfPlayer, L["Icons"], cardPlayerVis, -22)
-    AddCardCheckbox(cardPlayerIcons, "hidePlayerCornerIcon", L["Hide_Corner_Icon"], L["Tooltip_Hide_Corner_Icon"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hidePlayerHealthLossAnim", L["Hide_Health_Loss_FX"], L["Tooltip_Hide_Health_Loss_FX_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hidePlayerRestGlow", L["Hide_Rest_Glow"], L["Tooltip_Hide_Rest_Glow"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hideFullPower", L["Hide_Full_Mana_FX"], L["Tooltip_Hide_Full_Mana_FX_Desc"], BBF.HideFrames)
+    -- Card 3: Visual Effects & Glows
+    local cardPlayerFX = CreateOptionCard(cfPlayer, L["Visual_Effects_Glows"], cardPlayerDispRes, -22)
+    AddCardCheckbox(cardPlayerFX, "hidePlayerHealthLossAnim", L["Hide_Health_Loss_FX"], L["Tooltip_Hide_Health_Loss_FX_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerFX, "hideFullPower", L["Hide_Full_Mana_FX"], L["Tooltip_Hide_Full_Mana_FX_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerFX, "hidePlayerRestGlow", L["Hide_Rest_Glow"], L["Tooltip_Hide_Rest_Glow"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerFX, "hidePlayerRestAnimation", L["Hide_Zzz_Rest_Animation"], L["Tooltip_Hide_Zzz_Rest"], BBF.HideFrames)
+
+    -- Card 4: Icons & Indicators
+    local cardPlayerIcons = CreateOptionCard(cfPlayer, L["Icons_Indicators"], cardPlayerFX, -22)
     AddCardCheckbox(cardPlayerIcons, "hideCombatIcon", L["Hide_Combat_Icon"], L["Tooltip_Hide_Combat_Icon"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hideHitIndicator", L["Hide_Hit_Indicator"], L["Tooltip_Hide_Hit_Indicator_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerIcons, "hidePlayerRoleIcon", L["Hide_Role_Icon"], L["Tooltip_Hide_Role_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hideGroupIndicator", L["Hide_Group_Indicator"], L["Tooltip_Hide_Group_Indicator"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hideTotemFrame", L["Hide_Totem_Frame"], L["Tooltip_Hide_Totem_Frame"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hidePlayerLeaderIcon", L["Hide_Leader_Icon"], L["Tooltip_Hide_Leader_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hidePlayerGuideIcon", L["Hide_Guide_Icon"], L["Tooltip_Hide_Guide_Icon"], BBF.HideFrames)
-    AddCardCheckbox(cardPlayerIcons, "hidePlayerRoleIcon", L["Hide_Role_Icon"], L["Tooltip_Hide_Role_Icon"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerIcons, "hidePlayerCornerIcon", L["Hide_Corner_Icon"], L["Tooltip_Hide_Corner_Icon"], BBF.HideFrames)
+    AddCardCheckbox(cardPlayerIcons, "hideHitIndicator", L["Hide_Hit_Indicator"], L["Tooltip_Hide_Hit_Indicator_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hidePvpTimerText", L["Hide_PvP_Timer"], L["Tooltip_Hide_PvP_Timer_Desc"], BBF.HideFrames)
     FinalizeCardLayout(cfPlayer, cardPlayerIcons)
+
+
 
 
 
@@ -364,25 +369,34 @@ function guiGeneralTab()
     -- CATEGORY 3: Party Frame
     -------------------------------------------------------
     local cfParty = categoryFrames["party"].contentFrame
-    local cardParty = CreateOptionCard(cfParty, L["Party_Frame"], nil, -10)
-    AddCardCheckbox(cardParty, "showPartyCastbar", L["Party_Castbars"], L["Tooltip_Show_Party_Castbar"], BBF.UpdateCastbars)
-    AddCardCheckbox(cardParty, "hidePartyRoles", L["Hide_Role_Icons"], L["Tooltip_Hide_Party_Role_Icons"], function() BBF.PartyNameChange() end)
-    AddCardCheckbox(cardParty, "hidePartyFramesInArena", L["Hide_Party_in_Arena"], L["Tooltip_Hide_Party_in_Arena_GEX"], BBF.HidePartyInArena)
-    AddCardCheckbox(cardParty, "raidFramePixelBorder", L["Pixel_Border"], L["Tooltip_Pixel_Border_RaidFrames_Desc"])
-    AddCardCheckbox(cardParty, "hidePartyNames", L["Hide_Names"], "", function() BBF.AllNameChanges() end)
-    AddCardCheckbox(cardParty, "hidePartyAggroHighlight", L["Hide_Aggro_Highlight"], L["Tooltip_Hide_Party_Aggro_Highlight"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "hidePartyFrameTitle", L["Hide_CompactPartyFrame_Title"], L["Tooltip_Hide_CompactPartyFrame_Title"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "hideCompactUnitFrameBackground", L["Hide_Bg"], L["Tooltip_Hide_Compact_Frame_Backgrounds"], BBF.HideCompactUnitFrameBackgrounds)
-    AddCardCheckbox(cardParty, "hideRaidFrameManager", L["Hide_RaidFrameManager"], L["Tooltip_Hide_RaidFrameManager"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "classColorPartyNames", L["Color_Names"], L["Tooltip_Class_Color_Names_Party_Raid"], BBF.AllNameChanges)
-    AddCardCheckbox(cardParty, "hideRaidFrameContainerBorder", L["Hide_Container_Border"], L["Tooltip_Hide_Container_Border_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "hidePartyDispelOverlay", L["Hide_Dispel_Overlay"], L["Tooltip_Hide_Dispel_Overlay"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "hidePartyRangeIcon", L["Hide_Range_Icon"], L["Tooltip_Hide_Range_Icon"], BBF.HideFrames)
-    AddCardCheckbox(cardParty, "newRaidFrameRoleIcons", L["New_Role_Icons"], L["Tooltip_New_Role_Icons_Desc"])
-    AddCardCheckbox(cardParty, "betterTargetHighlight", L["Better_Target_Highlight"], L["Tooltip_Better_Target_Highlight"])
-    AddCardSlider(cardParty, "partyFrameScale", L["Party_Frame_Scale"], "", 0.7, 1.7, 0.01)
-    AddCardSlider(cardParty, "partyFrameRangeAlpha", L["Party_Frame_Range_Alpha"], L["Tooltip_Party_Frame_Range_Alpha"], 0, 1, 0.01)
-    FinalizeCardLayout(cfParty, cardParty)
+
+    -- Card 1: Frame & Layout
+    local cardPartyLayout = CreateOptionCard(cfParty, L["Frame_Layout"], nil, -10)
+    AddCardSlider(cardPartyLayout, "partyFrameScale", L["Party_Frame_Scale"], "", 0.7, 1.7, 0.01)
+    AddCardSlider(cardPartyLayout, "partyFrameRangeAlpha", L["Party_Frame_Range_Alpha"], L["Tooltip_Party_Frame_Range_Alpha"], 0, 1, 0.01)
+    AddCardCheckbox(cardPartyLayout, "hidePartyFramesInArena", L["Hide_Party_in_Arena"], L["Tooltip_Hide_Party_in_Arena_GEX"], BBF.HidePartyInArena)
+    AddCardCheckbox(cardPartyLayout, "hideRaidFrameManager", L["Hide_RaidFrameManager"], L["Tooltip_Hide_RaidFrameManager"], BBF.HideFrames)
+    AddCardCheckbox(cardPartyLayout, "raidFramePixelBorder", L["Pixel_Border"], L["Tooltip_Pixel_Border_RaidFrames_Desc"])
+    AddCardCheckbox(cardPartyLayout, "hideCompactUnitFrameBackground", L["Hide_Bg"], L["Tooltip_Hide_Compact_Frame_Backgrounds"], BBF.HideCompactUnitFrameBackgrounds)
+    AddCardCheckbox(cardPartyLayout, "hideRaidFrameContainerBorder", L["Hide_Container_Border"], L["Tooltip_Hide_Container_Border_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardPartyLayout, "hidePartyFrameTitle", L["Hide_CompactPartyFrame_Title"], L["Tooltip_Hide_CompactPartyFrame_Title"], BBF.HideFrames)
+
+    -- Card 2: Display & Text
+    local cardPartyDisp = CreateOptionCard(cfParty, L["Display_Text"], cardPartyLayout, -22)
+    AddCardCheckbox(cardPartyDisp, "hidePartyNames", L["Hide_Names"], "", function() BBF.AllNameChanges() end)
+    AddCardCheckbox(cardPartyDisp, "classColorPartyNames", L["Color_Names"], L["Tooltip_Class_Color_Names_Party_Raid"], BBF.AllNameChanges)
+    AddCardCheckbox(cardPartyDisp, "hidePartyRoles", L["Hide_Role_Icons"], L["Tooltip_Hide_Party_Role_Icons"], function() BBF.PartyNameChange() end)
+    AddCardCheckbox(cardPartyDisp, "newRaidFrameRoleIcons", L["New_Role_Icons"], L["Tooltip_New_Role_Icons_Desc"])
+    AddCardCheckbox(cardPartyDisp, "hidePartyRangeIcon", L["Hide_Range_Icon"], L["Tooltip_Hide_Range_Icon"], BBF.HideFrames)
+
+    -- Card 3: Combat & Status
+    local cardPartyCombat = CreateOptionCard(cfParty, L["Combat_Status"], cardPartyDisp, -22)
+    AddCardCheckbox(cardPartyCombat, "showPartyCastbar", L["Party_Castbars"], L["Tooltip_Show_Party_Castbar"], BBF.UpdateCastbars)
+    AddCardCheckbox(cardPartyCombat, "betterTargetHighlight", L["Better_Target_Highlight"], L["Tooltip_Better_Target_Highlight"])
+    AddCardCheckbox(cardPartyCombat, "hidePartyAggroHighlight", L["Hide_Aggro_Highlight"], L["Tooltip_Hide_Party_Aggro_Highlight"], BBF.HideFrames)
+    AddCardCheckbox(cardPartyCombat, "hidePartyDispelOverlay", L["Hide_Dispel_Overlay"], L["Tooltip_Hide_Dispel_Overlay"], BBF.HideFrames)
+    FinalizeCardLayout(cfParty, cardPartyCombat)
+
 
     -------------------------------------------------------
     -- CATEGORY 4: All Frames

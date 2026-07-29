@@ -1623,6 +1623,19 @@ L["Dark_Mode_Settings"] = "Dark Mode Settings"
 L["Crowd_Control"] = "Crowd Control"
 L["Visibility"] = "Visibility"
 L["Icons"] = "Icons"
+L["Behavior"] = "Behavior"
+L["Style_Appearance"] = "Style & Appearance"
+L["Visibility_Frame_Elements"] = "Visibility & Frame Elements"
+L["Resource_Feedback"] = "Resource & Feedback"
+L["Visual_Effects_Glows"] = "Visual Effects & Glows"
+L["Icons_Indicators"] = "Icons & Indicators"
+L["Frame_Layout"] = "Frame & Layout"
+L["Display_Text"] = "Display & Text"
+L["Combat_Status"] = "Combat & Status"
+L["Display_Resources"] = "Display & Resources"
+
+
+
 
 
 
