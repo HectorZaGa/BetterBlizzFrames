@@ -231,12 +231,16 @@ function guiGeneralTab()
         title:SetWidth(330)
         title:SetJustifyH("LEFT")
 
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 330), rowHeight)
+
         local cb = CreateCheckbox(dbKey, "", row, nil, callback)
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
         if descStr and descStr ~= "" then
-            CreateTooltipTwo(row, titleStr, descStr)
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
@@ -258,11 +262,15 @@ function guiGeneralTab()
         title:SetWidth(240)
         title:SetJustifyH("LEFT")
 
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 240), rowHeight)
+
         local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
         slider:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
         if descStr and descStr ~= "" then
-            CreateTooltipTwo(row, titleStr, descStr)
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(slider, titleStr, descStr)
         end
 
@@ -283,13 +291,17 @@ function guiGeneralTab()
         title1:SetPoint("LEFT", row, "LEFT", 0, 0)
         title1:SetText(titleStr1)
 
+        local titleFrame1 = CreateFrame("Frame", nil, row)
+        titleFrame1:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame1:SetSize(title1:GetStringWidth() + 6, rowHeight)
+
         local cb1 = CreateCheckbox(dbKey1, "", parentCb or row, nil)
         cb1:SetParent(row)
         cb1:SetSize(24, 24)
         cb1:SetPoint("LEFT", title1, "RIGHT", 6, 0)
 
         if descStr1 and descStr1 ~= "" then
-            CreateTooltipTwo(title1, titleStr1, descStr1)
+            CreateTooltipTwo(titleFrame1, titleStr1, descStr1)
             CreateTooltipTwo(cb1, titleStr1, descStr1)
         end
 
@@ -298,13 +310,17 @@ function guiGeneralTab()
         title2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
         title2:SetText(titleStr2)
 
+        local titleFrame2 = CreateFrame("Frame", nil, row)
+        titleFrame2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
+        titleFrame2:SetSize(title2:GetStringWidth() + 6, rowHeight)
+
         local cb2 = CreateCheckbox(dbKey2, "", parentCb or row, nil)
         cb2:SetParent(row)
         cb2:SetSize(24, 24)
         cb2:SetPoint("LEFT", title2, "RIGHT", 6, 0)
 
         if descStr2 and descStr2 ~= "" then
-            CreateTooltipTwo(title2, titleStr2, descStr2)
+            CreateTooltipTwo(titleFrame2, titleStr2, descStr2)
             CreateTooltipTwo(cb2, titleStr2, descStr2)
         end
 
@@ -312,6 +328,7 @@ function guiGeneralTab()
         card:SetHeight(-card.currentY + 6)
         return cb1, cb2
     end
+
 
 
 
