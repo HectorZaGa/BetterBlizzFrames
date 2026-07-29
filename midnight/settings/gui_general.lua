@@ -136,8 +136,9 @@ function guiGeneralTab()
     end
 
     for i, cat in ipairs(categoryList) do
-        local sf = CreateFrame("ScrollFrame", "BBF_MidnightCat_" .. cat.id, contentParent, "UIPanelScrollFrameTemplate")
+        local sf = CreateFrame("ScrollFrame", "BBF_MidnightCat_" .. cat.id, contentParent, "ScrollFrameTemplate")
         sf:SetAllPoints(contentParent)
+
         sf:Hide()
 
         local cf = CreateFrame("Frame", nil, sf)
