@@ -256,20 +256,25 @@ function guiGeneralTab()
         local rowHeight = 34
         row:SetSize(card.cardWidth - 40, rowHeight)
 
-        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 0, 0)
         title:SetText(titleStr)
         title:SetWidth(314)
         title:SetJustifyH("LEFT")
+
 
         local titleFrame = CreateFrame("Frame", nil, row)
         titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
         titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 314), rowHeight)
 
         local cb = CreateCheckbox(dbKey, "", parentCb or row, nil, callback)
+        cb.associatedTitle = title
+        cb.associatedRow = row
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
-
+        if cb.UpdateEnabledState then
+            cb:UpdateEnabledState()
+        end
 
         if descStr and descStr ~= "" then
             CreateTooltipTwo(titleFrame, titleStr, descStr)
@@ -320,7 +325,7 @@ function guiGeneralTab()
         row:SetSize(card.cardWidth - 40, rowHeight)
 
         -- Item 1: SFX
-        local title1 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        local title1 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title1:SetPoint("LEFT", row, "LEFT", 0, 0)
         title1:SetText(titleStr1)
 
@@ -329,8 +334,12 @@ function guiGeneralTab()
         titleFrame1:SetSize(title1:GetStringWidth() + 6, rowHeight)
 
         local cb1 = CreateCheckbox(dbKey1, "", parentCb or row, nil)
+        cb1.associatedTitle = title1
         cb1:SetSize(24, 24)
         cb1:SetPoint("LEFT", title1, "RIGHT", 6, 0)
+        if cb1.UpdateEnabledState then
+            cb1:UpdateEnabledState()
+        end
 
         if descStr1 and descStr1 ~= "" then
             CreateTooltipTwo(titleFrame1, titleStr1, descStr1)
@@ -338,7 +347,8 @@ function guiGeneralTab()
         end
 
         -- Item 2: Warning (!)
-        local title2 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        local title2 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+
         title2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
         title2:SetText(titleStr2)
 
@@ -347,8 +357,14 @@ function guiGeneralTab()
         titleFrame2:SetSize(title2:GetStringWidth() + 6, rowHeight)
 
         local cb2 = CreateCheckbox(dbKey2, "", parentCb or row, nil)
+        cb2.associatedTitle = title2
         cb2:SetSize(24, 24)
         cb2:SetPoint("LEFT", title2, "RIGHT", 6, 0)
+        if cb2.UpdateEnabledState then
+            cb2:UpdateEnabledState()
+        end
+
+
 
 
         if descStr2 and descStr2 ~= "" then
@@ -578,10 +594,12 @@ function guiGeneralTab()
     AddCardCheckbox(cardExtra, "racialIndicator", L["Racial_Indicator"], L["Tooltip_Racial_Indicator_Desc"], BBF.RacialIndicatorCaller)
     AddCardCheckbox(cardExtra, "overShields", L["Overshields"], L["Tooltip_Overshields_Desc"])
     local cbQueue = AddCardCheckbox(cardExtra, "queueTimer", L["Queue_Timer"], L["Tooltip_Queue_Timer_Desc"])
-    AddCardDualChildCheckboxes(cardExtra, cbQueue, "queueTimerAudio", L["SFX"], L["Tooltip_Sound_Effect_Desc"], "queueTimerWarning", L["Queue_Timer_Warning"], L["Tooltip_Sound_Alert_Desc"])
+    AddCardChildCheckbox(cardExtra, cbQueue, "queueTimerAudio", L["SFX"], L["Tooltip_Sound_Effect_Desc"])
+    AddCardChildCheckbox(cardExtra, cbQueue, "queueTimerWarning", L["Queue_Timer_Warning"], L["Tooltip_Sound_Alert_Desc"])
     AddCardCheckbox(cardExtra, "enableBigDebuffs", L["Enable_Big_Debuffs"], L["Tooltip_Big_Debuffs_Desc"], BBF.EnableBigDebuffs)
     AddCardCheckbox(cardExtra, "kickPopupEnabled", L["Kick_Popup"], L["Tooltip_Kick_Popup_Desc"], function() BBF.ToggleKickPopup() end)
     FinalizeCardLayout(cfExtra, cardExtra)
+
 
 
     -------------------------------------------------------

@@ -1925,9 +1925,21 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         if isParentDisabled then
             checkBox:Disable()
             checkBox:SetAlpha(0.5)
+            if checkBox.associatedTitle then
+                checkBox.associatedTitle:SetFontObject("GameFontDisableSmall")
+            end
+            if checkBox.associatedRow then
+                checkBox.associatedRow:SetAlpha(0.5)
+            end
         else
             checkBox:Enable()
             checkBox:SetAlpha(1)
+            if checkBox.associatedTitle then
+                checkBox.associatedTitle:SetFontObject("GameFontHighlightSmall")
+            end
+            if checkBox.associatedRow then
+                checkBox.associatedRow:SetAlpha(1)
+            end
         end
 
         if checkBox.childrenCheckButtons then
@@ -1938,6 +1950,7 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
             end
         end
     end
+
 
     checkBox.UpdateEnabledState = UpdateEnabledState
 
