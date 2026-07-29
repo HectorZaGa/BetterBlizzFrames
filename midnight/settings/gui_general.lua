@@ -141,8 +141,9 @@ function guiGeneralTab()
         sf:Hide()
 
         local cf = CreateFrame("Frame", nil, sf)
-        cf:SetSize(435, 1400)
+        cf:SetSize(435, 520)
         sf:SetScrollChild(cf)
+
 
         categoryFrames[cat.id] = sf
         sf.contentFrame = cf
@@ -270,6 +271,22 @@ function guiGeneralTab()
         return slider
     end
 
+    local function FinalizeCardLayout(cf, lastCard)
+        local sf = cf:GetParent()
+        local function UpdateHeight()
+            if cf:GetTop() and lastCard and lastCard:GetBottom() then
+                local contentHeight = (cf:GetTop() - lastCard:GetBottom()) + 20
+                cf:SetHeight(math.max(contentHeight, 520))
+            end
+        end
+        UpdateHeight()
+        C_Timer.After(0.01, UpdateHeight)
+        C_Timer.After(0.1, UpdateHeight)
+        if sf then
+            sf:HookScript("OnShow", UpdateHeight)
+        end
+    end
+
     -------------------------------------------------------
     -- CATEGORY 1: General
     -------------------------------------------------------
@@ -301,6 +318,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardDark, "darkModeObjectiveFrame", L["Objectives"], L["Tooltip_Dark_Mode_Objectives_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeVigor", L["Vigor"], L["Tooltip_Dark_Mode_Vigor_Desc"], function() BBF.DarkmodeFrames(true) end)
     AddCardCheckbox(cardDark, "darkModeEliteTexture", L["Elite_Texture"], L["Tooltip_Dark_Mode_Elite_Texture_Desc"], function() BBF.DarkmodeFrames(true) end)
+    FinalizeCardLayout(cfGen, cardDark)
 
     -------------------------------------------------------
     -- CATEGORY 2: Player Frame
@@ -338,6 +356,8 @@ function guiGeneralTab()
     AddCardCheckbox(cardPlayerIcons, "hidePlayerGuideIcon", L["Hide_Guide_Icon"], L["Tooltip_Hide_Guide_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hidePlayerRoleIcon", L["Hide_Role_Icon"], L["Tooltip_Hide_Role_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerIcons, "hidePvpTimerText", L["Hide_PvP_Timer"], L["Tooltip_Hide_PvP_Timer_Desc"], BBF.HideFrames)
+    FinalizeCardLayout(cfPlayer, cardPlayerIcons)
+
 
 
     -------------------------------------------------------
@@ -362,6 +382,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardParty, "betterTargetHighlight", L["Better_Target_Highlight"], L["Tooltip_Better_Target_Highlight"])
     AddCardSlider(cardParty, "partyFrameScale", L["Party_Frame_Scale"], "", 0.7, 1.7, 0.01)
     AddCardSlider(cardParty, "partyFrameRangeAlpha", L["Party_Frame_Range_Alpha"], L["Tooltip_Party_Frame_Range_Alpha"], 0, 1, 0.01)
+    FinalizeCardLayout(cfParty, cardParty)
 
     -------------------------------------------------------
     -- CATEGORY 4: All Frames
@@ -387,6 +408,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardAll, "hideRareDragonTexture", L["Hide_Dragon"], L["Tooltip_Hide_Dragon"], BBF.HideFrames)
     AddCardCheckbox(cardAll, "hideThreatOnFrame", L["Hide_Threat"], L["Tooltip_Hide_Threat_Meter_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardAll, "classPortraitsUseSpecIcons", L["Use_Spec_Icons"], L["Tooltip_Use_Spec_Icons"], BBF.SpecPortraits)
+    FinalizeCardLayout(cfAll, cardAll)
 
     -------------------------------------------------------
     -- CATEGORY 5: Target Frame
@@ -398,6 +420,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardTarget, "hideTargetLeaderIcon", L["Hide_Leader_Icon"], L["Tooltip_Hide_Target_Leader_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardTarget, "classColorTargetReputationTexture", L["Reputation_Class_Color"], L["Tooltip_Target_Reputation_Class_Color"])
     AddCardCheckbox(cardTarget, "hideTargetReputationColor", L["Hide_Reputation_Color"], L["Tooltip_Hide_Target_Reputation_Color"], BBF.HideFrames)
+    FinalizeCardLayout(cfTarget, cardTarget)
 
     -------------------------------------------------------
     -- CATEGORY 6: Target of Target
@@ -410,6 +433,7 @@ function guiGeneralTab()
     AddCardSlider(cardToT, "targetToTScale", L["Size"], L["Tooltip_ToT_Size"], 0.6, 2.5, 0.01)
     AddCardSlider(cardToT, "targetToTXPos", L["X_Offset"], L["Tooltip_ToT_X_Offset"], -100, 100, 1)
     AddCardSlider(cardToT, "targetToTYPos", L["Y_Offset"], L["Tooltip_ToT_Y_Offset"], -100, 100, 1)
+    FinalizeCardLayout(cfToT, cardToT)
 
     -------------------------------------------------------
     -- CATEGORY 7: Chat Frame
@@ -424,6 +448,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardChat, "filterEmoteSpam", L["Emote_Spam"], L["Tooltip_Filter_Emote_Spam"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterSystemMessages", L["System_Messages"], L["Tooltip_Filter_System_Messages"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterMiscInfo", L["Misc_Info"], L["Tooltip_Filter_Misc_Info"], BBF.ChatFilterCaller)
+    FinalizeCardLayout(cfChat, cardChat)
 
     -------------------------------------------------------
     -- CATEGORY 8: Extra Features
@@ -440,6 +465,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardExtra, "queueTimerWarning", L["Queue_Timer_Warning"], L["Tooltip_Sound_Alert_Desc"])
     AddCardCheckbox(cardExtra, "enableBigDebuffs", L["Enable_Big_Debuffs"], L["Tooltip_Big_Debuffs_Desc"], BBF.EnableBigDebuffs)
     AddCardCheckbox(cardExtra, "kickPopupEnabled", L["Kick_Popup"], L["Tooltip_Kick_Popup_Desc"], function() BBF.ToggleKickPopup() end)
+    FinalizeCardLayout(cfExtra, cardExtra)
 
     -------------------------------------------------------
     -- CATEGORY 9: Arena Names
@@ -451,6 +477,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardArena, "showSpecName", L["Show_Spec_Name"], L["Tooltip_Show_Spec_Name_Desc"])
     AddCardCheckbox(cardArena, "shortArenaSpecName", L["Short"], L["Tooltip_Short_Arena_Spec_Name"])
     AddCardCheckbox(cardArena, "showArenaID", L["Show_Arena_ID"], L["Tooltip_Show_Arena_ID"])
+    FinalizeCardLayout(cfArena, cardArena)
 
     -------------------------------------------------------
     -- CATEGORY 10: Focus Frame
@@ -462,6 +489,7 @@ function guiGeneralTab()
     AddCardCheckbox(cardFocus, "hideFocusLeaderIcon", L["Hide_Leader_Icon"], L["Tooltip_Hide_Focus_Leader_Icon"], BBF.HideFrames)
     AddCardCheckbox(cardFocus, "classColorFocusReputationTexture", L["Reputation_Class_Color"], L["Tooltip_Focus_Reputation_Class_Color"])
     AddCardCheckbox(cardFocus, "hideFocusReputationColor", L["Hide_Reputation_Color"], L["Tooltip_Hide_Focus_Reputation_Color"], BBF.HideFrames)
+    FinalizeCardLayout(cfFocus, cardFocus)
 
     -------------------------------------------------------
     -- CATEGORY 11: Focus ToT
@@ -474,6 +502,7 @@ function guiGeneralTab()
     AddCardSlider(cardFToT, "focusToTScale", L["Size"], L["Tooltip_FocusToT_Size"], 0.6, 2.5, 0.01)
     AddCardSlider(cardFToT, "focusToTXPos", L["X_Offset"], L["Tooltip_FocusToT_X_Offset"], -100, 100, 1)
     AddCardSlider(cardFToT, "focusToTYPos", L["Y_Offset"], L["Tooltip_FocusToT_Y_Offset"], -100, 100, 1)
+    FinalizeCardLayout(cfFToT, cardFToT)
 
     -------------------------------------------------------
     -- CATEGORY 12: Pet Frame
@@ -487,6 +516,8 @@ function guiGeneralTab()
     AddCardCheckbox(cardPet, "colorPetAfterOwner", L["Color_Pet_After_Player_Class"], "", function() BBF.UpdateFrames() end)
     AddCardCheckbox(cardPet, "hidePetText", L["Hide_Pet_Statusbar_Text"], L["Tooltip_Hide_Pet_Statusbar_Text_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardPet, "hidePetHitIndicator", L["Hide_Pet_Hit_Indicator"], L["Tooltip_Hide_Pet_Hit_Indicator_Desc"], BBF.HideFrames)
+    FinalizeCardLayout(cfPet, cardPet)
+
 
     -------------------------------------------------------
     -- DEFAULT CATEGORY SELECTION
