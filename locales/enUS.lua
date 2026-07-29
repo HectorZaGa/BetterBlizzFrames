@@ -1633,6 +1633,8 @@ L["Frame_Layout"] = "Frame & Layout"
 L["Display_Text"] = "Display & Text"
 L["Combat_Status"] = "Combat & Status"
 L["Display_Resources"] = "Display & Resources"
+L["Colors_Icons_FX"] = "Colors, Icons & FX"
+
 
 
 

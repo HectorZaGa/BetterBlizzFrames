@@ -271,6 +271,50 @@ function guiGeneralTab()
         return slider
     end
 
+    local function AddCardDualChildCheckboxes(card, parentCb, dbKey1, titleStr1, descStr1, dbKey2, titleStr2, descStr2)
+        local row = CreateFrame("Frame", nil, card)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 28, card.currentY)
+
+        local rowHeight = 30
+        row:SetSize(card.cardWidth - 40, rowHeight)
+
+        -- Item 1: SFX
+        local title1 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title1:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title1:SetText(titleStr1)
+
+        local cb1 = CreateCheckbox(dbKey1, "", parentCb or row, nil)
+        cb1:SetParent(row)
+        cb1:SetSize(24, 24)
+        cb1:SetPoint("LEFT", title1, "RIGHT", 6, 0)
+
+        if descStr1 and descStr1 ~= "" then
+            CreateTooltipTwo(title1, titleStr1, descStr1)
+            CreateTooltipTwo(cb1, titleStr1, descStr1)
+        end
+
+        -- Item 2: Warning (!)
+        local title2 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
+        title2:SetText(titleStr2)
+
+        local cb2 = CreateCheckbox(dbKey2, "", parentCb or row, nil)
+        cb2:SetParent(row)
+        cb2:SetSize(24, 24)
+        cb2:SetPoint("LEFT", title2, "RIGHT", 6, 0)
+
+        if descStr2 and descStr2 ~= "" then
+            CreateTooltipTwo(title2, titleStr2, descStr2)
+            CreateTooltipTwo(cb2, titleStr2, descStr2)
+        end
+
+        card.currentY = card.currentY - rowHeight - 6
+        card:SetHeight(-card.currentY + 6)
+        return cb1, cb2
+    end
+
+
+
     local function FinalizeCardLayout(cf, lastCard)
         local sf = cf:GetParent()
         local function UpdateHeight()
@@ -402,27 +446,36 @@ function guiGeneralTab()
     -- CATEGORY 4: All Frames
     -------------------------------------------------------
     local cfAll = categoryFrames["all"].contentFrame
-    local cardAll = CreateOptionCard(cfAll, L["All_Frames"], nil, -10)
-    AddCardCheckbox(cardAll, "classicFrames", L["Classic_Frames"], L["Tooltip_Classic_Frames_Desc"])
-    AddCardCheckbox(cardAll, "noPortraitModes", L["No_Portrait"], L["Tooltip_No_Portrait_Desc"])
-    AddCardCheckbox(cardAll, "noPortraitPixelBorder", L["NP_PixelBorder"], L["Tooltip_No_Portrait_PixelBorder_Desc"])
-    AddCardCheckbox(cardAll, "classColorFrames", L["Class_Color_Health"], L["Tooltip_Class_Color_Frames_Desc"])
-    AddCardCheckbox(cardAll, "customHealthbarColors", L["Custom_Color_Health_Mana"], L["Tooltip_Custom_Colors_Desc"])
-    AddCardCheckbox(cardAll, "classColorTargetNames", L["Class_Color_Names"], L["Tooltip_Class_Color_Names_Desc"])
-    AddCardCheckbox(cardAll, "classColorLevelText", L["Level"], L["Tooltip_Level"])
-    AddCardCheckbox(cardAll, "classColorFrameTexture", L["Class_Color_FrameTexture"], L["Tooltip_Class_Color_FrameTexture_Desc"])
-    AddCardCheckbox(cardAll, "centerNames", L["Center_Name"], L["Center_Names"], BBF.SetCenteredNamesCaller)
-    AddCardCheckbox(cardAll, "removeRealmNames", L["Hide_Realm"], L["Tooltip_Hide_Realm_Indicator_Desc"])
-    AddCardCheckbox(cardAll, "formatStatusBarText", L["Format_Numbers"], L["Tooltip_Format_Numbers_Desc"], BBF.HookStatusBarText)
-    AddCardCheckbox(cardAll, "singleValueStatusBarText", L["No_Max"], L["Tooltip_No_Max_Value_Desc"])
-    AddCardCheckbox(cardAll, "hidePrestigeBadge", L["Tooltip_Hide_PvP_Icon"], L["Tooltip_Hide_Prestige_Badge_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "hideCombatGlow", L["Hide_Combat_Glow"], L["Tooltip_Hide_Combat_Glow"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "hideUnitFrameShadow", L["Hide_Shadow"], L["Tooltip_Hide_Shadow_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "hideLevelText", L["Hide_Max_Level_Text"], L["Tooltip_Hide_Max_Level_Text"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "hideRareDragonTexture", L["Hide_Dragon"], L["Tooltip_Hide_Dragon"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "hideThreatOnFrame", L["Hide_Threat"], L["Tooltip_Hide_Threat_Meter_Desc"], BBF.HideFrames)
-    AddCardCheckbox(cardAll, "classPortraitsUseSpecIcons", L["Use_Spec_Icons"], L["Tooltip_Use_Spec_Icons"], BBF.SpecPortraits)
-    FinalizeCardLayout(cfAll, cardAll)
+
+    -- Card 1: Frame & Layout
+    local cardAllLayout = CreateOptionCard(cfAll, L["Frame_Layout"], nil, -10)
+    AddCardCheckbox(cardAllLayout, "classicFrames", L["Classic_Frames"], L["Tooltip_Classic_Frames_Desc"])
+    AddCardCheckbox(cardAllLayout, "noPortraitModes", L["No_Portrait"], L["Tooltip_No_Portrait_Desc"])
+    AddCardCheckbox(cardAllLayout, "noPortraitPixelBorder", L["NP_PixelBorder"], L["Tooltip_No_Portrait_PixelBorder_Desc"])
+    AddCardCheckbox(cardAllLayout, "classColorFrameTexture", L["Class_Color_FrameTexture"], L["Tooltip_Class_Color_FrameTexture_Desc"])
+    AddCardCheckbox(cardAllLayout, "hideUnitFrameShadow", L["Hide_Shadow"], L["Tooltip_Hide_Shadow_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardAllLayout, "hideRareDragonTexture", L["Hide_Dragon"], L["Tooltip_Hide_Dragon"], BBF.HideFrames)
+    AddCardCheckbox(cardAllLayout, "hideThreatOnFrame", L["Hide_Threat"], L["Tooltip_Hide_Threat_Meter_Desc"], BBF.HideFrames)
+
+    -- Card 2: Display & Text
+    local cardAllDisp = CreateOptionCard(cfAll, L["Display_Text"], cardAllLayout, -22)
+    AddCardCheckbox(cardAllDisp, "classColorLevelText", L["Level"], L["Tooltip_Level"])
+    AddCardCheckbox(cardAllDisp, "centerNames", L["Center_Name"], L["Center_Names"], BBF.SetCenteredNamesCaller)
+    AddCardCheckbox(cardAllDisp, "classColorTargetNames", L["Class_Color_Names"], L["Tooltip_Class_Color_Names_Desc"])
+    AddCardCheckbox(cardAllDisp, "removeRealmNames", L["Hide_Realm"], L["Tooltip_Hide_Realm_Indicator_Desc"])
+    AddCardCheckbox(cardAllDisp, "formatStatusBarText", L["Format_Numbers"], L["Tooltip_Format_Numbers_Desc"], BBF.HookStatusBarText)
+    AddCardCheckbox(cardAllDisp, "singleValueStatusBarText", L["No_Max"], L["Tooltip_No_Max_Value_Desc"])
+    AddCardCheckbox(cardAllDisp, "hideLevelText", L["Hide_Max_Level_Text"], L["Tooltip_Hide_Max_Level_Text"], BBF.HideFrames)
+
+    -- Card 3: Colors, Icons & FX
+    local cardAllColors = CreateOptionCard(cfAll, L["Colors_Icons_FX"], cardAllDisp, -22)
+    AddCardCheckbox(cardAllColors, "classColorFrames", L["Class_Color_Health"], L["Tooltip_Class_Color_Frames_Desc"])
+    AddCardCheckbox(cardAllColors, "customHealthbarColors", L["Custom_Color_Health_Mana"], L["Tooltip_Custom_Colors_Desc"])
+    AddCardCheckbox(cardAllColors, "hidePrestigeBadge", L["Tooltip_Hide_PvP_Icon"], L["Tooltip_Hide_Prestige_Badge_Desc"], BBF.HideFrames)
+    AddCardCheckbox(cardAllColors, "hideCombatGlow", L["Hide_Combat_Glow"], L["Tooltip_Hide_Combat_Glow"], BBF.HideFrames)
+    AddCardCheckbox(cardAllColors, "classPortraitsUseSpecIcons", L["Use_Spec_Icons"], L["Tooltip_Use_Spec_Icons"], BBF.SpecPortraits)
+    FinalizeCardLayout(cfAll, cardAllColors)
+
 
     -------------------------------------------------------
     -- CATEGORY 5: Target Frame
@@ -474,12 +527,12 @@ function guiGeneralTab()
     AddCardCheckbox(cardExtra, "absorbIndicator", L["Absorb_Indicator"], L["Tooltip_Absorb_Indicator_Desc"], BBF.AbsorbCaller)
     AddCardCheckbox(cardExtra, "racialIndicator", L["Racial_Indicator"], L["Tooltip_Racial_Indicator_Desc"], BBF.RacialIndicatorCaller)
     AddCardCheckbox(cardExtra, "overShields", L["Overshields"], L["Tooltip_Overshields_Desc"])
-    AddCardCheckbox(cardExtra, "queueTimer", L["Queue_Timer"], L["Tooltip_Queue_Timer_Desc"])
-    AddCardCheckbox(cardExtra, "queueTimerAudio", L["SFX"], L["Tooltip_Sound_Effect_Desc"])
-    AddCardCheckbox(cardExtra, "queueTimerWarning", L["Queue_Timer_Warning"], L["Tooltip_Sound_Alert_Desc"])
+    local cbQueue = AddCardCheckbox(cardExtra, "queueTimer", L["Queue_Timer"], L["Tooltip_Queue_Timer_Desc"])
+    AddCardDualChildCheckboxes(cardExtra, cbQueue, "queueTimerAudio", L["SFX"], L["Tooltip_Sound_Effect_Desc"], "queueTimerWarning", L["Queue_Timer_Warning"], L["Tooltip_Sound_Alert_Desc"])
     AddCardCheckbox(cardExtra, "enableBigDebuffs", L["Enable_Big_Debuffs"], L["Tooltip_Big_Debuffs_Desc"], BBF.EnableBigDebuffs)
     AddCardCheckbox(cardExtra, "kickPopupEnabled", L["Kick_Popup"], L["Tooltip_Kick_Popup_Desc"], function() BBF.ToggleKickPopup() end)
     FinalizeCardLayout(cfExtra, cardExtra)
+
 
     -------------------------------------------------------
     -- CATEGORY 9: Arena Names
