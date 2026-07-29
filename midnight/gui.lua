@@ -864,18 +864,31 @@ local function CreateBorderedFrame(point, width, height, xPos, yPos, parent)
 end
 
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, sliderWidth)
-    local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    local sliderFrame = CreateFrame("Frame", nil, parent, "MinimalSliderWithSteppersTemplate")
+    local slider = sliderFrame.Slider or sliderFrame
+
+    -- Reference and configure the draggable thumb texture
+    local thumbTexture = slider.GetThumbTexture and slider:GetThumbTexture()
+    if thumbTexture then
+        thumbTexture:SetDrawLayer("OVERLAY")
+    end
+
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
     slider:SetValueStep(stepValue)
     slider:SetObeyStepOnDrag(true)
 
+    if not slider.Text then
+        slider.Text = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        slider.Text:SetPoint("BOTTOM", slider, "TOP", 0, 3)
+    end
     slider.Text:SetFontObject(GameFontHighlightSmall)
     slider.Text:SetTextColor(1, 0.81, 0, 1)
-    slider.Text:SetFont(fontSmall, 11)
 
-    slider.Low:SetText(" ")
-    slider.High:SetText(" ")
+    if slider.Low then slider.Low:SetText(" ") end
+    if slider.High then slider.High:SetText(" ") end
+
+
 
     local category
     if parent.name then
