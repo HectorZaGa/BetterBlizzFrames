@@ -1878,6 +1878,57 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     return dropdown
 end
 
+function BBF.HandleRightClick(option, titleStr, widget)
+    local isShift = IsShiftKeyDown()
+    local isCtrl = IsControlKeyDown()
+
+    if option == "formatStatusBarText" or titleStr == L["Format_Numbers"] then
+        BetterBlizzFramesDB.formatStatusBarTextExtraDecimals = not BetterBlizzFramesDB.formatStatusBarTextExtraDecimals
+        if BBF.HookStatusBarText then BBF.HookStatusBarText() end
+
+    elseif option == "playerEliteFrame" or option == "darkModeEliteTexture" or titleStr == L["Elite_Texture"] or titleStr == L["Show_Elite_Texture"] then
+        BetterBlizzFramesDB.playerEliteFrameDarkmode = not BetterBlizzFramesDB.playerEliteFrameDarkmode
+        if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end
+        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
+
+    elseif option == "classColorFrames" or titleStr == L["Class_Color_Health"] or titleStr == L["Tooltip_Class_Color_Healthbars_Title"] then
+        if isShift then
+            BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
+        else
+            BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
+        end
+
+    elseif option == "customHealthbarColors" or titleStr == L["Custom_Colors"] or titleStr == L["Custom_Color_Health_Mana"] then
+        if BBF.OpenColorOptions then BBF.OpenColorOptions() end
+
+    elseif option == "hidePartyDispelOverlay" or titleStr == L["Hide_Dispel_Overlay"] then
+        if isCtrl then
+            BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons = not BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons
+        elseif isShift then
+            BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient
+        else
+            BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder
+        end
+        if BBF.HideFrames then BBF.HideFrames() end
+
+    elseif option == "raidFramePixelBorder" or titleStr == L["Pixel_Border"] or titleStr == L["Tooltip_Pixel_Border_RaidFrames_Title"] then
+        BetterBlizzFramesDB.raidFramePixelBorderSize = not BetterBlizzFramesDB.raidFramePixelBorderSize
+
+    elseif option == "partyFrameRangeAlpha" or titleStr == L["Party_Frame_Range_Alpha"] or titleStr == L["Change_Party_Frame_Alpha"] then
+        BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground = not BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground
+
+    elseif option == "darkModeUiAura" or titleStr == L["Auras"] or titleStr == L["Tooltip_Dark_Mode_Auras"] then
+        BetterBlizzFramesDB.removeDebuffColorBorder = not BetterBlizzFramesDB.removeDebuffColorBorder
+    end
+
+    if widget and widget:IsMouseOver() then
+        local onEnter = widget:GetScript("OnEnter")
+        if onEnter then
+            onEnter(widget)
+        end
+    end
+end
+
 local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
     if not checkBox.Text then
@@ -1886,6 +1937,7 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     end
     checkBox.Text:SetText(label)
     checkBox:SetSize(23,23)
+    checkBox:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
 
 
@@ -1989,9 +2041,16 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
     UpdateOption(BetterBlizzFramesDB[option])
 
-    checkBox:HookScript("OnClick", function(_, _, _)
-        UpdateOption(checkBox:GetChecked())
-        UpdateEnabledState()
+    checkBox:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then
+            checkBox:SetChecked(BetterBlizzFramesDB[option])
+            if BBF.HandleRightClick then
+                BBF.HandleRightClick(option, label, checkBox)
+            end
+        else
+            UpdateOption(checkBox:GetChecked())
+            UpdateEnabledState()
+        end
     end)
 
     return checkBox

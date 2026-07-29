@@ -239,6 +239,19 @@ function guiGeneralTab()
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                if cb:IsEnabled() then
+                    cb:Click("LeftButton")
+                end
+            elseif button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
+
         if descStr and descStr ~= "" then
             CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(cb, titleStr, descStr)
@@ -262,7 +275,6 @@ function guiGeneralTab()
         title:SetWidth(314)
         title:SetJustifyH("LEFT")
 
-
         local titleFrame = CreateFrame("Frame", nil, row)
         titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
         titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 314), rowHeight)
@@ -275,6 +287,19 @@ function guiGeneralTab()
         if cb.UpdateEnabledState then
             cb:UpdateEnabledState()
         end
+
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                if cb:IsEnabled() then
+                    cb:Click("LeftButton")
+                end
+            elseif button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
 
         if descStr and descStr ~= "" then
             CreateTooltipTwo(titleFrame, titleStr, descStr)
@@ -306,6 +331,15 @@ function guiGeneralTab()
 
         local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
         slider:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
 
         if descStr and descStr ~= "" then
             CreateTooltipTwo(titleFrame, titleStr, descStr)
@@ -341,6 +375,15 @@ function guiGeneralTab()
             cb1:UpdateEnabledState()
         end
 
+        titleFrame1:EnableMouse(true)
+        titleFrame1:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                if cb1:IsEnabled() then cb1:Click("LeftButton") end
+            elseif button == "RightButton" then
+                if BBF.HandleRightClick then BBF.HandleRightClick(dbKey1, titleStr1, titleFrame1) end
+            end
+        end)
+
         if descStr1 and descStr1 ~= "" then
             CreateTooltipTwo(titleFrame1, titleStr1, descStr1)
             CreateTooltipTwo(cb1, titleStr1, descStr1)
@@ -363,6 +406,16 @@ function guiGeneralTab()
         if cb2.UpdateEnabledState then
             cb2:UpdateEnabledState()
         end
+
+        titleFrame2:EnableMouse(true)
+        titleFrame2:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                if cb2:IsEnabled() then cb2:Click("LeftButton") end
+            elseif button == "RightButton" then
+                if BBF.HandleRightClick then BBF.HandleRightClick(dbKey2, titleStr2, titleFrame2) end
+            end
+        end)
+
 
 
 
