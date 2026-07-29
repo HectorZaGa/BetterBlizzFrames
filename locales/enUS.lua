@@ -1309,6 +1309,7 @@ L["Tooltip_Pandemic_Glow_Warlock_Extra"] = "\n\nIf Agony or Unstable Affliction 
 L["Tooltip_Pandemic_Glow_Title"] = "Pandemic Glow"
 L["Tooltip_PlayerFrame_Size_Extra"] = "Right-click to input specific value"
 L["Tooltip_Right_Click_For_Value"] = "Right Click For Value"
+L["Active_Texture_Status"] = "Active: %d/%d"
 L["Tooltip_Show_Elite_Texture_Desc"] = "Show elite dragon around PlayerFrame.\n\n|cff32f795Right-click to swap between the %d different textures available.|r"
 L["Tooltip_Show_For_Human"] = "Show For Human"
 L["Tooltip_Show_For_Night_Elf"] = "Show For Night Elf"

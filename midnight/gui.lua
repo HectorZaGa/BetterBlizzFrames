@@ -1398,12 +1398,16 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
         -- Set the bold title
         GameTooltip:AddLine(title)
         --GameTooltip:AddLine(" ") -- Adding an empty line as a separator
-        -- Set the main text
         local formattedMainText = mainText
         if (title == L["Show_Spec_Name"] or title == L["Tooltip_Show_Spec_Name"]) and mainText and string.find(mainText, "%%s") then
             local partySpecStatus = BetterBlizzFramesDB.partyArenaNames and (L["On"] or "ON") or "OFF"
             local checkMark = BetterBlizzFramesDB.partyArenaNames and " |A:ParagonReputation_Checkmark:15:15|a" or ""
             formattedMainText = string.format(mainText, partySpecStatus .. checkMark)
+        elseif (title == L["Show_Elite_Texture"] or title == L["Elite_Texture"]) and mainText and string.find(mainText, "%%d") then
+            local textures = BetterBlizzFramesDB.classicFrames and 7 or 4
+            local currentMode = BetterBlizzFramesDB.playerEliteFrameMode or 1
+            local activeStr = string.format(L["Active_Texture_Status"] or "Active: %d/%d", currentMode, textures)
+            formattedMainText = string.format(mainText, textures) .. " |cff32f795" .. activeStr .. "|r"
         end
         GameTooltip:AddLine(formattedMainText, 1, 1, 1, true) -- true for wrap text
 
@@ -1893,9 +1897,19 @@ function BBF.HandleRightClick(option, titleStr, widget)
         BetterBlizzFramesDB.formatStatusBarTextExtraDecimals = not BetterBlizzFramesDB.formatStatusBarTextExtraDecimals
         if BBF.HookStatusBarText then BBF.HookStatusBarText() end
 
-    elseif option == "playerEliteFrame" or option == "darkModeEliteTexture" or titleStr == L["Elite_Texture"] or titleStr == L["Show_Elite_Texture"] then
-        BetterBlizzFramesDB.playerEliteFrameDarkmode = not BetterBlizzFramesDB.playerEliteFrameDarkmode
+    elseif option == "playerEliteFrame" or titleStr == L["Show_Elite_Texture"] then
+        if isShift then
+            BetterBlizzFramesDB.playerEliteFrameDarkmode = not BetterBlizzFramesDB.playerEliteFrameDarkmode
+        else
+            local textures = BetterBlizzFramesDB.classicFrames and 7 or 4
+            BetterBlizzFramesDB.playerEliteFrameMode = ((BetterBlizzFramesDB.playerEliteFrameMode or 1) % textures) + 1
+        end
+        if BBF.PlayerElite then BBF.PlayerElite(BetterBlizzFramesDB.playerEliteFrameMode) end
         if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end
+        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
+
+    elseif option == "darkModeEliteTexture" or titleStr == L["Tooltip_Dark_Mode_Elite_Title"] or titleStr == L["Dark_Mode_Elite_Texture"] then
+        BetterBlizzFramesDB.darkModeEliteTextureDesaturated = not BetterBlizzFramesDB.darkModeEliteTextureDesaturated
         if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
 
     elseif option == "classColorFrames" or titleStr == L["Class_Color_Health"] or titleStr == L["Tooltip_Class_Color_Healthbars_Title"] then
