@@ -1425,13 +1425,16 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             local reset = "|r"
             local check = " |A:ParagonReputation_Checkmark:15:15|a"
 
+            local strPlayer = L["Ctrl_Right_Click_Keep_PlayerFrame_Green"] or "Ctrl+Right-Click to keep PlayerFrame green."
+            local strFriendly = L["Shift_Right_Click_Keep_Friendly_Units_Green"] or "Shift+Right-Click to keep Friendly units green."
+
             local tooltipText = "\n"
-            tooltipText = tooltipText .. green .. L["Tooltip_Class_Color_Keep_Player"] .. reset
+            tooltipText = tooltipText .. green .. strPlayer .. reset
             if BetterBlizzFramesDB.classColorFramesSkipPlayer then
                 tooltipText = tooltipText .. check
             end
 
-            tooltipText = tooltipText .. "\n\n" .. babyBlue .. L["Tooltip_Class_Color_Keep_Friendly"] .. reset
+            tooltipText = tooltipText .. "\n\n" .. babyBlue .. strFriendly .. reset
             if BetterBlizzFramesDB.classColorFramesSkipFriendly then
                 tooltipText = tooltipText .. check
             end
@@ -1999,10 +2002,40 @@ function BBF.HandleRightClick(option, titleStr, widget)
         if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
 
     elseif option == "classColorFrames" or titleStr == L["Class_Color_Health"] or titleStr == L["Tooltip_Class_Color_Healthbars_Title"] then
-        if isShift then
+        if isShift and not isCtrl then
             BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
         else
             BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
+        end
+
+        if BetterBlizzFramesDB.classColorFramesSkipPlayer then
+            if PlayerFrame and PlayerFrame.healthbar then
+                PlayerFrame.healthbar:SetStatusBarDesaturated(false)
+                PlayerFrame.healthbar:SetStatusBarColor(1, 1, 1)
+            end
+            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+            end
+        else
+            if PlayerFrame and PlayerFrame.healthbar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(PlayerFrame.healthbar, "player")
+            end
+            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+            end
+        end
+
+        if BBF.ClassColorFramesCaller then
+            BBF.ClassColorFramesCaller()
+        elseif BBF.ClassColorFrames then
+            BBF.ClassColorFrames()
+        end
+        if BBF.UpdateFrames then
+            BBF.UpdateFrames()
+        end
+
+        if GameTooltip:IsShown() and widget and widget.HasScript and widget:HasScript("OnEnter") then
+            widget:GetScript("OnEnter")(widget)
         end
 
     elseif option == "customHealthbarColors" or titleStr == L["Custom_Colors"] or titleStr == L["Custom_Color_Health_Mana"] then
