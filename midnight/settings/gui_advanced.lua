@@ -423,7 +423,7 @@ function guiPositionAndScale()
             { anchorFrame = row, x = card.cardWidth - 170, y = 8, label = "" }
         )
         dropdown:ClearAllPoints()
-        dropdown:SetPoint("RIGHT", row, "RIGHT", -20, 0)
+        dropdown:SetPoint("RIGHT", row, "RIGHT", -10, 0)
         dropdown:SetWidth(150)
 
         dropdown:HookScript("OnEnter", UpdateHighlight)

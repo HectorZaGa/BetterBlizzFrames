@@ -1829,11 +1829,6 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 end
 
 local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
-    -- Create the dropdown frame using the library's creation function
-    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
-    LibDD:UIDropDownMenu_SetWidth(dropdown, 125)
-
-    -- Function to get the display text based on the setting value
     local function getDisplayTextForSetting(settingValue)
         if name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown" then
             if settingValue == "LEFT" then
@@ -1853,24 +1848,25 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
         elseif settingValue == "RIGHT" then
             return L["Anchor_RIGHT"]
         end
-        return settingValue
+        return settingValue or defaultText
     end
 
-    -- Set the initial dropdown text
-    LibDD:UIDropDownMenu_SetText(dropdown, getDisplayTextForSetting(BetterBlizzFramesDB[settingKey]) or defaultText)
-
-    local anchorPointsToUse = anchorPoints
-    if name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown" then
-        anchorPointsToUse = anchorPoints2
+    local dropdown = CreateFrame("DropdownButton", name, parent, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(150)
+    if point and point.anchorFrame then
+        dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x or 0, point.y or 0)
     end
 
-    -- Initialize the dropdown using the library's initialize function
-    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local info = LibDD:UIDropDownMenu_CreateInfo()
+    local currentSetting = BetterBlizzFramesDB[settingKey]
+    dropdown:SetDefaultText(getDisplayTextForSetting(currentSetting) or defaultText)
+    dropdown.Background:SetVertexColor(0.9, 0.9, 0.9)
+    dropdown.Arrow:SetVertexColor(0.9, 0.9, 0.9)
+
+    local anchorPointsToUse = (name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown") and anchorPoints2 or anchorPoints
+
+    local function GeneratorFunction(owner, rootDescription)
         for _, anchor in ipairs(anchorPointsToUse) do
             local displayText = anchor
-
-            -- Customize display text for specific dropdowns
             if anchor == "TOP" then
                 displayText = L["Anchor_TOP"]
             elseif anchor == "BOTTOM" then
@@ -1891,34 +1887,29 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
                 end
             end
 
-            info.text = displayText
-            info.arg1 = anchor
-            info.func = function(self, arg1)
-                if BetterBlizzFramesDB[settingKey] ~= arg1 then
-                    BetterBlizzFramesDB[settingKey] = arg1
-                    LibDD:UIDropDownMenu_SetText(dropdown, getDisplayTextForSetting(arg1))
-                    toggleFunc(arg1)
-                    BBF.MoveToTFrames()
+            rootDescription:CreateRadio(displayText, function()
+                return BetterBlizzFramesDB[settingKey] == anchor
+            end, function()
+                if BetterBlizzFramesDB[settingKey] ~= anchor then
+                    BetterBlizzFramesDB[settingKey] = anchor
+                    dropdown:SetDefaultText(displayText)
+                    if toggleFunc then toggleFunc(anchor) end
+                    if BBF.MoveToTFrames then BBF.MoveToTFrames() end
                 end
-            end
-            info.checked = (BetterBlizzFramesDB[settingKey] == anchor)
-            LibDD:UIDropDownMenu_AddButton(info)
+            end)
         end
+    end
+
+    hooksecurefunc(dropdown, "OnMenuClosed", function()
+        dropdown:SetDefaultText(getDisplayTextForSetting(BetterBlizzFramesDB[settingKey]))
     end)
 
-    -- Position the dropdown
-    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
+    dropdown:SetupMenu(GeneratorFunction)
 
-    -- Create and set up the label
-    local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
-    dropdownText:SetText(point.label)
-
-    -- Enable or disable the dropdown based on the parent's check state
-    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
-    else
-        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
+    if point and point.label and point.label ~= "" then
+        local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
+        dropdownText:SetText(point.label)
     end
 
     return dropdown
