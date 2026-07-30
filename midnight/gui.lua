@@ -94,15 +94,18 @@ local function UpdateColorSquare(icon, r, g, b, a)
 end
 
 local function OpenColorOptions(entryColors, func)
-    local colorData = entryColors or {0, 1, 0, 1}
+    if type(entryColors) ~= "table" then return end
+    local colorData = entryColors
     local r, g, b = colorData[1] or 1, colorData[2] or 1, colorData[3] or 1
     local a = colorData[4] or 1
 
     local function updateColors(newR, newG, newB, newA)
-        entryColors[1] = newR
-        entryColors[2] = newG
-        entryColors[3] = newB
-        entryColors[4] = newA or 1
+        if type(entryColors) == "table" then
+            entryColors[1] = newR
+            entryColors[2] = newG
+            entryColors[3] = newB
+            entryColors[4] = newA or 1
+        end
 
         if func then
             func()
@@ -1942,6 +1945,9 @@ function BBF.OpenClassSpecificWindow()
             rowHighlight:SetAlpha(0)
 
             local classCheckbox = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
+            if classCheckbox:GetHighlightTexture() then
+                classCheckbox:GetHighlightTexture():SetAlpha(0)
+            end
             classCheckbox:SetSize(26, 26)
             classCheckbox:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
             if not classCheckbox.Text then
@@ -1977,6 +1983,226 @@ function BBF.OpenClassSpecificWindow()
             classOptionsFrame:Hide()
         else
             classOptionsFrame:Show()
+        end
+    end
+end
+
+local customColorFrame
+function BBF.OpenColorOptions()
+    if not customColorFrame then
+        customColorFrame = CreateFrame("Frame", "BBFCustomColorOptionsFrame", UIParent, "ButtonFrameTemplate")
+        ButtonFrameTemplate_HidePortrait(customColorFrame)
+        if customColorFrame.Inset then customColorFrame.Inset:Hide() end
+        customColorFrame:SetSize(360, 560)
+        customColorFrame:SetPoint("CENTER")
+        customColorFrame:SetFrameStrata("DIALOG")
+        customColorFrame:SetMovable(true)
+        customColorFrame:EnableMouse(true)
+        customColorFrame:RegisterForDrag("LeftButton")
+        customColorFrame:SetScript("OnDragStart", customColorFrame.StartMoving)
+        customColorFrame:SetScript("OnDragStop", customColorFrame.StopMovingOrSizing)
+        if customColorFrame.SetTitle then
+            customColorFrame:SetTitle(L["Custom_Health_Colors"])
+        else
+            customColorFrame.title = customColorFrame:CreateFontString(nil, "OVERLAY")
+            customColorFrame.title:SetFontObject("GameFontHighlight")
+            customColorFrame.title:SetPoint("TOP", customColorFrame, "TOP", 0, -5)
+            customColorFrame.title:SetText(L["Custom_Health_Colors"])
+        end
+
+        local scrollFrame = CreateFrame("ScrollFrame", nil, customColorFrame, "ScrollFrameTemplate")
+        scrollFrame:SetPoint("TOPLEFT", customColorFrame, "TOPLEFT", 10, -30)
+        scrollFrame:SetPoint("BOTTOMRIGHT", customColorFrame, "BOTTOMRIGHT", -30, 10)
+
+        local content = CreateFrame("Frame", nil, scrollFrame)
+        content:SetSize(315, 780)
+        scrollFrame:SetScrollChild(content)
+
+        local currentY = -10
+
+        local function AddHeader(textStr)
+            local header = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            header:SetPoint("TOPLEFT", content, "TOPLEFT", 10, currentY)
+            header:SetText(textStr)
+            currentY = currentY - 22
+            return header
+        end
+
+        local function AddCheckbox(dbKey, labelStr, callback)
+            local rowFrame = CreateFrame("Frame", nil, content)
+            rowFrame:SetSize(295, 28)
+            rowFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 6, currentY)
+
+            local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
+            rowHighlight:SetAllPoints()
+            rowHighlight:SetAtlas("options-item-highlight")
+            rowHighlight:SetBlendMode("ADD")
+            rowHighlight:SetAlpha(0)
+
+            local cb = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
+            if cb:GetHighlightTexture() then
+                cb:GetHighlightTexture():SetAlpha(0)
+            end
+            cb:SetSize(24, 24)
+            cb:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
+            if not cb.Text then
+                cb.Text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                cb.Text:SetPoint("LEFT", cb, "RIGHT", 6, 0)
+            end
+            cb.Text:SetText(labelStr)
+            cb:SetHitRectInsets(0, -220, 0, 0)
+            cb:SetChecked(BetterBlizzFramesDB[dbKey])
+            cb:SetScript("OnClick", function(self)
+                BetterBlizzFramesDB[dbKey] = self:GetChecked() or nil
+                if callback then callback() end
+                if BBF.UpdateFrames then BBF.UpdateFrames() end
+            end)
+
+            rowFrame:EnableMouse(true)
+            rowFrame:SetScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            rowFrame:SetScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            rowFrame:SetScript("OnMouseDown", function() cb:Click() end)
+            cb:HookScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            cb:HookScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+
+            currentY = currentY - 32
+            return cb
+        end
+
+        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, callback)
+            local btn = CreateFrame("Button", nil, content)
+            btn:SetSize(18, 18)
+            btn:SetPoint("TOPLEFT", content, "TOPLEFT", posX, posY)
+
+            local swatch = btn:CreateTexture(nil, "OVERLAY")
+            swatch:SetAllPoints()
+            swatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
+
+            local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            txt:SetPoint("LEFT", btn, "RIGHT", 4, 0)
+            txt:SetText(labelStr)
+
+            local function RefreshSwatch()
+                local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
+                local r = col.r or col[1] or 1
+                local g = col.g or col[2] or 1
+                local b = col.b or col[3] or 1
+                swatch:SetVertexColor(r, g, b)
+            end
+            RefreshSwatch()
+
+            btn:SetScript("OnClick", function()
+                local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
+                local r = col.r or col[1] or 1
+                local g = col.g or col[2] or 1
+                local b = col.b or col[3] or 1
+
+                local info = {
+                    r = r, g = g, b = b,
+                    hasOpacity = false,
+                    swatchFunc = function()
+                        local nr, ng, nb = ColorPickerFrame:GetColorRGB()
+                        BetterBlizzFramesDB[dbKey] = {r = nr, g = ng, b = nb}
+                        swatch:SetVertexColor(nr, ng, nb)
+                        if callback then callback() end
+                        if BBF.UpdateFrames then BBF.UpdateFrames() end
+                    end,
+                    cancelFunc = function(prev)
+                        BetterBlizzFramesDB[dbKey] = {r = prev.r, g = prev.g, b = prev.b}
+                        swatch:SetVertexColor(prev.r, prev.g, prev.b)
+                        if callback then callback() end
+                        if BBF.UpdateFrames then BBF.UpdateFrames() end
+                    end
+                }
+                ColorPickerFrame:SetupColorPickerAndShow(info)
+            end)
+
+            return btn
+        end
+
+        -- SECTION 1: General Custom Colors
+        AddHeader(L["Custom_Colors"])
+        AddCheckbox("customColorsUnitFrames", L["Enable_On_UnitFrames"])
+        AddCheckbox("customColorsRaidFrames", L["Enable_On_Raid_Party_Frames"])
+
+        -- SECTION 2: Reaction Colors
+        currentY = currentY - 10
+        AddHeader(L["Reaction_Colors"])
+        local startY = currentY
+        AddColorSwatch("enemyHealthColor", L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2})
+        AddColorSwatch("friendlyHealthColor", L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2})
+        AddColorSwatch("neutralHealthColor", L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2})
+        currentY = currentY - 28
+
+        -- SECTION 3: Class Colors
+        currentY = currentY - 10
+        AddHeader(L["Class_Colors"])
+        AddCheckbox("overrideClassColors", L["Override_Class_Colors"])
+        AddCheckbox("useOneClassColor", L["Use_One_Color"])
+        AddColorSwatch("singleClassColor", L["All_Classes"], 10, currentY, {r = 0.8, g = 0.8, b = 0.8})
+        currentY = currentY - 26
+
+        local classes = {}
+        for classID = 1, GetNumClasses() do
+            local _, classTag = GetClassInfo(classID)
+            if classTag then
+                local className = (BBF.FormatClassName and BBF.FormatClassName(classTag)) or classTag
+                table.insert(classes, {key = classTag, name = className})
+            end
+        end
+        table.sort(classes, function(a, b) return a.name < b.name end)
+
+        local thirdCount = math.ceil(#classes / 3)
+        local gridStartY = currentY
+        for i, classData in ipairs(classes) do
+            local colIndex = math.floor((i - 1) / thirdCount)
+            local rowIndex = (i - 1) % thirdCount
+            local posX = 10 + colIndex * 102
+            local posY = gridStartY - rowIndex * 24
+            local classDefColor = RAID_CLASS_COLORS[classData.key] or {r = 1, g = 1, b = 1}
+            AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b})
+        end
+        currentY = gridStartY - thirdCount * 24 - 12
+
+        -- SECTION 4: Power Colors
+        AddHeader(L["Power_Colors"])
+        AddCheckbox("customPowerColors", L["Enable_Power_Colors"])
+        AddCheckbox("useOnePowerColor", L["Use_One_Color"])
+        AddColorSwatch("singlePowerColor", L["All_Classes"], 10, currentY, {r = 0, g = 0.8, b = 1})
+        currentY = currentY - 26
+
+        local powerTypes = {
+            { key = "MANA", label = L["Power_Mana"] or "Mana", color = {r = 0, g = 0.5, b = 1} },
+            { key = "RAGE", label = L["Power_Rage"] or "Rage", color = {r = 1, g = 0, b = 0} },
+            { key = "FOCUS", label = L["Power_Focus"] or "Focus", color = {r = 1, g = 0.5, b = 0.25} },
+            { key = "ENERGY", label = L["Power_Energy"] or "Energy", color = {r = 1, g = 1, b = 0} },
+            { key = "RUNIC_POWER", label = L["Power_Runic_Power"] or "Runic Power", color = {r = 0, g = 0.82, b = 1} },
+            { key = "LUNAR_POWER", label = L["Power_Lunar_Power"] or "Astral Power", color = {r = 0, g = 0.9, b = 1} },
+            { key = "MAELSTROM", label = L["Power_Maelstrom"] or "Maelstrom", color = {r = 0, g = 0.5, b = 1} },
+            { key = "INSANITY", label = L["Power_Insanity"] or "Insanity", color = {r = 0.4, g = 0, b = 0.8} },
+            { key = "CHI", label = L["Power_Chi"] or "Chi", color = {r = 0.71, g = 1, b = 0.92} },
+            { key = "FURY", label = L["Power_Fury"] or "Fury", color = {r = 0.788, g = 0.259, b = 0.992} },
+        }
+
+        local pThird = math.ceil(#powerTypes / 3)
+        local pGridStartY = currentY
+        for i, pData in ipairs(powerTypes) do
+            local colIndex = math.floor((i - 1) / pThird)
+            local rowIndex = (i - 1) % pThird
+            local posX = 10 + colIndex * 102
+            local posY = pGridStartY - rowIndex * 24
+            AddColorSwatch("powerColor" .. pData.key, pData.label, posX, posY, pData.color)
+        end
+        currentY = pGridStartY - pThird * 24 - 20
+
+        content:SetHeight(math.abs(currentY) + 30)
+
+        customColorFrame:Show()
+    else
+        if customColorFrame:IsShown() then
+            customColorFrame:Hide()
+        else
+            customColorFrame:Show()
         end
     end
 end
@@ -2106,6 +2332,9 @@ end
 
 local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
+    if checkBox:GetHighlightTexture() then
+        checkBox:GetHighlightTexture():SetAlpha(0)
+    end
     if not checkBox.Text then
         checkBox.Text = checkBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         checkBox.Text:SetPoint("LEFT", checkBox, "RIGHT", 4, 0)
@@ -3524,7 +3753,6 @@ BBF.CreateList = CreateList
 BBF.CreateAnchorDropdown = CreateAnchorDropdown
 BBF.CreateIconChangeWindow = CreateIconChangeWindow
 BBF.CreateBorderedFrame = CreateBorderedFrame
-BBF.OpenColorOptions = OpenColorOptions
 BBF.RecolorEntireAuraWhitelist = RecolorEntireAuraWhitelist
 BBF.UpdateColorSquare = UpdateColorSquare
 BBF.CreateSearchFrame = CreateSearchFrame
