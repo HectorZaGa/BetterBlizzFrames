@@ -576,7 +576,28 @@ function guiPositionAndScale()
     -- Font dropdown row
     local rowFont = CreateFrame("Frame", nil, cardKickFont)
     rowFont:SetPoint("TOPLEFT", cardKickFont, "TOPLEFT", 6, cardKickFont.currentY)
-    rowFont:SetSize(cardKickFont.cardWidth - 12, 38)
+    local rowFontHeight = 36
+    rowFont:SetSize(cardKickFont.cardWidth - 12, rowFontHeight)
+
+    local rowFontHighlight = rowFont:CreateTexture(nil, "BACKGROUND")
+    rowFontHighlight:SetAllPoints()
+    rowFontHighlight:SetAtlas("options-item-highlight")
+    if not rowFontHighlight:GetTexture() then
+        rowFontHighlight:SetColorTexture(1, 1, 1, 0.12)
+    end
+    rowFontHighlight:SetBlendMode("ADD")
+    rowFontHighlight:Hide()
+
+    local function UpdateFontHighlight()
+        if MouseIsOver(rowFont) then rowFontHighlight:Show() else rowFontHighlight:Hide() end
+    end
+    rowFont:EnableMouse(true)
+    rowFont:SetScript("OnEnter", UpdateFontHighlight)
+    rowFont:SetScript("OnLeave", UpdateFontHighlight)
+
+    local fontLbl = rowFont:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    fontLbl:SetPoint("LEFT", rowFont, "LEFT", 16, 0)
+    fontLbl:SetText(L["Font"])
 
     local kickPopupFontDropdown = CreateFontDropdown(
         "kickPopupFont",
@@ -584,13 +605,20 @@ function guiPositionAndScale()
         L["Select_Font"],
         "kickPopupFont",
         function(fontPath) BBF.UpdateKickPopupFont() end,
-        { anchorFrame = rowFont, x = 0, y = 0, label = L["Font"] },
-        135,
+        { anchorFrame = rowFont, x = 0, y = 0, label = "" },
+        150,
         nil,
-        "TOPLEFT"
+        "NONE"
     )
+    kickPopupFontDropdown:ClearAllPoints()
+    kickPopupFontDropdown:SetPoint("RIGHT", rowFont, "RIGHT", -10, 0)
+    kickPopupFontDropdown:SetWidth(150)
 
-    cardKickFont.currentY = cardKickFont.currentY - 42
+    kickPopupFontDropdown:HookScript("OnEnter", UpdateFontHighlight)
+    kickPopupFontDropdown:HookScript("OnLeave", UpdateFontHighlight)
+
+    cardKickFont.currentY = cardKickFont.currentY - rowFontHeight - 8
+    cardKickFont:SetHeight(-cardKickFont.currentY + 6)
 
     AddCardCheckbox(cardKickFont, "kickPopupFontOutline", L["Outline_Label"], L["Tooltip_Outline_Toggle"], function() BBF.UpdateKickPopupFont() end)
     AddCardCheckbox(cardKickFont, "kickPopupFontShadow", L["Shadow"], "", function() BBF.UpdateKickPopupFont() end)
