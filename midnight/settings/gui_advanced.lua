@@ -620,13 +620,27 @@ function guiPositionAndScale()
     cardKickFont.currentY = cardKickFont.currentY - rowFontHeight - 8
     cardKickFont:SetHeight(-cardKickFont.currentY + 6)
 
-    AddCardCheckbox(cardKickFont, "kickPopupFontOutline", L["Outline_Label"], L["Tooltip_Outline_Toggle"], function() BBF.UpdateKickPopupFont() end)
-    AddCardCheckbox(cardKickFont, "kickPopupFontShadow", L["Shadow"], "", function() BBF.UpdateKickPopupFont() end)
-
-    -- Text Color row
+    -- Text Color row (Child of Font row, always enabled)
     local rowColor = CreateFrame("Frame", nil, cardKickFont)
-    rowColor:SetPoint("TOPLEFT", cardKickFont, "TOPLEFT", 6, cardKickFont.currentY)
-    rowColor:SetSize(cardKickFont.cardWidth - 12, 34)
+    rowColor:SetPoint("TOPLEFT", cardKickFont, "TOPLEFT", 22, cardKickFont.currentY)
+    local rowColorHeight = 34
+    rowColor:SetSize(cardKickFont.cardWidth - 28, rowColorHeight)
+
+    local rowColorHighlight = rowColor:CreateTexture(nil, "BACKGROUND")
+    rowColorHighlight:SetAllPoints()
+    rowColorHighlight:SetAtlas("options-item-highlight")
+    if not rowColorHighlight:GetTexture() then
+        rowColorHighlight:SetColorTexture(1, 1, 1, 0.12)
+    end
+    rowColorHighlight:SetBlendMode("ADD")
+    rowColorHighlight:Hide()
+
+    local function UpdateColorHighlight()
+        if MouseIsOver(rowColor) then rowColorHighlight:Show() else rowColorHighlight:Hide() end
+    end
+    rowColor:EnableMouse(true)
+    rowColor:SetScript("OnEnter", UpdateColorHighlight)
+    rowColor:SetScript("OnLeave", UpdateColorHighlight)
 
     local colorLbl = rowColor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     colorLbl:SetPoint("LEFT", rowColor, "LEFT", 16, 0)
@@ -635,9 +649,14 @@ function guiPositionAndScale()
     local colorBox = CreateColorBox(rowColor, "kickPopupTextColor", "", function() BBF.UpdateKickPopupFont() end)
     colorBox:SetPoint("RIGHT", rowColor, "RIGHT", -5, 0)
 
-    cardKickFont.currentY = cardKickFont.currentY - 42
+    colorBox:HookScript("OnEnter", UpdateColorHighlight)
+    colorBox:HookScript("OnLeave", UpdateColorHighlight)
+
+    cardKickFont.currentY = cardKickFont.currentY - rowColorHeight - 8
     cardKickFont:SetHeight(-cardKickFont.currentY + 6)
 
+    AddCardCheckbox(cardKickFont, "kickPopupFontOutline", L["Outline_Label"], L["Tooltip_Outline_Toggle"], function() BBF.UpdateKickPopupFont() end)
+    AddCardCheckbox(cardKickFont, "kickPopupFontShadow", L["Shadow"], "", function() BBF.UpdateKickPopupFont() end)
     AddCardCheckbox(cardKickFont, "kickPopupSauce", L["Kick_Popup_Sauce"], L["Tooltip_Kick_Popup_Sauce_Desc"], function()
         if BetterBlizzFramesDB.kickPopupTestMode then BBF.TestKickPopup(true) end
     end)

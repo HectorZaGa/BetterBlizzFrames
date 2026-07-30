@@ -89,7 +89,11 @@ end
 
 local function UpdateColorSquare(icon, r, g, b, a)
     if r and g and b then
-        icon:SetColorTexture(r, g, b, a)
+        if icon.SetVertexColor then
+            icon:SetVertexColor(r, g, b, a or 1)
+        elseif icon.SetColorTexture then
+            icon:SetColorTexture(r, g, b, a or 1)
+        end
     end
 end
 
@@ -457,25 +461,18 @@ local function CreateColorBox(parent, colorVar, labelText, callback)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetSize(55, 20)
 
-    -- Border Frame (slightly larger to act as a border)
-    local borderFrame = CreateFrame("Frame", nil, frame)
-    borderFrame:SetSize(15, 15)
-    borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0)
+    local colorTexture = frame:CreateTexture(nil, "OVERLAY")
+    colorTexture:SetSize(18, 18)
+    colorTexture:SetPoint("LEFT", frame, "LEFT", 4, 0)
+    colorTexture:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
 
-    local border = borderFrame:CreateTexture(nil, "OVERLAY", nil, 5)
-    border:SetAtlas("talents-node-square-gray")
-    border:SetAllPoints()
-
-    -- Create the color texture within the border frame
-    local colorTexture = borderFrame:CreateTexture(nil, "OVERLAY")
-    colorTexture:SetSize(12, 12)
-    colorTexture:SetPoint("CENTER", borderFrame, "CENTER", 0, 0)
-    colorTexture:SetColorTexture(unpack(BetterBlizzFramesDB[colorVar] or {1, 1, 1}))
+    local currentColor = BetterBlizzFramesDB[colorVar] or {1, 1, 1, 1}
+    colorTexture:SetVertexColor(currentColor[1] or 1, currentColor[2] or 1, currentColor[3] or 1, currentColor[4] or 1)
 
     -- Label text for the color box
     local text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     text:SetText(labelText)
-    text:SetPoint("LEFT", borderFrame, "RIGHT", 3, 0)
+    text:SetPoint("LEFT", colorTexture, "RIGHT", 4, 0)
     frame.text = text
 
     -- Make the frame clickable and open a color picker on click
@@ -488,7 +485,7 @@ local function CreateColorBox(parent, colorVar, labelText, callback)
                 local defaultColor = BBF.defaultSettings[colorVar]
                 if defaultColor then
                     BetterBlizzFramesDB[colorVar] = {unpack(defaultColor)}
-                    colorTexture:SetColorTexture(unpack(defaultColor))
+                    UpdateColorSquare(colorTexture, unpack(defaultColor))
                     if callback then
                         callback()
                     end
