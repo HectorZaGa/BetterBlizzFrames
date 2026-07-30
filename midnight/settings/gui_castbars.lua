@@ -67,13 +67,6 @@ function guiCastbars()
     castbarsSubCategory.ID = BetterBlizzFramesCastbars.name;
     CreateTitle(BetterBlizzFramesCastbars)
 
-    local bgImg = BetterBlizzFramesCastbars:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", BetterBlizzFramesCastbars, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local scrollFrame = CreateFrame("ScrollFrame", nil, BetterBlizzFramesCastbars, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(700, 612)
     scrollFrame:SetPoint("CENTER", BetterBlizzFramesCastbars, "CENTER", -20, 3)
@@ -944,7 +937,7 @@ function guiCastbars()
     end)
 
     BetterBlizzFramesCastbars.rightClickTip = BetterBlizzFramesCastbars:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    BetterBlizzFramesCastbars.rightClickTip:SetPoint("BOTTOMLEFT", bgImg, "BOTTOM", -231, -36)
+    BetterBlizzFramesCastbars.rightClickTip:SetPoint("BOTTOMLEFT", BetterBlizzFramesCastbars, "BOTTOM", -231, -36)
     BetterBlizzFramesCastbars.rightClickTip:SetText("|A:smallquestbang:20:20|a" .. L["Right_Click_Slider_Tip"])
 end
 

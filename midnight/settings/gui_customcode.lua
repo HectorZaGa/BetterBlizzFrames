@@ -55,13 +55,6 @@ function guiCustomCode()
     BBF.guiCustomCode = guiCustomCode.name
     CreateTitle(guiCustomCode)
 
-    local bgImg = guiCustomCode:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", guiCustomCode, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local discordLinkEditBox = CreateFrame("EditBox", nil, guiCustomCode, "InputBoxTemplate")
     discordLinkEditBox:SetPoint("TOPLEFT", guiCustomCode, "TOPLEFT", 25, -45)
     discordLinkEditBox:SetSize(180, 20)

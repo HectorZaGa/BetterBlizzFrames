@@ -58,13 +58,6 @@ function guiGeneralTab()
 
     local profilesFrame = guiProfiles()
 
-    local bgImg = BetterBlizzFrames:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", BetterBlizzFrames, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local midnightBeta = BetterBlizzFrames:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
     midnightBeta:SetPoint("BOTTOM", SettingsPanel, "TOP", 0, 0)
     midnightBeta:SetText(L["Msg_Midnight_Early_Beta"])

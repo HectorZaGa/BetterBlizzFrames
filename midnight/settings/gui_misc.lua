@@ -55,13 +55,6 @@ function guiMisc()
     guiMiscSubcategory.ID = guiMisc.name;
     CreateTitle(guiMisc)
 
-    local bgImg = guiMisc:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", guiMisc, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local settingsText = guiMisc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     settingsText:SetPoint("TOPLEFT", guiMisc, "TOPLEFT", 20, 0)
     settingsText:SetText(L["Misc_Settings"])

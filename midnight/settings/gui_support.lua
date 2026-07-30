@@ -57,13 +57,6 @@ function guiSupport()
     BBF.category.guiSupportCategory = guiSupportCategory.ID
     CreateTitle(guiSupport)
 
-    local bgImg = guiSupport:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", guiSupport, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local discordLinkEditBox = CreateFrame("EditBox", nil, guiSupport, "InputBoxTemplate")
     discordLinkEditBox:SetPoint("TOP", guiSupport, "TOP", 0, -170)
     discordLinkEditBox:SetSize(180, 20)

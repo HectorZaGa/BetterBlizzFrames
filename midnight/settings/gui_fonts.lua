@@ -58,13 +58,6 @@ function guiFrameLook()
     aurasSubCategory.ID = guiFrameLook.name;
     CreateTitle(guiFrameLook)
 
-    local bgImg = guiFrameLook:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", guiFrameLook, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     local scrollFrame = CreateFrame("ScrollFrame", nil, guiFrameLook, "UIPanelScrollFrameTemplate")
     scrollFrame:SetSize(700, 612)
     scrollFrame:SetPoint("CENTER", guiFrameLook, "CENTER", -20, 3)

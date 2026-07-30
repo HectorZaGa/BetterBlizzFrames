@@ -34,13 +34,6 @@ function guiPositionAndScale()
     BBF.category.AdvancedSettings = BetterBlizzFramesSubPanel.name
     CreateTitle(BetterBlizzFramesSubPanel)
 
-    local bgImg = BetterBlizzFramesSubPanel:CreateTexture(nil, "BACKGROUND")
-    bgImg:SetAtlas("professions-recipe-background")
-    bgImg:SetPoint("CENTER", BetterBlizzFramesSubPanel, "CENTER", -8, 4)
-    bgImg:SetSize(680, 610)
-    bgImg:SetAlpha(0.4)
-    bgImg:SetVertexColor(0,0,0)
-
     -------------------------------------------------------
     -- SIDEBAR NAVIGATION & CARD CONTAINER DESIGN
     -------------------------------------------------------
@@ -268,7 +261,7 @@ function guiPositionAndScale()
         row:SetScript("OnEnter", UpdateHighlight)
         row:SetScript("OnLeave", UpdateHighlight)
 
-        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 16, 0)
         title:SetText(titleStr)
         title:SetWidth(310)
