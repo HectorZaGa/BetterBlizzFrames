@@ -584,9 +584,13 @@ StaticPopupDialogs["BBF_TOT_MESSAGE"] = {
     end,
     OnCancel = function()
         BetterBlizzFramesDB.targetToTXPos = 0
-        BBF.targetToTXPos:SetValue(0)
+        if BBF.targetToTXPos and BBF.targetToTXPos.SetValue then
+            BBF.targetToTXPos:SetValue(0)
+        end
         BetterBlizzFramesDB.focusToTXPos = 0
-        BBF.focusToTXPos:SetValue(0)
+        if BBF.focusToTXPos and BBF.focusToTXPos.SetValue then
+            BBF.focusToTXPos:SetValue(0)
+        end
         BBF.MoveToTFrames()
         StaticPopup_Show("BBF_CONFIRM_RELOAD")
     end,

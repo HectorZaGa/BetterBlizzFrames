@@ -83,9 +83,13 @@ function guiFrameAuras()
             if BetterBlizzFramesDB.targetToTXPos == 0 then
                 StaticPopup_Show("BBF_TOT_MESSAGE")
                 BetterBlizzFramesDB.targetToTXPos = 31
-                BBF.targetToTXPos:SetValue(31)
+                if BBF.targetToTXPos and BBF.targetToTXPos.SetValue then
+                    BBF.targetToTXPos:SetValue(31)
+                end
                 BetterBlizzFramesDB.focusToTXPos = 31
-                BBF.focusToTXPos:SetValue(31)
+                if BBF.focusToTXPos and BBF.focusToTXPos.SetValue then
+                    BBF.focusToTXPos:SetValue(31)
+                end
                 BBF.MoveToTFrames()
             else
                 StaticPopup_Show("BBF_CONFIRM_RELOAD")
@@ -94,9 +98,13 @@ function guiFrameAuras()
             if BetterBlizzFramesDB.targetToTXPos == 31 then
                 BBF.Print(L["Chat_Aura_Settings_Off"])
                 BetterBlizzFramesDB.targetToTXPos = 0
-                BBF.targetToTXPos:SetValue(0)
+                if BBF.targetToTXPos and BBF.targetToTXPos.SetValue then
+                    BBF.targetToTXPos:SetValue(0)
+                end
                 BetterBlizzFramesDB.focusToTXPos = 0
-                BBF.focusToTXPos:SetValue(0)
+                if BBF.focusToTXPos and BBF.focusToTXPos.SetValue then
+                    BBF.focusToTXPos:SetValue(0)
+                end
                 BBF.MoveToTFrames()
             end
             StaticPopup_Show("BBF_CONFIRM_RELOAD")
