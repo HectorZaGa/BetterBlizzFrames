@@ -1384,7 +1384,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
     widget.tooltipMainText = mainText
     widget.tooltipSubText = subText
     widget.tooltipCVarName = cvarName
-    widget:SetScript("OnEnter", function(self)
+    widget:HookScript("OnEnter", function(self)
         -- Clear the tooltip before showing new information
         GameTooltip:ClearLines()
         if GameTooltip:IsShown() then
@@ -1559,7 +1559,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
         end
         GameTooltip:Show()
     end)
-    widget:SetScript("OnLeave", function(self)
+    widget:HookScript("OnLeave", function(self)
         GameTooltip:Hide()
     end)
 end

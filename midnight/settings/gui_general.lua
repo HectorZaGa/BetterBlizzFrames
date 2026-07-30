@@ -220,19 +220,25 @@ function guiGeneralTab()
 
     local function AddCardCheckbox(card, dbKey, titleStr, descStr, callback)
         local row = CreateFrame("Frame", nil, card)
-        row:SetPoint("TOPLEFT", card, "TOPLEFT", 12, card.currentY)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 6, card.currentY)
 
         local rowHeight = 34
-        row:SetSize(card.cardWidth - 24, rowHeight)
+        row:SetSize(card.cardWidth - 12, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
         rowHighlight:SetAllPoints()
-        rowHighlight:SetAtlas("options-item-highlight")
-        rowHighlight:SetBlendMode("ADD")
-        rowHighlight:SetAlpha(0)
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        title:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
         title:SetWidth(330)
         title:SetJustifyH("LEFT")
@@ -245,17 +251,7 @@ function guiGeneralTab()
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
-        local function ShowHL() rowHighlight:SetAlpha(0.2) end
-        local function HideHL() rowHighlight:SetAlpha(0) end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHL)
-        row:SetScript("OnLeave", HideHL)
-        titleFrame:HookScript("OnEnter", ShowHL)
-        titleFrame:HookScript("OnLeave", HideHL)
-        cb:HookScript("OnEnter", ShowHL)
-        cb:HookScript("OnLeave", HideHL)
-
+        titleFrame:EnableMouse(true)
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "LeftButton" then
                 if cb:IsEnabled() then
@@ -273,6 +269,11 @@ function guiGeneralTab()
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
+        titleFrame:HookScript("OnEnter", ShowHighlight)
+        titleFrame:HookScript("OnLeave", HideHighlight)
+        cb:HookScript("OnEnter", ShowHighlight)
+        cb:HookScript("OnLeave", HideHighlight)
+
         card.currentY = card.currentY - rowHeight - 8
         card:SetHeight(-card.currentY + 6)
         return cb
@@ -280,19 +281,25 @@ function guiGeneralTab()
 
     local function AddCardChildCheckbox(card, parentCb, dbKey, titleStr, descStr, callback)
         local row = CreateFrame("Frame", nil, card)
-        row:SetPoint("TOPLEFT", card, "TOPLEFT", 28, card.currentY)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 22, card.currentY)
 
         local rowHeight = 34
-        row:SetSize(card.cardWidth - 40, rowHeight)
+        row:SetSize(card.cardWidth - 28, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
         rowHighlight:SetAllPoints()
-        rowHighlight:SetAtlas("options-item-highlight")
-        rowHighlight:SetBlendMode("ADD")
-        rowHighlight:SetAlpha(0)
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        title:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
         title:SetWidth(314)
         title:SetJustifyH("LEFT")
@@ -310,17 +317,7 @@ function guiGeneralTab()
             cb:UpdateEnabledState()
         end
 
-        local function ShowHL() rowHighlight:SetAlpha(0.2) end
-        local function HideHL() rowHighlight:SetAlpha(0) end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHL)
-        row:SetScript("OnLeave", HideHL)
-        titleFrame:HookScript("OnEnter", ShowHL)
-        titleFrame:HookScript("OnLeave", HideHL)
-        cb:HookScript("OnEnter", ShowHL)
-        cb:HookScript("OnLeave", HideHL)
-
+        titleFrame:EnableMouse(true)
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "LeftButton" then
                 if cb:IsEnabled() then
@@ -338,27 +335,37 @@ function guiGeneralTab()
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
+        titleFrame:HookScript("OnEnter", ShowHighlight)
+        titleFrame:HookScript("OnLeave", HideHighlight)
+        cb:HookScript("OnEnter", ShowHighlight)
+        cb:HookScript("OnLeave", HideHighlight)
+
         card.currentY = card.currentY - rowHeight - 8
         card:SetHeight(-card.currentY + 6)
         return cb
     end
 
     local function AddCardSlider(card, dbKey, titleStr, descStr, minVal, maxVal, stepVal, callback)
-
         local row = CreateFrame("Frame", nil, card)
-        row:SetPoint("TOPLEFT", card, "TOPLEFT", 12, card.currentY)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 6, card.currentY)
 
         local rowHeight = 40
-        row:SetSize(card.cardWidth - 24, rowHeight)
+        row:SetSize(card.cardWidth - 12, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
         rowHighlight:SetAllPoints()
-        rowHighlight:SetAtlas("options-item-highlight")
-        rowHighlight:SetBlendMode("ADD")
-        rowHighlight:SetAlpha(0)
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        title:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
         title:SetWidth(240)
         title:SetJustifyH("LEFT")
@@ -370,17 +377,7 @@ function guiGeneralTab()
         local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
         slider:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
-        local function ShowHL() rowHighlight:SetAlpha(0.2) end
-        local function HideHL() rowHighlight:SetAlpha(0) end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHL)
-        row:SetScript("OnLeave", HideHL)
-        titleFrame:HookScript("OnEnter", ShowHL)
-        titleFrame:HookScript("OnLeave", HideHL)
-        slider:HookScript("OnEnter", ShowHL)
-        slider:HookScript("OnLeave", HideHL)
-
+        titleFrame:EnableMouse(true)
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "RightButton" then
                 if BBF.HandleRightClick then
@@ -394,6 +391,11 @@ function guiGeneralTab()
             CreateTooltipTwo(slider, titleStr, descStr)
         end
 
+        titleFrame:HookScript("OnEnter", ShowHighlight)
+        titleFrame:HookScript("OnLeave", HideHighlight)
+        slider:HookScript("OnEnter", ShowHighlight)
+        slider:HookScript("OnLeave", HideHighlight)
+
         card.currentY = card.currentY - rowHeight - 10
         card:SetHeight(-card.currentY + 6)
         return slider
@@ -401,14 +403,26 @@ function guiGeneralTab()
 
     local function AddCardDualChildCheckboxes(card, parentCb, dbKey1, titleStr1, descStr1, dbKey2, titleStr2, descStr2)
         local row = CreateFrame("Frame", nil, card)
-        row:SetPoint("TOPLEFT", card, "TOPLEFT", 28, card.currentY)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 22, card.currentY)
 
         local rowHeight = 30
-        row:SetSize(card.cardWidth - 40, rowHeight)
+        row:SetSize(card.cardWidth - 28, rowHeight)
+
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
 
         -- Item 1: SFX
         local title1 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        title1:SetPoint("LEFT", row, "LEFT", 0, 0)
+        title1:SetPoint("LEFT", row, "LEFT", 6, 0)
         title1:SetText(titleStr1)
 
         local titleFrame1 = CreateFrame("Frame", nil, row)
@@ -437,9 +451,13 @@ function guiGeneralTab()
             CreateTooltipTwo(cb1, titleStr1, descStr1)
         end
 
+        titleFrame1:HookScript("OnEnter", ShowHighlight)
+        titleFrame1:HookScript("OnLeave", HideHighlight)
+        cb1:HookScript("OnEnter", ShowHighlight)
+        cb1:HookScript("OnLeave", HideHighlight)
+
         -- Item 2: Warning (!)
         local title2 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-
         title2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
         title2:SetText(titleStr2)
 
@@ -464,14 +482,15 @@ function guiGeneralTab()
             end
         end)
 
-
-
-
-
         if descStr2 and descStr2 ~= "" then
             CreateTooltipTwo(titleFrame2, titleStr2, descStr2)
             CreateTooltipTwo(cb2, titleStr2, descStr2)
         end
+
+        titleFrame2:HookScript("OnEnter", ShowHighlight)
+        titleFrame2:HookScript("OnLeave", HideHighlight)
+        cb2:HookScript("OnEnter", ShowHighlight)
+        cb2:HookScript("OnLeave", HideHighlight)
 
         card.currentY = card.currentY - rowHeight - 6
         card:SetHeight(-card.currentY + 6)
