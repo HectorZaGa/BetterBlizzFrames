@@ -1969,10 +1969,14 @@ function BBF.OpenClassSpecificWindow()
             rowFrame:SetPoint("TOPRIGHT", classOptionsFrame, "TOPRIGHT", 4, -32 - (i - 1) * 33)
 
             local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
-            rowHighlight:SetAllPoints()
+            rowHighlight:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", -10, 0)
+            rowHighlight:SetPoint("BOTTOMRIGHT", rowFrame, "BOTTOMRIGHT", -10, 0)
             rowHighlight:SetAtlas("options-item-highlight")
+            if not rowHighlight:GetTexture() then
+                rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+            end
             rowHighlight:SetBlendMode("ADD")
-            rowHighlight:SetAlpha(0)
+            rowHighlight:Hide()
 
             local classCheckbox = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
             if classCheckbox:GetHighlightTexture() then
@@ -1985,6 +1989,14 @@ function BBF.OpenClassSpecificWindow()
                 classCheckbox.HoverBackground:SetAlpha(0)
                 classCheckbox.HoverBackground:Hide()
                 classCheckbox.HoverBackground.Show = function() end
+            end
+
+            local function UpdateHighlight()
+                if MouseIsOver(rowFrame) then
+                    rowHighlight:Show()
+                else
+                    rowHighlight:Hide()
+                end
             end
             classCheckbox:SetSize(26, 26)
             classCheckbox:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
@@ -2009,11 +2021,11 @@ function BBF.OpenClassSpecificWindow()
             end)
 
             rowFrame:EnableMouse(true)
-            rowFrame:SetScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
-            rowFrame:SetScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            rowFrame:SetScript("OnEnter", UpdateHighlight)
+            rowFrame:SetScript("OnLeave", UpdateHighlight)
             rowFrame:SetScript("OnMouseDown", function() classCheckbox:Click() end)
-            classCheckbox:HookScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
-            classCheckbox:HookScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            classCheckbox:HookScript("OnEnter", UpdateHighlight)
+            classCheckbox:HookScript("OnLeave", UpdateHighlight)
         end
         classOptionsFrame:Show()
     else
@@ -2079,8 +2091,11 @@ function BBF.OpenColorOptions()
             local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
             rowHighlight:SetAllPoints()
             rowHighlight:SetAtlas("options-item-highlight")
+            if not rowHighlight:GetTexture() then
+                rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+            end
             rowHighlight:SetBlendMode("ADD")
-            rowHighlight:SetAlpha(0)
+            rowHighlight:Hide()
 
             local cb = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
             if cb:GetHighlightTexture() then
@@ -2093,6 +2108,14 @@ function BBF.OpenColorOptions()
                 cb.HoverBackground:SetAlpha(0)
                 cb.HoverBackground:Hide()
                 cb.HoverBackground.Show = function() end
+            end
+
+            local function UpdateHighlight()
+                if MouseIsOver(rowFrame) then
+                    rowHighlight:Show()
+                else
+                    rowHighlight:Hide()
+                end
             end
             cb:SetSize(24, 24)
             cb:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
@@ -2115,11 +2138,11 @@ function BBF.OpenColorOptions()
             end
 
             rowFrame:EnableMouse(true)
-            rowFrame:SetScript("OnEnter", function() if cb:IsEnabled() then rowHighlight:SetAlpha(0.25) end end)
-            rowFrame:SetScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            rowFrame:SetScript("OnEnter", UpdateHighlight)
+            rowFrame:SetScript("OnLeave", UpdateHighlight)
             rowFrame:SetScript("OnMouseDown", function() if cb:IsEnabled() then cb:Click() end end)
-            cb:HookScript("OnEnter", function() if cb:IsEnabled() then rowHighlight:SetAlpha(0.25) end end)
-            cb:HookScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            cb:HookScript("OnEnter", UpdateHighlight)
+            cb:HookScript("OnLeave", UpdateHighlight)
 
             currentY = currentY - 32
             return cb
