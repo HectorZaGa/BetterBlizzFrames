@@ -263,7 +263,7 @@ function guiGeneralTab()
         return card
     end
 
-    local function AddCardCheckbox(card, dbKey, titleStr, descStr, callback)
+    local function AddCardCheckbox(card, dbKey, titleStr, descStr, callback, cpuUsage, subText)
         local row = CreateFrame("Frame", nil, card)
         row:SetPoint("TOPLEFT", card, "TOPLEFT", 6, card.currentY)
 
@@ -319,8 +319,8 @@ function guiGeneralTab()
         end)
 
         if descStr and descStr ~= "" then
-            CreateTooltipTwo(titleFrame, titleStr, descStr)
-            CreateTooltipTwo(cb, titleStr, descStr)
+            CreateTooltipTwo(titleFrame, titleStr, descStr, subText, nil, nil, cpuUsage)
+            CreateTooltipTwo(cb, titleStr, descStr, subText, nil, nil, cpuUsage)
         end
 
         titleFrame:HookScript("OnEnter", UpdateHighlight)
@@ -876,11 +876,11 @@ function guiGeneralTab()
     -------------------------------------------------------
     local cfExtra = categoryFrames["extra"].contentFrame
     local cardExtra = CreateOptionCard(cfExtra, L["Extra_Features"], nil, -10)
-    AddCardCheckbox(cardExtra, "combatIndicator", L["Combat_Indicator"], L["Tooltip_Combat_Indicator_Desc"], function() BBF.CombatIndicatorCaller() end)
+    AddCardCheckbox(cardExtra, "combatIndicator", L["Combat_Indicator"], L["Tooltip_Combat_Indicator_Desc"], function() BBF.CombatIndicatorCaller() end, 1)
     AddCardCheckbox(cardExtra, "healerIndicator", L["Healer_Indicator"], L["Tooltip_Healer_Indicator_Desc"], function() BBF.HealerIndicatorCaller() end)
-    AddCardCheckbox(cardExtra, "absorbIndicator", L["Absorb_Indicator"], L["Tooltip_Absorb_Indicator_Desc"], BBF.AbsorbCaller)
-    AddCardCheckbox(cardExtra, "racialIndicator", L["Racial_Indicator"], L["Tooltip_Racial_Indicator_Desc"], BBF.RacialIndicatorCaller)
-    AddCardCheckbox(cardExtra, "overShields", L["Overshields"], L["Tooltip_Overshields_Desc"])
+    AddCardCheckbox(cardExtra, "absorbIndicator", L["Absorb_Indicator"], L["Tooltip_Absorb_Indicator_Desc"], BBF.AbsorbCaller, 1)
+    AddCardCheckbox(cardExtra, "racialIndicator", L["Racial_Indicator"], L["Tooltip_Racial_Indicator_Desc"], BBF.RacialIndicatorCaller, 1)
+    AddCardCheckbox(cardExtra, "overShields", L["Overshields"], L["Tooltip_Overshields_Desc"], nil, 2)
     local cbQueue = AddCardCheckbox(cardExtra, "queueTimer", L["Queue_Timer"], L["Tooltip_Queue_Timer_Desc"])
     AddCardChildCheckbox(cardExtra, cbQueue, "queueTimerAudio", L["Sound_Effect"], L["Tooltip_Queue_Timer_SFX_Desc"])
     AddCardChildCheckbox(cardExtra, cbQueue, "queueTimerWarning", L["Sound_Alert"], L["Tooltip_Queue_Timer_Warning_Desc"])
