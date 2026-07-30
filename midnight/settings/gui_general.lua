@@ -657,7 +657,7 @@ function guiGeneralTab()
     -- Card 3: Colors, Icons & FX
     local cardAllColors = CreateOptionCard(cfAll, L["Colors_Icons_FX"], cardAllDisp, -22)
     AddCardCheckbox(cardAllColors, "classColorFrames", L["Class_Color_Health"], L["Tooltip_Class_Color_Healthbars"])
-    AddCardCheckbox(cardAllColors, "customHealthbarColors", L["Custom_Colors"], L["Tooltip_Custom_Colors_Desc"])
+    AddCardCheckbox(cardAllColors, "customHealthbarColors", L["Custom_Color_Health_Mana"], L["Tooltip_Custom_Colors_Desc"])
     AddCardCheckbox(cardAllColors, "hidePrestigeBadge", L["Hide_Prestige_Honor_Badge_PvP_Icon"], L["Tooltip_Hide_Prestige_PvP_Icon_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardAllColors, "hideCombatGlow", L["Hide_Combat_Glow"], L["Tooltip_Hide_Combat_Glow"], BBF.HideFrames)
     AddCardCheckbox(cardAllColors, "classPortraitsUseSpecIcons", L["Use_Spec_Icons"], L["Tooltip_Use_Spec_Icons"], BBF.SpecPortraits)
