@@ -750,6 +750,20 @@ function guiGeneralTab()
     AddCardSlider(cardToT, "targetToTYPos", L["Y_Offset"], L["Tooltip_ToT_Y_Offset"], -100, 100, 1)
     FinalizeCardLayout(cfToT, cardToT)
 
+    local function AddCardHeader(card, titleStr)
+        local row = CreateFrame("Frame", nil, card)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 6, card.currentY)
+        row:SetSize(card.cardWidth - 12, 22)
+
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("LEFT", row, "LEFT", 4, 0)
+        title:SetText(titleStr)
+
+        card.currentY = card.currentY - 26
+        card:SetHeight(-card.currentY + 6)
+        return title
+    end
+
     -------------------------------------------------------
     -- CATEGORY 7: Chat Frame
     -------------------------------------------------------
@@ -757,6 +771,7 @@ function guiGeneralTab()
     local cardChat = CreateOptionCard(cfChat, L["Chat_Frame"], nil, -10)
     local cbChatBtns = AddCardCheckbox(cardChat, "hideChatButtons", L["Hide_Chat_Buttons"], L["Tooltip_Hide_Chat_Buttons"], BBF.HideFrames)
     AddCardChildCheckbox(cardChat, cbChatBtns, "hideChatBackground", L["Hide_Chat_Background"], L["Tooltip_Hide_Chat_Background"], BBF.HideFrames)
+    AddCardHeader(cardChat, L["Filters"])
     AddCardCheckbox(cardChat, "filterGladiusSpam", L["Gladius_Spam"], L["Tooltip_Filter_Gladius_Spam"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterNpcArenaSpam", L["Arena_Npc_Talk"], L["Tooltip_Filter_Arena_Npc_Talk"], BBF.ChatFilterCaller)
     AddCardCheckbox(cardChat, "filterTalentSpam", L["Talent_Spam"], L["Tooltip_Filter_Talent_Spam"], BBF.ChatFilterCaller)
@@ -785,16 +800,88 @@ function guiGeneralTab()
 
 
 
+    local function AddCardMultiParentChildCheckbox(card, parentCbs, dbKey, titleStr, descStr, callback)
+        local row = CreateFrame("Frame", nil, card)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 22, card.currentY)
+
+        local rowHeight = 34
+        row:SetSize(card.cardWidth - 28, rowHeight)
+
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
+
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
+        title:SetText(titleStr)
+        title:SetWidth(314)
+        title:SetJustifyH("LEFT")
+
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 314), rowHeight)
+
+        local cb = CreateCheckbox(dbKey, "", row, nil, callback)
+        cb.associatedTitle = title
+        cb.associatedRow = row
+        cb.parentCheckButtons = parentCbs
+        for _, parentCB in ipairs(parentCbs) do
+            parentCB.childrenCheckButtons = parentCB.childrenCheckButtons or {}
+            table.insert(parentCB.childrenCheckButtons, cb)
+        end
+        cb:SetSize(28, 28)
+        cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+        if cb.UpdateEnabledState then
+            cb:UpdateEnabledState()
+        end
+
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                if cb:IsEnabled() then
+                    cb:Click("LeftButton")
+                end
+            elseif button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
+
+        if descStr and descStr ~= "" then
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
+            CreateTooltipTwo(cb, titleStr, descStr)
+        end
+
+        titleFrame:HookScript("OnEnter", ShowHighlight)
+        titleFrame:HookScript("OnLeave", HideHighlight)
+        cb:HookScript("OnEnter", ShowHighlight)
+        cb:HookScript("OnLeave", HideHighlight)
+
+        card.currentY = card.currentY - rowHeight - 8
+        card:SetHeight(-card.currentY + 6)
+        return cb
+    end
+
     -------------------------------------------------------
     -- CATEGORY 9: Arena Names
     -------------------------------------------------------
     local cfArena = categoryFrames["arenaNames"].contentFrame
     local cardArena = CreateOptionCard(cfArena, L["Arena_Names"], nil, -10)
-    AddCardCheckbox(cardArena, "targetAndFocusArenaNames", L["Target_And_Focus_Arena_Names"], L["Tooltip_Target_And_Focus_Arena_Names_Desc"])
-    AddCardCheckbox(cardArena, "partyArenaNames", L["Party"], L["Tooltip_Party_Arena_Names_Desc"])
-    AddCardCheckbox(cardArena, "showSpecName", L["Show_Spec_Name"], L["Tooltip_Show_Spec_Name_Desc"])
-    AddCardCheckbox(cardArena, "shortArenaSpecName", L["Short"], L["Tooltip_Short_Arena_Spec_Name"])
-    AddCardCheckbox(cardArena, "showArenaID", L["Show_Arena_ID"], L["Tooltip_Show_Arena_ID"])
+    local cbTF = AddCardCheckbox(cardArena, "targetAndFocusArenaNames", L["Target_And_Focus_Arena_Names"], L["Tooltip_Target_And_Focus_Arena_Names_Desc"])
+    local cbParty = AddCardCheckbox(cardArena, "partyArenaNames", L["Party"], L["Tooltip_Party_Arena_Names_Desc"])
+    local arenaParents = { cbTF, cbParty }
+    AddCardMultiParentChildCheckbox(cardArena, arenaParents, "showSpecName", L["Show_Spec_Name"], L["Tooltip_Show_Spec_Name_Desc"])
+    AddCardMultiParentChildCheckbox(cardArena, arenaParents, "shortArenaSpecName", L["Short"], L["Tooltip_Short_Arena_Spec_Name"])
+    AddCardMultiParentChildCheckbox(cardArena, arenaParents, "showArenaID", L["Show_Arena_ID"], L["Tooltip_Show_Arena_ID"])
     FinalizeCardLayout(cfArena, cardArena)
 
     -------------------------------------------------------

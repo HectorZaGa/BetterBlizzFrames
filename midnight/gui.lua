@@ -2555,9 +2555,20 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     end
 
     local function UpdateEnabledState()
-        local parentCB = checkBox.parentCheckButton
         local isParentDisabled = false
-        if parentCB then
+        if checkBox.parentCheckButtons then
+            local anyParentActive = false
+            for _, parentCB in ipairs(checkBox.parentCheckButtons) do
+                if parentCB:GetChecked() and parentCB:IsEnabled() then
+                    anyParentActive = true
+                    break
+                end
+            end
+            if not anyParentActive then
+                isParentDisabled = true
+            end
+        elseif checkBox.parentCheckButton then
+            local parentCB = checkBox.parentCheckButton
             if not parentCB:GetChecked() or not parentCB:IsEnabled() then
                 isParentDisabled = true
             end
