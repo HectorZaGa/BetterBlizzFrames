@@ -1904,6 +1904,9 @@ function BBF.OpenClassSpecificWindow()
         classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "ButtonFrameTemplate")
         ButtonFrameTemplate_HidePortrait(classOptionsFrame)
         if classOptionsFrame.Inset then classOptionsFrame.Inset:Hide() end
+        if classOptionsFrame.Bg then
+            classOptionsFrame.Bg:SetColorTexture(0.0784, 0.0784, 0.0784, 1)
+        end
         classOptionsFrame:SetSize(260, 310)
         classOptionsFrame:SetPoint("CENTER")
         classOptionsFrame:SetFrameStrata("DIALOG")
@@ -1993,6 +1996,9 @@ function BBF.OpenColorOptions()
         customColorFrame = CreateFrame("Frame", "BBFCustomColorOptionsFrame", UIParent, "ButtonFrameTemplate")
         ButtonFrameTemplate_HidePortrait(customColorFrame)
         if customColorFrame.Inset then customColorFrame.Inset:Hide() end
+        if customColorFrame.Bg then
+            customColorFrame.Bg:SetColorTexture(0.0784, 0.0784, 0.0784, 1)
+        end
         customColorFrame:SetSize(360, 560)
         customColorFrame:SetPoint("CENTER")
         customColorFrame:SetFrameStrata("DIALOG")
