@@ -103,18 +103,25 @@ function guiGeneralTab()
     contentParent:SetPoint("BOTTOMRIGHT", BetterBlizzFrames, "BOTTOMRIGHT", -38, 15)
 
     local categoryList = {
-        { id = "general",     label = L["General"],                 icon = "Interface\\Icons\\INV_Gizmo_02" },
-        { id = "player",      label = L["Player_Frame"],            icon = "Interface\\Icons\\Achievement_GuildPerk_MobileBanking" },
-        { id = "party",       label = L["Party_Frame"],             icon = "Interface\\Icons\\Achievement_GuildPerk_EverybodysFriend" },
-        { id = "all",         label = L["All_Frames"],              icon = "Interface\\Icons\\Ability_Warrior_ShieldWall" },
-        { id = "target",      label = L["Target_Frame"],            icon = "Interface\\Icons\\Ability_Tracking" },
-        { id = "tot",         label = L["Target_of_Target"],       icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "chat",        label = L["Chat_Frame"],              icon = "Interface\\Icons\\UI_Chat" },
-        { id = "extra",       label = L["Extra_Features"],          icon = "Interface\\Icons\\Spell_Holy_PowerInfusion" },
-        { id = "arenaNames",  label = L["Arena_Names"],             icon = "Interface\\Icons\\Achievement_Arena_3v3_7" },
-        { id = "focus",       label = L["Focus_Frame"],             icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "focusToT",    label = L["Focus_ToT"],               icon = "Interface\\Icons\\Spell_Holy_MindVision" },
-        { id = "pet",         label = L["Pet_Frame"],               icon = "Interface\\Icons\\Ability_Hunter_Pet_Raptor" },
+        { id = "general",     label = L["General"],             atlas = "optionsicon-brown", size = {20, 20} },
+        { id = "player",      label = L["Player_Frame"],        atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {0.1, 0.6, 1} },
+        { id = "party",       label = L["Party_Frame"],         atlas = "groupfinder-icon-friend", size = {20, 20}, desaturated = true, color = {0.1, 0.6, 1},
+          overlays = { { atlas = "groupfinder-icon-friend", size = {16, 16}, offset = {4, 3}, desaturated = true, color = {0, 1, 0} } } },
+        { id = "all",         label = L["All_Frames"],          atlas = "groupfinder-icon-friend", size = {20, 20}, desaturated = true, color = {0.1, 0.6, 1},
+          overlays = {
+              { atlas = "groupfinder-icon-friend", size = {16, 16}, offset = {3, 3}, desaturated = true, color = {0, 1, 0} },
+              { atlas = "groupfinder-icon-friend", size = {16, 16}, offset = {-5, 3}, desaturated = true, color = {1, 0, 0} }
+          } },
+        { id = "target",      label = L["Target_Frame"],        atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {1, 0, 0} },
+        { id = "tot",         label = L["Target_of_Target"],   atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {1, 0, 0},
+          overlays = { { atlas = "TargetCrosshairs", size = {22, 22}, offset = {8, -8} } } },
+        { id = "chat",        label = L["Chat_Frame"],          atlas = "transmog-icon-chat", size = {18, 16} },
+        { id = "extra",       label = L["Extra_Features"],      atlas = "Campaign-QuestLog-LoreBook", size = {20, 20} },
+        { id = "arenaNames",  label = L["Arena_Names"],         atlas = "questlog-questtypeicon-pvp", size = {18, 20} },
+        { id = "focus",       label = L["Focus_Frame"],         atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {0, 1, 0} },
+        { id = "focusToT",    label = L["Focus_ToT"],           atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {0, 1, 0},
+          overlays = { { atlas = "TargetCrosshairs", size = {22, 22}, offset = {8, -8} } } },
+        { id = "pet",         label = L["Pet_Frame"],           atlas = "newplayerchat-chaticon-newcomer", size = {19, 19} },
     }
 
     local categoryFrames = {}
@@ -160,13 +167,51 @@ function guiGeneralTab()
         btn:SetBackdropColor(0.1, 0.1, 0.12, 0.85)
         btn:SetBackdropBorderColor(0.25, 0.25, 0.28, 0.8)
 
-        local iconTex = btn:CreateTexture(nil, "ARTWORK")
-        iconTex:SetSize(20, 20)
-        iconTex:SetPoint("LEFT", 8, 0)
-        iconTex:SetTexture(cat.icon)
+        local iconFrame = CreateFrame("Frame", nil, btn)
+        iconFrame:SetSize(26, 26)
+        iconFrame:SetPoint("LEFT", btn, "LEFT", 4, 0)
+
+        local iconTex = iconFrame:CreateTexture(nil, "ARTWORK")
+        local w, h = unpack(cat.size or {20, 20})
+        iconTex:SetSize(w, h)
+        iconTex:SetPoint("CENTER", iconFrame, "CENTER", 0, 0)
+
+        if cat.atlas then
+            iconTex:SetAtlas(cat.atlas)
+        elseif cat.icon then
+            iconTex:SetTexture(cat.icon)
+        end
+
+        if cat.desaturated then
+            iconTex:SetDesaturated(true)
+        end
+        if cat.color then
+            iconTex:SetVertexColor(unpack(cat.color))
+        end
+
+        if cat.overlays then
+            for _, ov in ipairs(cat.overlays) do
+                local ovTex = iconFrame:CreateTexture(nil, ov.layer or "OVERLAY")
+                local ow, oh = unpack(ov.size or {20, 20})
+                ovTex:SetSize(ow, oh)
+                local ox, oy = unpack(ov.offset or {0, 0})
+                ovTex:SetPoint("CENTER", iconTex, "CENTER", ox, oy)
+                if ov.atlas then
+                    ovTex:SetAtlas(ov.atlas)
+                elseif ov.icon then
+                    ovTex:SetTexture(ov.icon)
+                end
+                if ov.desaturated then
+                    ovTex:SetDesaturated(true)
+                end
+                if ov.color then
+                    ovTex:SetVertexColor(unpack(ov.color))
+                end
+            end
+        end
 
         btn.Text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        btn.Text:SetPoint("LEFT", iconTex, "RIGHT", 6, 0)
+        btn.Text:SetPoint("LEFT", iconFrame, "RIGHT", 4, 0)
         btn.Text:SetText(cat.label)
         btn.Text:SetTextColor(0.8, 0.8, 0.8)
 
