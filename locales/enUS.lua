@@ -1636,6 +1636,10 @@ L["Combat_Status"] = "Combat & Status"
 L["Display_Resources"] = "Display & Resources"
 L["Colors_Icons_FX"] = "Colors, Icons & FX"
 
+L["Power_Ebon_Might"] = "Ebon Might"
+L["Power_Stagger"] = "Stagger"
+L["Power_Soul_Shards"] = "Soul Shards"
+
 
 
 

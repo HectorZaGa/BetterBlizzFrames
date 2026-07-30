@@ -2074,8 +2074,7 @@ function BBF.OpenColorOptions()
             currentY = currentY - 32
             return cb
         end
-
-        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, callback)
+        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, maxTextWidth, callback)
             local btn = CreateFrame("Button", nil, content)
             btn:SetSize(18, 18)
             btn:SetPoint("TOPLEFT", content, "TOPLEFT", posX, posY)
@@ -2086,7 +2085,14 @@ function BBF.OpenColorOptions()
 
             local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             txt:SetPoint("LEFT", btn, "RIGHT", 4, 0)
+            if maxTextWidth then
+                txt:SetWidth(maxTextWidth)
+                txt:SetWordWrap(true)
+                txt:SetJustifyH("LEFT")
+            end
             txt:SetText(labelStr)
+
+            btn:SetHitRectInsets(0, -(maxTextWidth or 70), 0, 0)
 
             local function RefreshSwatch()
                 local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
@@ -2135,9 +2141,9 @@ function BBF.OpenColorOptions()
         currentY = currentY - 10
         AddHeader(L["Reaction_Colors"])
         local startY = currentY
-        AddColorSwatch("enemyHealthColor", L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2})
-        AddColorSwatch("friendlyHealthColor", L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2})
-        AddColorSwatch("neutralHealthColor", L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2})
+        AddColorSwatch("enemyHealthColor", _G["ENEMY"] or L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2}, 76)
+        AddColorSwatch("friendlyHealthColor", _G["FRIENDLY"] or L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2}, 76)
+        AddColorSwatch("neutralHealthColor", _G["NEUTRAL"] or L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2}, 76)
         currentY = currentY - 28
 
         -- SECTION 3: Class Colors
@@ -2148,27 +2154,37 @@ function BBF.OpenColorOptions()
         AddColorSwatch("singleClassColor", L["All_Classes"], 10, currentY, {r = 0.8, g = 0.8, b = 0.8})
         currentY = currentY - 26
 
+        local function GetNativePowerName(key, spellID)
+            if _G[key] then return _G[key] end
+            if _G["POWER_TYPE_" .. key] then return _G["POWER_TYPE_" .. key] end
+            if spellID then
+                local name = C_Spell.GetSpellName(spellID)
+                if name then return name end
+            end
+            return key
+        end
+
         local classes = {}
         for classID = 1, GetNumClasses() do
-            local _, classTag = GetClassInfo(classID)
-            if classTag then
-                local className = (BBF.FormatClassName and BBF.FormatClassName(classTag)) or classTag
-                table.insert(classes, {key = classTag, name = className})
+            local localizedClassName, classTag = GetClassInfo(classID)
+            if classTag and localizedClassName then
+                table.insert(classes, {key = classTag, name = localizedClassName})
             end
         end
         table.sort(classes, function(a, b) return a.name < b.name end)
 
         local thirdCount = math.ceil(#classes / 3)
         local gridStartY = currentY
+        local rowHeight = 28
         for i, classData in ipairs(classes) do
             local colIndex = math.floor((i - 1) / thirdCount)
             local rowIndex = (i - 1) % thirdCount
             local posX = 10 + colIndex * 102
-            local posY = gridStartY - rowIndex * 24
+            local posY = gridStartY - rowIndex * rowHeight
             local classDefColor = RAID_CLASS_COLORS[classData.key] or {r = 1, g = 1, b = 1}
-            AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b})
+            AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b}, 76)
         end
-        currentY = gridStartY - thirdCount * 24 - 12
+        currentY = gridStartY - thirdCount * rowHeight - 12
 
         -- SECTION 4: Power Colors
         AddHeader(L["Power_Colors"])
@@ -2178,16 +2194,19 @@ function BBF.OpenColorOptions()
         currentY = currentY - 26
 
         local powerTypes = {
-            { key = "MANA", label = L["Power_Mana"] or "Mana", color = {r = 0, g = 0.5, b = 1} },
-            { key = "RAGE", label = L["Power_Rage"] or "Rage", color = {r = 1, g = 0, b = 0} },
-            { key = "FOCUS", label = L["Power_Focus"] or "Focus", color = {r = 1, g = 0.5, b = 0.25} },
-            { key = "ENERGY", label = L["Power_Energy"] or "Energy", color = {r = 1, g = 1, b = 0} },
-            { key = "RUNIC_POWER", label = L["Power_Runic_Power"] or "Runic Power", color = {r = 0, g = 0.82, b = 1} },
-            { key = "LUNAR_POWER", label = L["Power_Lunar_Power"] or "Astral Power", color = {r = 0, g = 0.9, b = 1} },
-            { key = "MAELSTROM", label = L["Power_Maelstrom"] or "Maelstrom", color = {r = 0, g = 0.5, b = 1} },
-            { key = "INSANITY", label = L["Power_Insanity"] or "Insanity", color = {r = 0.4, g = 0, b = 0.8} },
-            { key = "CHI", label = L["Power_Chi"] or "Chi", color = {r = 0.71, g = 1, b = 0.92} },
-            { key = "FURY", label = L["Power_Fury"] or "Fury", color = {r = 0.788, g = 0.259, b = 0.992} },
+            { key = "MANA", color = {r = 0, g = 0.5, b = 1} },
+            { key = "RAGE", color = {r = 1, g = 0, b = 0} },
+            { key = "FOCUS", color = {r = 1, g = 0.5, b = 0.25} },
+            { key = "ENERGY", color = {r = 1, g = 1, b = 0} },
+            { key = "RUNIC_POWER", color = {r = 0, g = 0.82, b = 1} },
+            { key = "LUNAR_POWER", color = {r = 0, g = 0.9, b = 1} },
+            { key = "MAELSTROM", color = {r = 0, g = 0.5, b = 1} },
+            { key = "INSANITY", color = {r = 0.4, g = 0, b = 0.8} },
+            { key = "CHI", color = {r = 0.71, g = 1, b = 0.92} },
+            { key = "FURY", color = {r = 0.788, g = 0.259, b = 0.992} },
+            { key = "EBON_MIGHT", spellID = 395152, color = {r = 0.2, g = 0.58, b = 0.5} },
+            { key = "STAGGER", color = {r = 0.52, g = 1, b = 0.52} },
+            { key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
         }
 
         local pThird = math.ceil(#powerTypes / 3)
@@ -2196,10 +2215,11 @@ function BBF.OpenColorOptions()
             local colIndex = math.floor((i - 1) / pThird)
             local rowIndex = (i - 1) % pThird
             local posX = 10 + colIndex * 102
-            local posY = pGridStartY - rowIndex * 24
-            AddColorSwatch("powerColor" .. pData.key, pData.label, posX, posY, pData.color)
+            local posY = pGridStartY - rowIndex * rowHeight
+            local labelName = GetNativePowerName(pData.key, pData.spellID)
+            AddColorSwatch("powerColor" .. pData.key, labelName, posX, posY, pData.color, 76)
         end
-        currentY = pGridStartY - pThird * 24 - 20
+        currentY = pGridStartY - pThird * rowHeight - 20
 
         content:SetHeight(math.abs(currentY) + 30)
 
