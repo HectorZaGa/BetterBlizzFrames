@@ -2035,11 +2035,12 @@ function BBF.OpenColorOptions()
             currentY = currentY - 22
             return header
         end
-
-        local function AddCheckbox(dbKey, labelStr, callback)
+        local function AddCheckbox(dbKey, labelStr, callback, indentX, ttTitle, ttDesc)
+            local posX = 6 + (indentX or 0)
+            local width = 295 - (indentX or 0)
             local rowFrame = CreateFrame("Frame", nil, content)
-            rowFrame:SetSize(295, 28)
-            rowFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 6, currentY)
+            rowFrame:SetSize(width, 28)
+            rowFrame:SetPoint("TOPLEFT", content, "TOPLEFT", posX, currentY)
 
             local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
             rowHighlight:SetAllPoints()
@@ -2058,7 +2059,7 @@ function BBF.OpenColorOptions()
                 cb.Text:SetPoint("LEFT", cb, "RIGHT", 6, 0)
             end
             cb.Text:SetText(labelStr)
-            cb:SetHitRectInsets(0, -220, 0, 0)
+            cb:SetHitRectInsets(0, -(width - 45), 0, 0)
             cb:SetChecked(BetterBlizzFramesDB[dbKey])
             cb:SetScript("OnClick", function(self)
                 BetterBlizzFramesDB[dbKey] = self:GetChecked() or nil
@@ -2066,20 +2067,34 @@ function BBF.OpenColorOptions()
                 if BBF.UpdateFrames then BBF.UpdateFrames() end
             end)
 
+            if ttTitle or ttDesc then
+                CreateTooltipTwo(cb, ttTitle or labelStr, ttDesc, nil, "ANCHOR_RIGHT")
+                CreateTooltipTwo(rowFrame, ttTitle or labelStr, ttDesc, nil, "ANCHOR_RIGHT")
+            end
+
             rowFrame:EnableMouse(true)
-            rowFrame:SetScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            rowFrame:SetScript("OnEnter", function() if cb:IsEnabled() then rowHighlight:SetAlpha(0.25) end end)
             rowFrame:SetScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
-            rowFrame:SetScript("OnMouseDown", function() cb:Click() end)
-            cb:HookScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            rowFrame:SetScript("OnMouseDown", function() if cb:IsEnabled() then cb:Click() end end)
+            cb:HookScript("OnEnter", function() if cb:IsEnabled() then rowHighlight:SetAlpha(0.25) end end)
             cb:HookScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
 
             currentY = currentY - 32
             return cb
         end
-        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, maxTextWidth, callback)
+
+        local function SetSwatchEnabled(swatchBtn, enabled)
+            if swatchBtn then
+                swatchBtn:SetEnabled(enabled)
+                swatchBtn:SetAlpha(enabled and 1 or 0.4)
+            end
+        end
+
+        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
             local btn = CreateFrame("Button", nil, content)
             btn:SetSize(18, 18)
             btn:SetPoint("TOPLEFT", content, "TOPLEFT", posX, posY)
+            btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
             local swatch = btn:CreateTexture(nil, "OVERLAY")
             swatch:SetAllPoints()
@@ -2096,6 +2111,10 @@ function BBF.OpenColorOptions()
 
             btn:SetHitRectInsets(0, -(maxTextWidth or 70), 0, 0)
 
+            local titleText = ttTitle or labelStr
+            local descText = ttDesc or L["Tooltip_Color_Picker_Desc"]
+            CreateTooltipTwo(btn, titleText, descText, nil, "ANCHOR_RIGHT")
+
             local function RefreshSwatch()
                 local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
                 local r = col.r or col[1] or 1
@@ -2105,7 +2124,15 @@ function BBF.OpenColorOptions()
             end
             RefreshSwatch()
 
-            btn:SetScript("OnClick", function()
+            btn:SetScript("OnClick", function(self, mouseButton)
+                if mouseButton == "RightButton" and IsShiftKeyDown() then
+                    BetterBlizzFramesDB[dbKey] = nil
+                    RefreshSwatch()
+                    if callback then callback() end
+                    if BBF.UpdateFrames then BBF.UpdateFrames() end
+                    return
+                end
+
                 local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
                 local r = col.r or col[1] or 1
                 local g = col.g or col[2] or 1
@@ -2136,24 +2163,43 @@ function BBF.OpenColorOptions()
 
         -- SECTION 1: General Custom Colors
         AddHeader(L["Custom_Colors"])
-        AddCheckbox("customColorsUnitFrames", L["Enable_On_UnitFrames"])
-        AddCheckbox("customColorsRaidFrames", L["Enable_On_Raid_Party_Frames"])
+        AddCheckbox("customColorsUnitFrames", L["Enable_On_UnitFrames"], nil, nil, L["Enable_On_UnitFrames"], L["Tooltip_Enable_On_UnitFrames_Desc"])
+        AddCheckbox("customColorsRaidFrames", L["Enable_On_Raid_Party_Frames"], nil, nil, L["Enable_On_Raid_Party_Frames"], L["Tooltip_Enable_On_Raid_Party_Frames_Desc"])
 
         -- SECTION 2: Reaction Colors
         currentY = currentY - 10
         AddHeader(L["Reaction_Colors"])
         local startY = currentY
-        AddColorSwatch("enemyHealthColor", _G["ENEMY"] or L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2}, 76)
-        AddColorSwatch("friendlyHealthColor", _G["FRIENDLY"] or L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2}, 76)
-        AddColorSwatch("neutralHealthColor", _G["NEUTRAL"] or L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2}, 76)
+        AddColorSwatch("enemyHealthColor", _G["ENEMY"] or L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2}, 76, nil, L["Enemy_Health_Color"], L["Tooltip_Color_Picker_Desc"])
+        AddColorSwatch("friendlyHealthColor", _G["FRIENDLY"] or L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2}, 76, nil, L["Friendly_Health_Color"], L["Tooltip_Color_Picker_Desc"])
+        AddColorSwatch("neutralHealthColor", _G["NEUTRAL"] or L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2}, 76, nil, L["Neutral_Health_Color"], L["Tooltip_Color_Picker_Desc"])
         currentY = currentY - 28
 
         -- SECTION 3: Class Colors
         currentY = currentY - 10
         AddHeader(L["Class_Colors"])
-        AddCheckbox("overrideClassColors", L["Override_Class_Colors"])
-        AddCheckbox("useOneClassColor", L["Use_One_Color"])
-        AddColorSwatch("singleClassColor", L["All_Classes"], 10, currentY, {r = 0.8, g = 0.8, b = 0.8})
+
+        local classSwatches = {}
+        local singleClassBtn
+        local useOneClassCb
+
+        local function UpdateClassColorsState()
+            local parentEnabled = BetterBlizzFramesDB.overrideClassColors
+            local useOne = BetterBlizzFramesDB.useOneClassColor
+
+            useOneClassCb:SetEnabled(parentEnabled and true or false)
+            useOneClassCb:SetAlpha(parentEnabled and 1 or 0.4)
+
+            SetSwatchEnabled(singleClassBtn, parentEnabled and useOne)
+
+            for _, btn in ipairs(classSwatches) do
+                SetSwatchEnabled(btn, parentEnabled and not useOne)
+            end
+        end
+
+        AddCheckbox("overrideClassColors", L["Override_Class_Colors"], function() UpdateClassColorsState() end, nil, L["Override_Class_Colors"], L["Tooltip_Override_Class_Colors_Desc"])
+        useOneClassCb = AddCheckbox("useOneClassColor", L["Use_One_Color"], function() UpdateClassColorsState() end, 16, L["Use_One_Color"], L["Tooltip_Use_One_Color_For_All_Classes_Desc"])
+        singleClassBtn = AddColorSwatch("singleClassColor", L["All_Classes"], 26, currentY, {r = 0.8, g = 0.8, b = 0.8}, nil, nil, L["Single_Class_Color"], L["Tooltip_Color_Picker_Desc"])
         currentY = currentY - 26
 
         local function GetNativePowerName(key, spellID)
@@ -2184,15 +2230,35 @@ function BBF.OpenColorOptions()
             local posX = 10 + colIndex * 102
             local posY = gridStartY - rowIndex * rowHeight
             local classDefColor = RAID_CLASS_COLORS[classData.key] or {r = 1, g = 1, b = 1}
-            AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b}, 76)
+            local btn = AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b}, 76, nil, classData.name, L["Tooltip_Color_Picker_Desc"])
+            table.insert(classSwatches, btn)
         end
         currentY = gridStartY - thirdCount * rowHeight - 12
 
         -- SECTION 4: Power Colors
         AddHeader(L["Power_Colors"])
-        AddCheckbox("customPowerColors", L["Enable_Power_Colors"])
-        AddCheckbox("useOnePowerColor", L["Use_One_Color"])
-        AddColorSwatch("singlePowerColor", L["All_Classes"], 10, currentY, {r = 0, g = 0.8, b = 1})
+
+        local powerSwatches = {}
+        local singlePowerBtn
+        local useOnePowerCb
+
+        local function UpdatePowerColorsState()
+            local parentEnabled = BetterBlizzFramesDB.customPowerColors
+            local useOne = BetterBlizzFramesDB.useOnePowerColor
+
+            useOnePowerCb:SetEnabled(parentEnabled and true or false)
+            useOnePowerCb:SetAlpha(parentEnabled and 1 or 0.4)
+
+            SetSwatchEnabled(singlePowerBtn, parentEnabled and useOne)
+
+            for _, btn in ipairs(powerSwatches) do
+                SetSwatchEnabled(btn, parentEnabled and not useOne)
+            end
+        end
+
+        AddCheckbox("customPowerColors", L["Enable_Power_Colors"], function() UpdatePowerColorsState() end, nil, L["Enable_Power_Colors"], L["Tooltip_Enable_Power_Colors_Desc"])
+        useOnePowerCb = AddCheckbox("useOnePowerColor", L["Use_One_Color"], function() UpdatePowerColorsState() end, 16, L["Use_One_Color"], L["Tooltip_Use_One_Color_For_All_Powers_Desc"])
+        singlePowerBtn = AddColorSwatch("singlePowerColor", L["All_Classes"], 26, currentY, {r = 0, g = 0.8, b = 1}, nil, nil, L["Single_Power_Color"], L["Tooltip_Color_Picker_Desc"])
         currentY = currentY - 26
 
         local powerTypes = {
@@ -2219,9 +2285,74 @@ function BBF.OpenColorOptions()
             local posX = 10 + colIndex * 102
             local posY = pGridStartY - rowIndex * rowHeight
             local labelName = GetNativePowerName(pData.key, pData.spellID)
-            AddColorSwatch("powerColor" .. pData.key, labelName, posX, posY, pData.color, 76)
+            local btn = AddColorSwatch("powerColor" .. pData.key, labelName, posX, posY, pData.color, 76, nil, labelName, L["Tooltip_Color_Picker_Desc"])
+            table.insert(powerSwatches, btn)
         end
-        currentY = pGridStartY - pThird * rowHeight - 20
+        currentY = pGridStartY - pThird * rowHeight - 14
+
+        -- SECTION 5: Background Colors
+        AddHeader(L["Background_Colors"])
+        local unitHealthBgBtn, unitManaBgBtn, unitBgDd
+
+        local function UpdateUnitBgState()
+            local parentEnabled = BetterBlizzFramesDB.customBgColorUnitFrames
+            SetSwatchEnabled(unitHealthBgBtn, parentEnabled)
+            SetSwatchEnabled(unitManaBgBtn, parentEnabled)
+            if unitBgDd then unitBgDd:SetEnabled(parentEnabled) end
+        end
+
+        local unitBgCb = AddCheckbox("customBgColorUnitFrames", L["Change_UnitFrame_Background_Color"], function() UpdateUnitBgState() end, nil, L["Change_UnitFrame_Background_Color"], L["Tooltip_Change_UnitFrame_Background_Color_Desc"])
+        if CreateTextureDropdown then
+            unitBgDd = CreateTextureDropdown(
+                "unitFrameBgTexture",
+                content,
+                L["Select_Texture"],
+                "unitFrameBgTexture",
+                function()
+                    if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
+                    if BBF.UnitFrameBackgroundTexture then BBF.UnitFrameBackgroundTexture() end
+                end,
+                { anchorFrame = unitBgCb, x = 20, y = -4, label = L["Select_Texture"] }
+            )
+            currentY = currentY - 32
+        end
+        unitHealthBgBtn = AddColorSwatch("customHealthBgColor", L["Health_BG"], 26, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Health_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
+        unitManaBgBtn = AddColorSwatch("customManaBgColor", L["Mana_BG"], 146, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Mana_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
+        currentY = currentY - 28
+
+        local raidHealthBgBtn, raidManaBgBtn, raidBgDd
+
+        local function UpdateRaidBgState()
+            local parentEnabled = BetterBlizzFramesDB.customBgColorRaidFrames
+            SetSwatchEnabled(raidHealthBgBtn, parentEnabled)
+            SetSwatchEnabled(raidManaBgBtn, parentEnabled)
+            if raidBgDd then raidBgDd:SetEnabled(parentEnabled) end
+        end
+
+        local raidBgCb = AddCheckbox("customBgColorRaidFrames", L["Change_Party_RaidFrame_Background_Color"], function() UpdateRaidBgState() end, nil, L["Change_Party_RaidFrame_Background_Color"], L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"])
+        if CreateTextureDropdown then
+            raidBgDd = CreateTextureDropdown(
+                "raidFrameBgTexture",
+                content,
+                L["Select_Texture"],
+                "raidFrameBgTexture",
+                function()
+                    if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
+                    if BBF.SetCompactUnitFramesBackground then BBF.SetCompactUnitFramesBackground() end
+                end,
+                { anchorFrame = raidBgCb, x = 20, y = -4, label = L["Select_Texture"] }
+            )
+            currentY = currentY - 32
+        end
+        raidHealthBgBtn = AddColorSwatch("customRaidHealthBgColor", L["Health_BG"], 26, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Party_Raid_Health_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
+        raidManaBgBtn = AddColorSwatch("customRaidManaBgColor", L["Mana_BG"], 146, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Party_Raid_Mana_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
+        currentY = currentY - 28
+
+        -- Sync initial states
+        UpdateClassColorsState()
+        UpdatePowerColorsState()
+        UpdateUnitBgState()
+        UpdateRaidBgState()
 
         content:SetHeight(math.abs(currentY) + 30)
 
