@@ -323,7 +323,7 @@ function guiPositionAndScale()
         return cb
     end
 
-    local function AddCardSlider(card, dbKey, titleStr, descStr, minVal, maxVal, step, callback)
+    local function AddCardSlider(card, dbKey, titleStr, descStr, minVal, maxVal, stepVal, callback)
         local row = CreateFrame("Frame", nil, card)
         row:SetPoint("TOPLEFT", card, "TOPLEFT", 6, card.currentY)
         local rowHeight = 40
@@ -345,13 +345,30 @@ function guiPositionAndScale()
         row:SetScript("OnEnter", UpdateHighlight)
         row:SetScript("OnLeave", UpdateHighlight)
 
-        local slider = CreateSlider(row, titleStr, minVal, maxVal, step, dbKey)
-        slider:ClearAllPoints()
-        slider:SetPoint("RIGHT", row, "RIGHT", -10, 0)
-        slider:SetSize(160, 16)
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
+        title:SetText(titleStr)
+        title:SetWidth(240)
+        title:SetJustifyH("LEFT")
+
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 240), rowHeight)
+
+        local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
+        slider:SetPoint("RIGHT", row, "RIGHT", -20, 0)
+
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
 
         if descStr and descStr ~= "" then
-            CreateTooltipTwo(row, titleStr, descStr)
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(slider, titleStr, descStr)
         end
 
@@ -359,6 +376,8 @@ function guiPositionAndScale()
             slider:HookScript("OnValueChanged", function() callback() end)
         end
 
+        titleFrame:HookScript("OnEnter", UpdateHighlight)
+        titleFrame:HookScript("OnLeave", UpdateHighlight)
         slider:HookScript("OnEnter", UpdateHighlight)
         slider:HookScript("OnLeave", UpdateHighlight)
 
@@ -404,7 +423,7 @@ function guiPositionAndScale()
             { anchorFrame = row, x = card.cardWidth - 170, y = 8, label = "" }
         )
         dropdown:ClearAllPoints()
-        dropdown:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+        dropdown:SetPoint("RIGHT", row, "RIGHT", -20, 0)
         dropdown:SetWidth(150)
 
         dropdown:HookScript("OnEnter", UpdateHighlight)
