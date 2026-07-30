@@ -1976,7 +1976,15 @@ function BBF.OpenClassSpecificWindow()
 
             local classCheckbox = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
             if classCheckbox:GetHighlightTexture() then
+                classCheckbox:GetHighlightTexture():SetTexture("")
                 classCheckbox:GetHighlightTexture():SetAlpha(0)
+                classCheckbox:GetHighlightTexture():Hide()
+                classCheckbox:GetHighlightTexture().Show = function() end
+            end
+            if classCheckbox.HoverBackground then
+                classCheckbox.HoverBackground:SetAlpha(0)
+                classCheckbox.HoverBackground:Hide()
+                classCheckbox.HoverBackground.Show = function() end
             end
             classCheckbox:SetSize(26, 26)
             classCheckbox:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
@@ -2076,7 +2084,15 @@ function BBF.OpenColorOptions()
 
             local cb = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
             if cb:GetHighlightTexture() then
+                cb:GetHighlightTexture():SetTexture("")
                 cb:GetHighlightTexture():SetAlpha(0)
+                cb:GetHighlightTexture():Hide()
+                cb:GetHighlightTexture().Show = function() end
+            end
+            if cb.HoverBackground then
+                cb.HoverBackground:SetAlpha(0)
+                cb.HoverBackground:Hide()
+                cb.HoverBackground.Show = function() end
             end
             cb:SetSize(24, 24)
             cb:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
@@ -2518,7 +2534,15 @@ end
 local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
     if checkBox:GetHighlightTexture() then
+        checkBox:GetHighlightTexture():SetTexture("")
         checkBox:GetHighlightTexture():SetAlpha(0)
+        checkBox:GetHighlightTexture():Hide()
+        checkBox:GetHighlightTexture().Show = function() end
+    end
+    if checkBox.HoverBackground then
+        checkBox.HoverBackground:SetAlpha(0)
+        checkBox.HoverBackground:Hide()
+        checkBox.HoverBackground.Show = function() end
     end
     if not checkBox.Text then
         checkBox.Text = checkBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")

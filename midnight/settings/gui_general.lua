@@ -225,18 +225,6 @@ function guiGeneralTab()
         local rowHeight = 34
         row:SetSize(card.cardWidth - 12, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
-
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
@@ -269,11 +257,6 @@ function guiGeneralTab()
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
-        titleFrame:HookScript("OnEnter", ShowHighlight)
-        titleFrame:HookScript("OnLeave", HideHighlight)
-        cb:HookScript("OnEnter", ShowHighlight)
-        cb:HookScript("OnLeave", HideHighlight)
-
         card.currentY = card.currentY - rowHeight - 8
         card:SetHeight(-card.currentY + 6)
         return cb
@@ -285,18 +268,6 @@ function guiGeneralTab()
 
         local rowHeight = 34
         row:SetSize(card.cardWidth - 28, rowHeight)
-
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 6, 0)
@@ -335,11 +306,6 @@ function guiGeneralTab()
             CreateTooltipTwo(cb, titleStr, descStr)
         end
 
-        titleFrame:HookScript("OnEnter", ShowHighlight)
-        titleFrame:HookScript("OnLeave", HideHighlight)
-        cb:HookScript("OnEnter", ShowHighlight)
-        cb:HookScript("OnLeave", HideHighlight)
-
         card.currentY = card.currentY - rowHeight - 8
         card:SetHeight(-card.currentY + 6)
         return cb
@@ -351,18 +317,6 @@ function guiGeneralTab()
 
         local rowHeight = 40
         row:SetSize(card.cardWidth - 12, rowHeight)
-
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
 
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("LEFT", row, "LEFT", 6, 0)
@@ -391,11 +345,6 @@ function guiGeneralTab()
             CreateTooltipTwo(slider, titleStr, descStr)
         end
 
-        titleFrame:HookScript("OnEnter", ShowHighlight)
-        titleFrame:HookScript("OnLeave", HideHighlight)
-        slider:HookScript("OnEnter", ShowHighlight)
-        slider:HookScript("OnLeave", HideHighlight)
-
         card.currentY = card.currentY - rowHeight - 10
         card:SetHeight(-card.currentY + 6)
         return slider
@@ -407,18 +356,6 @@ function guiGeneralTab()
 
         local rowHeight = 30
         row:SetSize(card.cardWidth - 28, rowHeight)
-
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
 
         -- Item 1: SFX
         local title1 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -451,11 +388,6 @@ function guiGeneralTab()
             CreateTooltipTwo(cb1, titleStr1, descStr1)
         end
 
-        titleFrame1:HookScript("OnEnter", ShowHighlight)
-        titleFrame1:HookScript("OnLeave", HideHighlight)
-        cb1:HookScript("OnEnter", ShowHighlight)
-        cb1:HookScript("OnLeave", HideHighlight)
-
         -- Item 2: Warning (!)
         local title2 = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title2:SetPoint("LEFT", cb1, "RIGHT", 35, 0)
@@ -486,11 +418,6 @@ function guiGeneralTab()
             CreateTooltipTwo(titleFrame2, titleStr2, descStr2)
             CreateTooltipTwo(cb2, titleStr2, descStr2)
         end
-
-        titleFrame2:HookScript("OnEnter", ShowHighlight)
-        titleFrame2:HookScript("OnLeave", HideHighlight)
-        cb2:HookScript("OnEnter", ShowHighlight)
-        cb2:HookScript("OnLeave", HideHighlight)
 
         card.currentY = card.currentY - rowHeight - 6
         card:SetHeight(-card.currentY + 6)
@@ -543,18 +470,6 @@ function guiGeneralTab()
         local rowHeight = 40
         row:SetSize(card.cardWidth - 28, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
-
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
@@ -586,11 +501,6 @@ function guiGeneralTab()
             CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(slider, titleStr, descStr)
         end
-
-        titleFrame:HookScript("OnEnter", ShowHighlight)
-        titleFrame:HookScript("OnLeave", HideHighlight)
-        slider:HookScript("OnEnter", ShowHighlight)
-        slider:HookScript("OnLeave", HideHighlight)
 
         card.currentY = card.currentY - rowHeight - 10
         card:SetHeight(-card.currentY + 6)
@@ -807,18 +717,6 @@ function guiGeneralTab()
         local rowHeight = 34
         row:SetSize(card.cardWidth - 28, rowHeight)
 
-        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
-        rowHighlight:SetAllPoints()
-        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-        rowHighlight:Hide()
-
-        local function ShowHighlight() rowHighlight:Show() end
-        local function HideHighlight() rowHighlight:Hide() end
-
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", ShowHighlight)
-        row:SetScript("OnLeave", HideHighlight)
-
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 6, 0)
         title:SetText(titleStr)
@@ -860,11 +758,6 @@ function guiGeneralTab()
             CreateTooltipTwo(titleFrame, titleStr, descStr)
             CreateTooltipTwo(cb, titleStr, descStr)
         end
-
-        titleFrame:HookScript("OnEnter", ShowHighlight)
-        titleFrame:HookScript("OnLeave", HideHighlight)
-        cb:HookScript("OnEnter", ShowHighlight)
-        cb:HookScript("OnLeave", HideHighlight)
 
         card.currentY = card.currentY - rowHeight - 8
         card:SetHeight(-card.currentY + 6)
