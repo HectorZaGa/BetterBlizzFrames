@@ -225,6 +225,12 @@ function guiGeneralTab()
         local rowHeight = 34
         row:SetSize(card.cardWidth - 24, rowHeight)
 
+        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetAtlas("options-item-highlight")
+        rowHighlight:SetBlendMode("ADD")
+        rowHighlight:SetAlpha(0)
+
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("LEFT", row, "LEFT", 0, 0)
         title:SetText(titleStr)
@@ -239,7 +245,17 @@ function guiGeneralTab()
         cb:SetSize(28, 28)
         cb:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
-        titleFrame:EnableMouse(true)
+        local function ShowHL() rowHighlight:SetAlpha(0.2) end
+        local function HideHL() rowHighlight:SetAlpha(0) end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHL)
+        row:SetScript("OnLeave", HideHL)
+        titleFrame:HookScript("OnEnter", ShowHL)
+        titleFrame:HookScript("OnLeave", HideHL)
+        cb:HookScript("OnEnter", ShowHL)
+        cb:HookScript("OnLeave", HideHL)
+
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "LeftButton" then
                 if cb:IsEnabled() then
@@ -269,6 +285,12 @@ function guiGeneralTab()
         local rowHeight = 34
         row:SetSize(card.cardWidth - 40, rowHeight)
 
+        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetAtlas("options-item-highlight")
+        rowHighlight:SetBlendMode("ADD")
+        rowHighlight:SetAlpha(0)
+
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("LEFT", row, "LEFT", 0, 0)
         title:SetText(titleStr)
@@ -288,7 +310,17 @@ function guiGeneralTab()
             cb:UpdateEnabledState()
         end
 
-        titleFrame:EnableMouse(true)
+        local function ShowHL() rowHighlight:SetAlpha(0.2) end
+        local function HideHL() rowHighlight:SetAlpha(0) end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHL)
+        row:SetScript("OnLeave", HideHL)
+        titleFrame:HookScript("OnEnter", ShowHL)
+        titleFrame:HookScript("OnLeave", HideHL)
+        cb:HookScript("OnEnter", ShowHL)
+        cb:HookScript("OnLeave", HideHL)
+
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "LeftButton" then
                 if cb:IsEnabled() then
@@ -319,6 +351,12 @@ function guiGeneralTab()
         local rowHeight = 40
         row:SetSize(card.cardWidth - 24, rowHeight)
 
+        local rowHighlight = row:CreateTexture(nil, "BACKGROUND")
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetAtlas("options-item-highlight")
+        rowHighlight:SetBlendMode("ADD")
+        rowHighlight:SetAlpha(0)
+
         local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         title:SetPoint("LEFT", row, "LEFT", 0, 0)
         title:SetText(titleStr)
@@ -332,7 +370,17 @@ function guiGeneralTab()
         local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
         slider:SetPoint("RIGHT", row, "RIGHT", -5, 0)
 
-        titleFrame:EnableMouse(true)
+        local function ShowHL() rowHighlight:SetAlpha(0.2) end
+        local function HideHL() rowHighlight:SetAlpha(0) end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHL)
+        row:SetScript("OnLeave", HideHL)
+        titleFrame:HookScript("OnEnter", ShowHL)
+        titleFrame:HookScript("OnLeave", HideHL)
+        slider:HookScript("OnEnter", ShowHL)
+        slider:HookScript("OnLeave", HideHL)
+
         titleFrame:SetScript("OnMouseDown", function(self, button)
             if button == "RightButton" then
                 if BBF.HandleRightClick then

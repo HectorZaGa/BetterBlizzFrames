@@ -1889,6 +1889,92 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
     return dropdown
 end
 
+local classOptionsFrame
+function BBF.OpenClassSpecificWindow()
+    if not classOptionsFrame then
+        classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "ButtonFrameTemplate")
+        ButtonFrameTemplate_HidePortrait(classOptionsFrame)
+        if classOptionsFrame.Inset then classOptionsFrame.Inset:Hide() end
+        classOptionsFrame:SetSize(260, 310)
+        classOptionsFrame:SetPoint("CENTER")
+        classOptionsFrame:SetFrameStrata("DIALOG")
+        classOptionsFrame:SetMovable(true)
+        classOptionsFrame:EnableMouse(true)
+        classOptionsFrame:RegisterForDrag("LeftButton")
+        classOptionsFrame:SetScript("OnDragStart", classOptionsFrame.StartMoving)
+        classOptionsFrame:SetScript("OnDragStop", classOptionsFrame.StopMovingOrSizing)
+        if classOptionsFrame.SetTitle then
+            classOptionsFrame:SetTitle(L["Class_Specific_Options"])
+        else
+            classOptionsFrame.title = classOptionsFrame:CreateFontString(nil, "OVERLAY")
+            classOptionsFrame.title:SetFontObject("GameFontHighlight")
+            classOptionsFrame.title:SetPoint("TOP", classOptionsFrame, "TOP", 0, -5)
+            classOptionsFrame.title:SetText(L["Class_Specific_Options"])
+        end
+
+        local classes = {
+            { classID = 11, var = "hidePlayerPowerNoDruid", color = RAID_CLASS_COLORS["DRUID"] },
+            { classID = 4, var = "hidePlayerPowerNoRogue", color = RAID_CLASS_COLORS["ROGUE"] },
+            { classID = 9, var = "hidePlayerPowerNoWarlock", color = RAID_CLASS_COLORS["WARLOCK"] },
+            { classID = 2, var = "hidePlayerPowerNoPaladin", color = RAID_CLASS_COLORS["PALADIN"] },
+            { classID = 6, var = "hidePlayerPowerNoDeathKnight", color = RAID_CLASS_COLORS["DEATHKNIGHT"] },
+            { classID = 13, var = "hidePlayerPowerNoEvoker", color = RAID_CLASS_COLORS["EVOKER"] },
+            { classID = 10, var = "hidePlayerPowerNoMonk", color = RAID_CLASS_COLORS["MONK"] },
+            { classID = 8, var = "hidePlayerPowerNoMage", color = RAID_CLASS_COLORS["MAGE"] },
+        }
+
+        for i, classData in ipairs(classes) do
+            local rowFrame = CreateFrame("Frame", nil, classOptionsFrame)
+            rowFrame:SetHeight(30)
+            rowFrame:SetPoint("TOPLEFT", classOptionsFrame, "TOPLEFT", 16, -32 - (i - 1) * 33)
+            rowFrame:SetPoint("TOPRIGHT", classOptionsFrame, "TOPRIGHT", 4, -32 - (i - 1) * 33)
+
+            local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
+            rowHighlight:SetAllPoints()
+            rowHighlight:SetAtlas("options-item-highlight")
+            rowHighlight:SetBlendMode("ADD")
+            rowHighlight:SetAlpha(0)
+
+            local classCheckbox = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
+            classCheckbox:SetSize(26, 26)
+            classCheckbox:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
+            if not classCheckbox.Text then
+                classCheckbox.Text = classCheckbox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                classCheckbox.Text:SetPoint("LEFT", classCheckbox, "RIGHT", 6, 0)
+            end
+            local localizedClassName = GetClassInfo(classData.classID)
+            classCheckbox.Text:SetText(string.format(L["Ignore_Class"], localizedClassName or ""))
+
+            if classData.color then
+                local r, g, b = classData.color.r, classData.color.g, classData.color.b
+                classCheckbox.Text:SetTextColor(r, g, b)
+            end
+
+            classCheckbox:SetHitRectInsets(0, -180, 0, 0)
+            classCheckbox:SetChecked(BetterBlizzFramesDB[classData.var])
+
+            classCheckbox:SetScript("OnClick", function(self)
+                BetterBlizzFramesDB[classData.var] = self:GetChecked() or nil
+                if BBF.HideFrames then BBF.HideFrames() end
+            end)
+
+            rowFrame:EnableMouse(true)
+            rowFrame:SetScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            rowFrame:SetScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+            rowFrame:SetScript("OnMouseDown", function() classCheckbox:Click() end)
+            classCheckbox:HookScript("OnEnter", function() rowHighlight:SetAlpha(0.25) end)
+            classCheckbox:HookScript("OnLeave", function() rowHighlight:SetAlpha(0) end)
+        end
+        classOptionsFrame:Show()
+    else
+        if classOptionsFrame:IsShown() then
+            classOptionsFrame:Hide()
+        else
+            classOptionsFrame:Show()
+        end
+    end
+end
+
 function BBF.HandleRightClick(option, titleStr, widget)
     local isShift = IsShiftKeyDown()
     local isCtrl = IsControlKeyDown()
@@ -1938,8 +2024,8 @@ function BBF.HandleRightClick(option, titleStr, widget)
     elseif option == "partyFrameRangeAlpha" or titleStr == L["Party_Frame_Range_Alpha"] or titleStr == L["Change_Party_Frame_Alpha"] then
         BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground = not BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground
 
-    elseif option == "darkModeUiAura" or titleStr == L["Auras"] or titleStr == L["Tooltip_Dark_Mode_Auras"] then
-        BetterBlizzFramesDB.removeDebuffColorBorder = not BetterBlizzFramesDB.removeDebuffColorBorder
+    elseif option == "hidePlayerPower" or titleStr == L["Hide_Resource_Power"] then
+        if BBF.OpenClassSpecificWindow then BBF.OpenClassSpecificWindow() end
 
     elseif option == "showSpecName" or titleStr == L["Show_Spec_Name"] then
         BetterBlizzFramesDB.partyArenaNames = not BetterBlizzFramesDB.partyArenaNames
