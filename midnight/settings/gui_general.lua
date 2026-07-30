@@ -375,7 +375,7 @@ function guiGeneralTab()
         titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 240), rowHeight)
 
         local slider = CreateSlider(row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
-        slider:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+        slider:SetPoint("RIGHT", row, "RIGHT", -20, 0)
 
         titleFrame:EnableMouse(true)
         titleFrame:SetScript("OnMouseDown", function(self, button)
