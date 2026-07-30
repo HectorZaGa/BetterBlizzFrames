@@ -1902,6 +1902,7 @@ local classOptionsFrame
 function BBF.OpenClassSpecificWindow()
     if not classOptionsFrame then
         classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "ButtonFrameTemplate")
+        tinsert(UISpecialFrames, "ClassOptionsFrame")
         ButtonFrameTemplate_HidePortrait(classOptionsFrame)
         if classOptionsFrame.Inset then classOptionsFrame.Inset:Hide() end
         if classOptionsFrame.Bg then
@@ -1994,6 +1995,7 @@ local customColorFrame
 function BBF.OpenColorOptions()
     if not customColorFrame then
         customColorFrame = CreateFrame("Frame", "BBFCustomColorOptionsFrame", UIParent, "ButtonFrameTemplate")
+        tinsert(UISpecialFrames, "BBFCustomColorOptionsFrame")
         ButtonFrameTemplate_HidePortrait(customColorFrame)
         if customColorFrame.Inset then customColorFrame.Inset:Hide() end
         if customColorFrame.Bg then
