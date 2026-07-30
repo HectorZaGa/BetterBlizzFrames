@@ -956,18 +956,44 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     SetSliderValue()
 
-    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
-        slider:Disable()
-        slider:SetAlpha(0.5)
-    else
-        if parent:GetObjectType() == "CheckButton" and parent:IsEnabled() then
+    if parent and parent:GetObjectType() == "CheckButton" then
+        slider.parentCheckButton = parent
+        parent.childrenCheckButtons = parent.childrenCheckButtons or {}
+        table.insert(parent.childrenCheckButtons, slider)
+    end
+
+    local function UpdateEnabledState()
+        local parentCB = slider.parentCheckButton
+        local isParentDisabled = false
+        if parentCB then
+            if not parentCB:GetChecked() or not parentCB:IsEnabled() then
+                isParentDisabled = true
+            end
+        end
+
+        if isParentDisabled then
+            slider:Disable()
+            slider:SetAlpha(0.5)
+            if slider.associatedTitle then
+                slider.associatedTitle:SetFontObject("GameFontDisableSmall")
+            end
+            if slider.associatedRow then
+                slider.associatedRow:SetAlpha(0.5)
+            end
+        else
             slider:Enable()
             slider:SetAlpha(1)
-        elseif parent:GetObjectType() ~= "CheckButton" then
-            slider:Enable()
-            slider:SetAlpha(1)
+            if slider.associatedTitle then
+                slider.associatedTitle:SetFontObject("GameFontHighlightSmall")
+            end
+            if slider.associatedRow then
+                slider.associatedRow:SetAlpha(1)
+            end
         end
     end
+
+    slider.UpdateEnabledState = UpdateEnabledState
+    UpdateEnabledState()
 
     -- Create Input Box on Right Click
     local editBox = CreateFrame("EditBox", nil, slider, "InputBoxTemplate")

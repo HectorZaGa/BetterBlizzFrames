@@ -536,19 +536,80 @@ function guiGeneralTab()
     AddCardCheckbox(cardCC, "hideLossOfControlFrameLines", L["Hide_CC_Red_Lines"], L["Tooltip_Hide_CC_Red_Lines"], BBF.HideFrames)
     AddCardSlider(cardCC, "lossOfControlScale", L["Loss_of_Control_Scale"], L["Tooltip_CC_Scale_Desc"], 0.4, 1.4, 0.01)
 
+    local function AddCardChildSlider(card, parentCb, dbKey, titleStr, descStr, minVal, maxVal, stepVal, callback)
+        local row = CreateFrame("Frame", nil, card)
+        row:SetPoint("TOPLEFT", card, "TOPLEFT", 22, card.currentY)
+
+        local rowHeight = 40
+        row:SetSize(card.cardWidth - 28, rowHeight)
+
+        local rowHighlight = row:CreateTexture(nil, "ARTWORK", nil, 7)
+        rowHighlight:SetAllPoints()
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+        rowHighlight:Hide()
+
+        local function ShowHighlight() rowHighlight:Show() end
+        local function HideHighlight() rowHighlight:Hide() end
+
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", ShowHighlight)
+        row:SetScript("OnLeave", HideHighlight)
+
+        local title = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        title:SetPoint("LEFT", row, "LEFT", 6, 0)
+        title:SetText(titleStr)
+        title:SetWidth(224)
+        title:SetJustifyH("LEFT")
+
+        local titleFrame = CreateFrame("Frame", nil, row)
+        titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+        titleFrame:SetSize(math.min(title:GetStringWidth() + 10, 224), rowHeight)
+
+        local slider = CreateSlider(parentCb or row, "", minVal, maxVal, stepVal, dbKey, nil, 120)
+        slider.associatedTitle = title
+        slider.associatedRow = row
+        slider:SetPoint("RIGHT", row, "RIGHT", -20, 0)
+        if slider.UpdateEnabledState then
+            slider:UpdateEnabledState()
+        end
+
+        titleFrame:EnableMouse(true)
+        titleFrame:SetScript("OnMouseDown", function(self, button)
+            if button == "RightButton" then
+                if BBF.HandleRightClick then
+                    BBF.HandleRightClick(dbKey, titleStr, titleFrame)
+                end
+            end
+        end)
+
+        if descStr and descStr ~= "" then
+            CreateTooltipTwo(titleFrame, titleStr, descStr)
+            CreateTooltipTwo(slider, titleStr, descStr)
+        end
+
+        titleFrame:HookScript("OnEnter", ShowHighlight)
+        titleFrame:HookScript("OnLeave", HideHighlight)
+        slider:HookScript("OnEnter", ShowHighlight)
+        slider:HookScript("OnLeave", HideHighlight)
+
+        card.currentY = card.currentY - rowHeight - 10
+        card:SetHeight(-card.currentY + 6)
+        return slider
+    end
+
     -- Card 3: Dark Mode Settings
     local cardDark = CreateOptionCard(cfGen, L["Dark_Mode_Settings"], cardCC, -22)
-    AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"], L["Tooltip_Dark_Mode"], function() BBF.DarkmodeFrames(true) end)
-    AddCardSlider(cardDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value"], 0, 1, 0.01)
-    AddCardCheckbox(cardDark, "darkModeCastbars", L["Castbars"], L["Dark_Borders_Castbars"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeActionBars", L["ActionBars"], L["Dark_Borders_ActionBars"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeUiAura", L["Auras"], L["Dark_Borders_Aura_Icons"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeMinimap", L["Minimap"], L["Dark_Mode_Minimap"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeNameplateResource", L["Nameplate_Resource"], L["Dark_Mode_Nameplate_Resource"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeGameTooltip", L["Tooltip"], L["Tooltip_Dark_Mode_Tooltip_Desc"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeObjectiveFrame", L["Objectives"], L["Tooltip_Dark_Mode_Objectives_Desc"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeVigor", L["Vigor"], L["Tooltip_Dark_Mode_Vigor_Desc"], function() BBF.DarkmodeFrames(true) end)
-    AddCardCheckbox(cardDark, "darkModeEliteTexture", L["Elite_Texture"], L["Tooltip_Dark_Mode_Elite_Desc"], function() BBF.DarkmodeFrames(true) end)
+    local cbDark = AddCardCheckbox(cardDark, "darkModeUi", L["Dark_Mode"], L["Tooltip_Dark_Mode"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildSlider(cardDark, cbDark, "darkModeColor", L["Darkness"], L["Tooltip_Dark_Mode_Value"], 0, 1, 0.01)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeCastbars", L["Castbars"], L["Dark_Borders_Castbars"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeActionBars", L["ActionBars"], L["Dark_Borders_ActionBars"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeUiAura", L["Auras"], L["Dark_Borders_Aura_Icons"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeMinimap", L["Minimap"], L["Dark_Mode_Minimap"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeNameplateResource", L["Nameplate_Resource"], L["Dark_Mode_Nameplate_Resource"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeGameTooltip", L["Tooltip"], L["Tooltip_Dark_Mode_Tooltip_Desc"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeObjectiveFrame", L["Objectives"], L["Tooltip_Dark_Mode_Objectives_Desc"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeVigor", L["Vigor"], L["Tooltip_Dark_Mode_Vigor_Desc"], function() BBF.DarkmodeFrames(true) end)
+    AddCardChildCheckbox(cardDark, cbDark, "darkModeEliteTexture", L["Elite_Texture"], L["Tooltip_Dark_Mode_Elite_Desc"], function() BBF.DarkmodeFrames(true) end)
     FinalizeCardLayout(cfGen, cardDark)
 
     -------------------------------------------------------
@@ -568,7 +629,7 @@ function guiGeneralTab()
 
     -- Card 2: Display & Resources
     local cardPlayerDispRes = CreateOptionCard(cfPlayer, L["Display_Resources"], cardPlayerLayout, -22)
-    AddCardCheckbox(cardPlayerDispRes, "hidePlayerName", L["Hide_Names"], L["Tooltip_Hide_Player_Name"], function() BBF.SetCenteredNamesCaller() end)
+    AddCardCheckbox(cardPlayerDispRes, "hidePlayerName", L["Hide_Names"], "", function() BBF.SetCenteredNamesCaller() end)
     AddCardCheckbox(cardPlayerDispRes, "hidePlayerPower", L["Hide_Resource_Power"], L["Tooltip_Hide_Resource_Power_Desc"], BBF.HideFrames)
     AddCardCheckbox(cardPlayerDispRes, "hideResourceTooltip", L["Hide_Resource_Tooltip"], L["Tooltip_Hide_Resource_Tooltip_Desc"], BBF.HideClassResourceTooltip)
     AddCardCheckbox(cardPlayerDispRes, "hideManaFeedback", L["Hide_Mana_Feedback"], L["Tooltip_Hide_Mana_Feedback_Desc"], BBF.HideFrames)
