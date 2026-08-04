@@ -149,8 +149,8 @@ function guiGeneralTab()
         sf.contentFrame = cf
 
         local btn = CreateFrame("Button", nil, sidebar, "BackdropTemplate")
-        btn:SetSize(160, 34)
-        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * 38))
+        btn:SetSize(160, 36)
+        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * 40))
         btn:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8X8",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",

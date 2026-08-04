@@ -34,8 +34,8 @@ function guiFrameAuras()
     -- SIDEBAR NAVIGATION CONTAINER
     -------------------------------------------------------
     local sidebar = CreateFrame("Frame", nil, guiFrameAuras)
-    sidebar:SetSize(160, 520)
-    sidebar:SetPoint("TOPLEFT", guiFrameAuras, "TOPLEFT", 15, -45)
+    sidebar:SetSize(165, 545)
+    sidebar:SetPoint("TOPLEFT", guiFrameAuras, "TOPLEFT", 12, -45)
 
     local contentParent = CreateFrame("Frame", nil, guiFrameAuras)
     contentParent:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", 10, 0)
@@ -94,9 +94,10 @@ function guiFrameAuras()
     enableMasque:SetAlpha(0.5)
 
     local categoryList = {
-        { id = "player",      label = L["Player_Auras"],             atlas = "UI-HUD-UnitFrame-Player-PortraitOn", size = {20, 20} },
-        { id = "targetfocus", label = L["Target_And_Focus_Auras"],   atlas = "TargetCrosshairs",                   size = {20, 20} },
-        { id = "display",     label = L["Display_And_Visibility"],   atlas = "transmog-icon-chat",                   size = {20, 20} },
+        { id = "player",      label = L["Player_Auras"],             atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {0.1, 0.6, 1} },
+        { id = "targetfocus", label = L["Target_And_Focus_Auras"],   atlas = "groupfinder-icon-friend", size = {22, 22}, desaturated = true, color = {0, 1, 0},
+          overlays = { { atlas = "TargetCrosshairs", size = {22, 22}, offset = {8, -8} } } },
+        { id = "display",     label = L["Display_And_Visibility"],   atlas = "optionsicon-brown", size = {20, 20} },
     }
 
     local categoryFrames = {}
@@ -130,8 +131,8 @@ function guiFrameAuras()
         sf.contentFrame = cf
 
         local btn = CreateFrame("Button", nil, sidebar, "BackdropTemplate")
-        btn:SetSize(160, 34)
-        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * 38))
+        btn:SetSize(160, 36)
+        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * 40))
         btn:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8X8",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -154,6 +155,34 @@ function guiFrameAuras()
             iconTex:SetAtlas(cat.atlas)
         elseif cat.icon then
             iconTex:SetTexture(cat.icon)
+        end
+
+        if cat.desaturated then
+            iconTex:SetDesaturated(true)
+        end
+        if cat.color then
+            iconTex:SetVertexColor(unpack(cat.color))
+        end
+
+        if cat.overlays then
+            for _, ov in ipairs(cat.overlays) do
+                local ovTex = iconFrame:CreateTexture(nil, ov.layer or "OVERLAY")
+                local ow, oh = unpack(ov.size or {20, 20})
+                ovTex:SetSize(ow, oh)
+                local ox, oy = unpack(ov.offset or {0, 0})
+                ovTex:SetPoint("CENTER", iconTex, "CENTER", ox, oy)
+                if ov.atlas then
+                    ovTex:SetAtlas(ov.atlas)
+                elseif ov.icon then
+                    ovTex:SetTexture(ov.icon)
+                end
+                if ov.desaturated then
+                    ovTex:SetDesaturated(true)
+                end
+                if ov.color then
+                    ovTex:SetVertexColor(unpack(ov.color))
+                end
+            end
         end
 
         btn.Text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -180,7 +209,7 @@ function guiFrameAuras()
     -- CARD HELPERS WITH TOOLTIPS & EXPANDED SPACING
     -------------------------------------------------------
     local function CreateOptionCard(parentFrame, titleText, anchorFrame, yOffset, cardWidth)
-        cardWidth = cardWidth or 430
+        cardWidth = cardWidth or 435
         
         local header = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         if anchorFrame then

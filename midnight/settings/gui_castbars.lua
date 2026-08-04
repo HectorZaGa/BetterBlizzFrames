@@ -27,8 +27,8 @@ function guiCastbars()
     -- SIDEBAR NAVIGATION CONTAINER
     -------------------------------------------------------
     local sidebar = CreateFrame("Frame", nil, BetterBlizzFramesCastbars)
-    sidebar:SetSize(160, 520)
-    sidebar:SetPoint("TOPLEFT", BetterBlizzFramesCastbars, "TOPLEFT", 15, -45)
+    sidebar:SetSize(165, 545)
+    sidebar:SetPoint("TOPLEFT", BetterBlizzFramesCastbars, "TOPLEFT", 12, -45)
 
     local contentParent = CreateFrame("Frame", nil, BetterBlizzFramesCastbars)
     contentParent:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", 10, 0)
@@ -68,7 +68,7 @@ function guiCastbars()
         sf:Hide()
 
         local cf = CreateFrame("Frame", nil, sf)
-        cf.cardWidth = 430
+        cf.cardWidth = 435
         cf:SetSize(cf.cardWidth, 520)
         sf:SetScrollChild(cf)
         sf.contentFrame = cf
@@ -77,7 +77,7 @@ function guiCastbars()
 
         local btn = CreateFrame("Button", nil, sidebar, "BackdropTemplate")
         btn:SetSize(160, 36)
-        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -(i - 1) * 42)
+        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * 40))
         btn:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8X8",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -161,7 +161,7 @@ function guiCastbars()
     -- CARD HELPERS WITH GOLD HEADERS & TOOLTIP BORDERS
     -------------------------------------------------------
     local function CreateOptionCard(parentFrame, titleText, anchorFrame, yOffset, cardWidth)
-        cardWidth = cardWidth or 430
+        cardWidth = cardWidth or 435
 
         local header = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         if anchorFrame then
