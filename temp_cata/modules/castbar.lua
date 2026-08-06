@@ -1091,3 +1091,79 @@ function BBF.HookCastbarsForEvoker()
     --     evokerCastbarsHooked = true
     -- end
 end
+
+local CastStartEvents = {
+    UNIT_SPELLCAST_START            = true,
+    UNIT_SPELLCAST_CHANNEL_START    = true,
+    PLAYER_TARGET_CHANGED           = true,
+    PLAYER_FOCUS_CHANGED            = true,
+}
+
+local function GetCastbarTargetName(unit)
+    local name = UnitSpellTargetName(unit)
+    if not name then return end
+
+    local class = UnitSpellTargetClass(unit)
+    if not class then
+        _, class = UnitClass(unit .. "target")
+    end
+    return name, class
+end
+
+local function GetColoredTargetString(name, class)
+    if not name then return end
+    if class then
+        local color = C_ClassColor and C_ClassColor.GetClassColor(class) or RAID_CLASS_COLORS[class]
+        if color then
+            if color.WrapTextInColorCode then
+                return color:WrapTextInColorCode(name)
+            elseif color.colorStr then
+                return "|c" .. color.colorStr .. name .. "|r"
+            end
+        end
+    end
+    return name
+end
+
+function BBF.CastbarTargetText(castBar)
+    castBar:HookScript("OnEvent", function(self, event)
+        if not CastStartEvents[event] then return end
+        local spell = UnitCastingInfo(self.unit) or UnitChannelInfo(self.unit)
+        if not spell then return end
+
+        local name, class = GetCastbarTargetName(self.unit)
+        local coloredName = GetColoredTargetString(name, class)
+
+        if coloredName then
+            castBar.Text:SetText(spell .. ": " .. coloredName)
+        end
+    end)
+end
+
+function BBF.CastbarTargetHighlight(castBar)
+    castBar.castOnMeHighlight = castBar:CreateTexture(nil, "OVERLAY", nil, 7)
+    castBar.castOnMeHighlight:SetAtlas("ui-hud-nameplates-targetedbyenemy")
+    castBar.castOnMeHighlight:SetPoint("TOPLEFT", -2.5, 2)
+    castBar.castOnMeHighlight:SetPoint("BOTTOMRIGHT", 2.5, -2)
+    castBar.castOnMeHighlight:SetAlpha(0)
+
+    castBar:HookScript("OnEvent", function(self)
+        self.castOnMeHighlight:SetAlpha(PlayerIsSpellTarget(self.unit) and 1 or 0)
+    end)
+end
+
+function BBF.HookCastbars()
+    if BetterBlizzFramesDB.castBarTargetText then
+        BBF.CastbarTargetText(TargetFrameSpellBar)
+        if FocusFrameSpellBar then
+            BBF.CastbarTargetText(FocusFrameSpellBar)
+        end
+    end
+
+    if BetterBlizzFramesDB.castBarTargetHighlight then
+        BBF.CastbarTargetHighlight(TargetFrameSpellBar)
+        if FocusFrameSpellBar then
+            BBF.CastbarTargetHighlight(FocusFrameSpellBar)
+        end
+    end
+end

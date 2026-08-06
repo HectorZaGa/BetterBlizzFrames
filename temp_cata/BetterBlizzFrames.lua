@@ -2936,6 +2936,7 @@ Frame:SetScript("OnEvent", function(...)
             BBF.CastbarRecolorWidgets()
             BBF.CastBarTimerCaller()
             BBF.ShowPlayerCastBarIcon()
+            BBF.HookCastbars()
             BBF.CombatIndicator(PlayerFrame, "player")
             if BetterBlizzFramesDB.hideArenaFrames then
                 BBF.HideArenaFrames()
@@ -2983,6 +2984,7 @@ Frame:SetScript("OnEvent", function(...)
                 if BetterBlizzFramesDB.biggerHealthbars then
                     BBF.HookBiggerHealthbars()
                 end
+                BBF.BiggerDefaultPartyFrames()
                 BBF.HookHideManabars()
                 BBF.PlayerElite(BetterBlizzFramesDB.playerEliteFrameMode)
                 BBF.ToggleCastbarInterruptIcon()
@@ -3414,3 +3416,82 @@ end
 C_Timer.After(1, function()
     BBF.EditModeAlphaSlider = CreateSmoothSlider(EditModeManagerFrame.LayoutDropdown, "editModeSelectionAlpha", "Edit Mode Transparency", 0.85, BBF.ReduceEditModeAlpha)
 end)
+
+
+function BBF.BiggerDefaultPartyFrames()
+    if not (BetterBlizzFramesDB.biggerHealthbars or BetterBlizzFramesDB.betterDefaultPartyFrames) then return end
+    local bigBars = BetterBlizzFramesDB.biggerHealthbars
+    local bigNamesInside = bigBars and BetterBlizzFramesDB.biggerHealthbarsNameInside
+    local hpHeight = bigBars and 18 or 6
+    local barWidth = 71
+    local manabar_height = 6
+    local barsXPos = 37
+    local hpYPos = bigBars and -5.5 or -17
+    local manaYPos = -24
+
+    local mfs = {PartyFrame.MemberFrame1, PartyFrame.MemberFrame2, PartyFrame.MemberFrame3, PartyFrame.MemberFrame4}
+
+    for _, mf in ipairs(mfs) do
+        local overlay = mf.PartyMemberOverlay
+        local portrait = mf.Portrait
+        local name = mf.bbfName
+        local healthbar = mf.HealthBar
+        local manabar = mf.ManaBar
+        local bg = mf.Background
+        local ogName = overlay.Name
+        local auras = mf.AuraFrameContainer
+
+        local texture = overlay.Texture
+        if bigBars then
+            texture:SetTexture("Interface\\Addons\\BetterBlizzFrames\\media\\UI-TargetingFrame-NoLevel")
+        else
+            texture:SetTexture("Interface\\TargetingFrame\\UI-FocusFrame-Large")
+        end
+
+        texture:SetTexCoord(1, 0, 0, 1)
+        texture:SetScale(1.2)
+        local p, rt, rp, x, y = portrait:GetPoint()
+        texture:SetPoint(p, rt, rp, -17, 2)
+
+        healthbar:SetHeight(hpHeight)
+        healthbar:SetWidth(barWidth)
+        healthbar:SetPoint("TOPLEFT", x + barsXPos, y + hpYPos)
+
+        manabar:SetHeight(manabar_height)
+        manabar:SetWidth(barWidth)
+        manabar:SetPoint("TOPLEFT", x + barsXPos, y + manaYPos)
+
+        ogName:SetWidth(barWidth)
+        ogName:SetJustifyH("CENTER")
+        ogName:ClearAllPoints()
+        if bigBars then
+            if bigNamesInside then
+                ogName:SetPoint("CENTER", healthbar, "CENTER", 0, 0.5)
+            else
+                ogName:SetPoint("BOTTOM", healthbar, "TOP", 0, 2)
+            end
+        else
+            ogName:SetPoint("BOTTOM", healthbar, "TOP", 0, 1.5)
+        end
+
+        name:SetWidth(barWidth)
+        name:SetJustifyH("CENTER")
+        name:ClearAllPoints()
+        if bigBars then
+            if bigNamesInside then
+                name:SetPoint("CENTER", healthbar, "CENTER", 0, 0.5)
+            else
+                name:SetPoint("BOTTOM", healthbar, "TOP", 0, 2)
+            end
+        else
+            name:SetPoint("BOTTOM", healthbar, "TOP", 0, 1.5)
+        end
+
+        local a, b, c = bg:GetPoint()
+        bg:SetPoint(a, b, c, 44, -12)
+        bg:SetSize(71, 24)
+
+        auras:ClearAllPoints()
+        auras:SetPoint("TOPLEFT", manabar, "BOTTOMLEFT", 2, -3)
+    end
+end

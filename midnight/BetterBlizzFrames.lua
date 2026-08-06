@@ -3744,22 +3744,36 @@ function BBF.HookUnitFrameTextures()
                 bg:SetPoint("BOTTOMRIGHT", bg:GetParent(), "BOTTOMRIGHT", 1, -1)
 
                 if not BBF.RecolorCastbarHooked then
+                    local green = CreateColor(0, 1, 0, 1)
+                    local yellow = CreateColor(1, 0.7, 0, 1)
+                    local unInt = CreateColor(0.7, 0.7, 0.7, 1)
                     statusBar:HookScript("OnEvent", function(self)
                         self:SetStatusBarTexture(castbarTexture)
+                        local notInterruptible
+                        local sbTex = self:GetStatusBarTexture()
                         if self.channeling then
-                            self:SetStatusBarColor(0, 1, 0)
+                            notInterruptible = statusBar.unit and select(7, UnitChannelInfo(statusBar.unit))
+                            if notInterruptible ~= nil then
+                                sbTex:SetVertexColorFromBoolean(
+                                    notInterruptible,
+                                    unInt,
+                                    green
+                                )
+                            else
+                                self:SetStatusBarColor(0, 1, 0)
+                            end
                         else
-                            self:SetStatusBarColor(1, 0.7, 0)
+                            notInterruptible = statusBar.unit and select(8, UnitCastingInfo(statusBar.unit))
+                            if notInterruptible ~= nil then
+                                sbTex:SetVertexColorFromBoolean(
+                                    notInterruptible,
+                                    unInt,
+                                    yellow
+                                )
+                            else
+                                self:SetStatusBarColor(1, 0.7, 0)
+                            end
                         end
-                        -- if self.barType == "uninterruptable" then
-                        --     self:SetStatusBarColor(0.7, 0.7, 0.7)
-                        -- elseif self.barType == "channel" then
-                        --     self:SetStatusBarColor(0, 1, 0)
-                        -- elseif self.barType == "interrupted" then
-                        --     self:SetStatusBarColor(1, 0, 0)
-                        -- else
-                        --     self:SetStatusBarColor(1, 0.7, 0)
-                        -- end
                     end)
                 else
                     statusBar:HookScript("OnEvent", function(self)

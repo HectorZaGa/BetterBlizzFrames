@@ -182,6 +182,7 @@ L["Hide_MultiGroup_Icon"] = "Hide MultiGroup Icon"
 L["Hide_Party_in_Arena"] = "Hide Party in Arena"
 L["Party"] = "Party"
 L["Party_Castbars"] = "Party Castbars"
+L["Larger_Frames"] = "Larger Frames"
 L["Party_Frame"] = "Party Frame"
 L["Party_Frame_Scale"] = "Party Frame Scale"
 L["Change_Party_Frame_Alpha"] = "Change Party Frame Alpha"
@@ -202,6 +203,7 @@ L["Tooltip_Party_Castbars"] = "Show party members castbar on party frames.\n\nMo
 L["Tooltip_Party_Font_Color"] = "Change the font color on Party Frames.\n\nRight-click to change color."
 L["Tooltip_Party_Frame_Font_Color_Desc"] = "Party Frame Font Color"
 L["Tooltip_Show_Party_Castbar"] = "Show castbar on party frame belonging to yourself as well."
+L["Tooltip_Better_Frames_Desc"] = "Make the default Party Frames larger like TargetFrame etc."
 
 ---------------------------------------
 -- Target Frame

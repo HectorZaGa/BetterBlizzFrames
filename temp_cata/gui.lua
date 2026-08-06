@@ -3153,6 +3153,15 @@ local function guiGeneralTab()
     end)
     CreateTooltip(showPartyCastbar, L["Tooltip_Show_Party_Castbar"])
 
+    local betterDefaultPartyFrames = CreateCheckbox("betterDefaultPartyFrames", L["Larger_Frames"], BetterBlizzFrames, nil, BBF.BiggerDefaultPartyFrames)
+    betterDefaultPartyFrames:SetPoint("LEFT", showPartyCastbar.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(betterDefaultPartyFrames, L["Larger_Frames"], L["Tooltip_Better_Frames_Desc"])
+    betterDefaultPartyFrames:HookScript("OnClick", function(self)
+        if not self:GetChecked() then
+            StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        end
+    end)
+
 --[=[
     local sortGroup = CreateCheckbox("sortGroup", L["Sort_Group"], BetterBlizzFrames, nil, BBF.SortGroup)
     sortGroup:SetPoint("TOPLEFT", showPartyCastbar, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
@@ -3713,6 +3722,8 @@ local function guiGeneralTab()
         CheckAndToggleCheckboxes(biggerHealthbars)
         if not self:GetChecked() then
             StaticPopup_Show("BBF_CONFIRM_RELOAD")
+        else
+            BBF.BiggerDefaultPartyFrames()
         end
     end)
 
@@ -4960,6 +4971,20 @@ local function guiCastbars()
     -- normalCastbarForEmpoweredCasts:SetPoint("TOPLEFT", buffsOnTopReverseCastbarMovement, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
     -- CreateTooltip(normalCastbarForEmpoweredCasts, "Change Evoker empowered castbars to look like normal ones. (Easier to see if you can interrupt)")
     -- notWorking(normalCastbarForEmpoweredCasts, true)
+
+    local castBarTargetText = CreateCheckbox("castBarTargetText", L["Castbar_Target_Text"], contentFrame)
+    castBarTargetText:SetPoint("TOPLEFT", buffsOnTopReverseCastbarMovement, "BOTTOMLEFT", 0, pixelsBetweenBoxes)
+    CreateTooltipTwo(castBarTargetText, L["Castbar_Target_Text"], L["Tooltip_Castbar_Target_Text_Desc"])
+    castBarTargetText:HookScript("OnClick", function()
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end)
+
+    local castBarTargetHighlight = CreateCheckbox("castBarTargetHighlight", L["Castbar_Target_Highlight"], contentFrame)
+    castBarTargetHighlight:SetPoint("LEFT", castBarTargetText.text, "RIGHT", 0, 0)
+    CreateTooltipTwo(castBarTargetHighlight, L["Castbar_Target_Highlight"], L["Tooltip_Castbar_Target_Highlight_Desc"])
+    castBarTargetHighlight:HookScript("OnClick", function()
+        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+    end)
 end
 
 local function guiPositionAndScale()
