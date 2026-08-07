@@ -1100,7 +1100,7 @@ function GUI.OpenPopup(popupId, schema)
                         { key = "FURY", color = {r = 0.788, g = 0.259, b = 0.992} },
                         { key = "EBON_MIGHT", spellID = 395152, color = {r = 0.2, g = 0.58, b = 0.5} },
                         { key = "STAGGER", color = {r = 0.52, g = 1, b = 0.52} },
-                        { key = "SOUL_FRAGMENTS", spellID = 246985, color = {r = 0.35, g = 0.25, b = 0.73} },
+                        { key = "SOUL_FRAGMENTS", color = {r = 0.35, g = 0.25, b = 0.73} },
                         { key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
                     }
                 end

@@ -1491,6 +1491,7 @@ L["Power_Fury"] = "Fury"
 L["Power_Ebon_Might"] = "Ebon Might"
 L["Power_Stagger"] = "Stagger"
 L["Power_Soul_Fragments"] = "Soul Fragments"
+L["Power_Soul_Shards"] = "Soul Shards"
 
 ---------------------------------------
 -- Right-Click Options
@@ -1647,10 +1648,6 @@ L["Display_Text"] = "Display & Text"
 L["Combat_Status"] = "Combat & Status"
 L["Display_Resources"] = "Display & Resources"
 L["Colors_Icons_FX"] = "Colors, Icons & FX"
-
-L["Power_Ebon_Might"] = "Ebon Might"
-L["Power_Stagger"] = "Stagger"
-L["Power_Soul_Shards"] = "Soul Shards"
 
 
 
