@@ -40,19 +40,6 @@ end
 local playerClass = select(2, UnitClass("player"))
 local playerClassResourceScale = "classResource" .. playerClass .. "Scale"
 
-BBF.fontSmall = fontSmall
-BBF.fontMedium = fontMedium
-BBF.fontLarge = fontLarge
-BBF.anchorPoints = anchorPoints
-BBF.anchorPoints2 = anchorPoints2
-BBF.pixelsBetweenBoxes = pixelsBetweenBoxes
-BBF.pixelsOnFirstBox = pixelsOnFirstBox
-BBF.sliderUnderBoxX = sliderUnderBoxX
-BBF.sliderUnderBoxY = sliderUnderBoxY
-BBF.sliderUnderBox = sliderUnderBox
-BBF.playerClass = playerClass
-BBF.playerClassResourceScale = playerClassResourceScale
-
 
 BBF.squareGreenGlow = "Interface\\AddOns\\BetterBlizzFrames\\media\\blizzTex\\newplayertutorial-drag-slotgreen.tga"
 
@@ -89,27 +76,20 @@ end
 
 local function UpdateColorSquare(icon, r, g, b, a)
     if r and g and b then
-        if icon.SetVertexColor then
-            icon:SetVertexColor(r, g, b, a or 1)
-        elseif icon.SetColorTexture then
-            icon:SetColorTexture(r, g, b, a or 1)
-        end
+        icon:SetColorTexture(r, g, b, a)
     end
 end
 
 local function OpenColorOptions(entryColors, func)
-    if type(entryColors) ~= "table" then return end
-    local colorData = entryColors
+    local colorData = entryColors or {0, 1, 0, 1}
     local r, g, b = colorData[1] or 1, colorData[2] or 1, colorData[3] or 1
     local a = colorData[4] or 1
 
     local function updateColors(newR, newG, newB, newA)
-        if type(entryColors) == "table" then
-            entryColors[1] = newR
-            entryColors[2] = newG
-            entryColors[3] = newB
-            entryColors[4] = newA or 1
-        end
+        entryColors[1] = newR
+        entryColors[2] = newG
+        entryColors[3] = newB
+        entryColors[4] = newA or 1
 
         if func then
             func()
@@ -461,18 +441,25 @@ local function CreateColorBox(parent, colorVar, labelText, callback)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetSize(55, 20)
 
-    local colorTexture = frame:CreateTexture(nil, "OVERLAY")
-    colorTexture:SetSize(18, 18)
-    colorTexture:SetPoint("LEFT", frame, "LEFT", 4, 0)
-    colorTexture:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
+    -- Border Frame (slightly larger to act as a border)
+    local borderFrame = CreateFrame("Frame", nil, frame)
+    borderFrame:SetSize(15, 15)
+    borderFrame:SetPoint("LEFT", frame, "LEFT", 4, 0)
 
-    local currentColor = BetterBlizzFramesDB[colorVar] or {1, 1, 1, 1}
-    colorTexture:SetVertexColor(currentColor[1] or 1, currentColor[2] or 1, currentColor[3] or 1, currentColor[4] or 1)
+    local border = borderFrame:CreateTexture(nil, "OVERLAY", nil, 5)
+    border:SetAtlas("talents-node-square-gray")
+    border:SetAllPoints()
+
+    -- Create the color texture within the border frame
+    local colorTexture = borderFrame:CreateTexture(nil, "OVERLAY")
+    colorTexture:SetSize(12, 12)
+    colorTexture:SetPoint("CENTER", borderFrame, "CENTER", 0, 0)
+    colorTexture:SetColorTexture(unpack(BetterBlizzFramesDB[colorVar] or {1, 1, 1}))
 
     -- Label text for the color box
     local text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     text:SetText(labelText)
-    text:SetPoint("LEFT", colorTexture, "RIGHT", 4, 0)
+    text:SetPoint("LEFT", borderFrame, "RIGHT", 3, 0)
     frame.text = text
 
     -- Make the frame clickable and open a color picker on click
@@ -485,7 +472,7 @@ local function CreateColorBox(parent, colorVar, labelText, callback)
                 local defaultColor = BBF.defaultSettings[colorVar]
                 if defaultColor then
                     BetterBlizzFramesDB[colorVar] = {unpack(defaultColor)}
-                    UpdateColorSquare(colorTexture, unpack(defaultColor))
+                    colorTexture:SetColorTexture(unpack(defaultColor))
                     if callback then
                         callback()
                     end
@@ -584,13 +571,9 @@ StaticPopupDialogs["BBF_TOT_MESSAGE"] = {
     end,
     OnCancel = function()
         BetterBlizzFramesDB.targetToTXPos = 0
-        if BBF.targetToTXPos and BBF.targetToTXPos.SetValue then
-            BBF.targetToTXPos:SetValue(0)
-        end
+        BBF.targetToTXPos:SetValue(0)
         BetterBlizzFramesDB.focusToTXPos = 0
-        if BBF.focusToTXPos and BBF.focusToTXPos.SetValue then
-            BBF.focusToTXPos:SetValue(0)
-        end
+        BBF.focusToTXPos:SetValue(0)
         BBF.MoveToTFrames()
         StaticPopup_Show("BBF_CONFIRM_RELOAD")
     end,
@@ -869,14 +852,14 @@ end
 
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, sliderWidth)
     local sliderFrame = CreateFrame("Frame", nil, parent, "MinimalSliderWithSteppersTemplate")
-    local slider = sliderFrame.Slider or sliderFrame
-
-    -- Reference and configure the draggable thumb texture
+    local slider = sliderFrame and (sliderFrame.Slider or sliderFrame)
+    if not slider or not slider.SetMinMaxValues then
+        slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    end
     local thumbTexture = slider.GetThumbTexture and slider:GetThumbTexture()
     if thumbTexture then
         thumbTexture:SetDrawLayer("OVERLAY")
     end
-
     slider:SetOrientation('HORIZONTAL')
     slider:SetMinMaxValues(minValue, maxValue)
     slider:SetValueStep(stepValue)
@@ -886,21 +869,28 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
         slider.Text = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         slider.Text:SetPoint("BOTTOM", slider, "TOP", 0, 3)
     end
-    slider.Text:SetFontObject(GameFontHighlightSmall)
-    slider.Text:SetTextColor(1, 0.81, 0, 1)
+    if slider.Text then
+        slider.Text:SetFontObject(GameFontHighlightSmall)
+        slider.Text:SetTextColor(1, 0.81, 0, 1)
+        if fontSmall then slider.Text:SetFont(fontSmall, 11) end
+    end
 
     if slider.Low then slider.Low:SetText(" ") end
     if slider.High then slider.High:SetText(" ") end
 
-
-
     local category
-    if parent.name then
+    if type(parent) == "table" and parent.name then
         category = parent.name
-    elseif parent:GetParent() and parent:GetParent().name then
-        category = parent:GetParent().name
-    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
-        category = parent:GetParent():GetParent().name
+    elseif type(parent) == "table" and parent.GetParent then
+        local p1 = parent:GetParent()
+        if p1 and p1.name then
+            category = p1.name
+        elseif p1 and p1.GetParent then
+            local p2 = p1:GetParent()
+            if p2 and p2.name then
+                category = p2.name
+            end
+        end
     end
 
     if category == "Better|cff00c0ffBlizz|rFrames |A:gmchat-icon-blizz:16:16|a" then
@@ -957,44 +947,18 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
     SetSliderValue()
 
-    if parent and parent:GetObjectType() == "CheckButton" then
-        slider.parentCheckButton = parent
-        parent.childrenCheckButtons = parent.childrenCheckButtons or {}
-        table.insert(parent.childrenCheckButtons, slider)
-    end
-
-    local function UpdateEnabledState()
-        local parentCB = slider.parentCheckButton
-        local isParentDisabled = false
-        if parentCB then
-            if not parentCB:GetChecked() or not parentCB:IsEnabled() then
-                isParentDisabled = true
-            end
-        end
-
-        if isParentDisabled then
-            slider:Disable()
-            slider:SetAlpha(0.5)
-            if slider.associatedTitle then
-                slider.associatedTitle:SetFontObject("GameFontDisableSmall")
-            end
-            if slider.associatedRow then
-                slider.associatedRow:SetAlpha(0.5)
-            end
-        else
+    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+        slider:Disable()
+        slider:SetAlpha(0.5)
+    else
+        if parent:GetObjectType() == "CheckButton" and parent:IsEnabled() then
             slider:Enable()
             slider:SetAlpha(1)
-            if slider.associatedTitle then
-                slider.associatedTitle:SetFontObject("GameFontHighlightSmall")
-            end
-            if slider.associatedRow then
-                slider.associatedRow:SetAlpha(1)
-            end
+        elseif parent:GetObjectType() ~= "CheckButton" then
+            slider:Enable()
+            slider:SetAlpha(1)
         end
     end
-
-    slider.UpdateEnabledState = UpdateEnabledState
-    UpdateEnabledState()
 
     -- Create Input Box on Right Click
     local editBox = CreateFrame("EditBox", nil, slider, "InputBoxTemplate")
@@ -1414,7 +1378,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
     widget.tooltipMainText = mainText
     widget.tooltipSubText = subText
     widget.tooltipCVarName = cvarName
-    widget:HookScript("OnEnter", function(self)
+    widget:SetScript("OnEnter", function(self)
         -- Clear the tooltip before showing new information
         GameTooltip:ClearLines()
         if GameTooltip:IsShown() then
@@ -1428,18 +1392,8 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
         -- Set the bold title
         GameTooltip:AddLine(title)
         --GameTooltip:AddLine(" ") -- Adding an empty line as a separator
-        local formattedMainText = mainText
-        if (title == L["Show_Spec_Name"] or title == L["Tooltip_Show_Spec_Name"]) and mainText and string.find(mainText, "%%s") then
-            local partySpecStatus = BetterBlizzFramesDB.partyArenaNames and (L["On"] or "ON") or "OFF"
-            local checkMark = BetterBlizzFramesDB.partyArenaNames and " |A:ParagonReputation_Checkmark:15:15|a" or ""
-            formattedMainText = string.format(mainText, partySpecStatus .. checkMark)
-        elseif (title == L["Show_Elite_Texture"] or title == L["Elite_Texture"]) and mainText and string.find(mainText, "%%d") then
-            local textures = BetterBlizzFramesDB.classicFrames and 7 or 4
-            local currentMode = BetterBlizzFramesDB.playerEliteFrameMode or 1
-            local activeStr = string.format(L["Active_Texture_Status"] or "Active: %d/%d", currentMode, textures)
-            formattedMainText = string.format(mainText, textures) .. " |cff32f795" .. activeStr .. "|r"
-        end
-        GameTooltip:AddLine(formattedMainText, 1, 1, 1, true) -- true for wrap text
+        -- Set the main text
+        GameTooltip:AddLine(mainText, 1, 1, 1, true) -- true for wrap text
 
         if title == L["Format_Numbers"] then
             local tooltipText = "\n\n18800 K |A:glueannouncementpopup-arrow:20:20|a 18.8 M\n|cff32f795" .. L["Right_Click_Show_Extra_Decimal"] .. "|r"
@@ -1455,16 +1409,13 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             local reset = "|r"
             local check = " |A:ParagonReputation_Checkmark:15:15|a"
 
-            local strPlayer = L["Ctrl_Right_Click_Keep_PlayerFrame_Green"] or "Ctrl+Right-Click to keep PlayerFrame green."
-            local strFriendly = L["Shift_Right_Click_Keep_Friendly_Units_Green"] or "Shift+Right-Click to keep Friendly units green."
-
             local tooltipText = "\n"
-            tooltipText = tooltipText .. green .. strPlayer .. reset
+            tooltipText = tooltipText .. green .. L["Tooltip_Class_Color_Keep_Player"] .. reset
             if BetterBlizzFramesDB.classColorFramesSkipPlayer then
                 tooltipText = tooltipText .. check
             end
 
-            tooltipText = tooltipText .. "\n\n" .. babyBlue .. strFriendly .. reset
+            tooltipText = tooltipText .. "\n\n" .. babyBlue .. L["Tooltip_Class_Color_Keep_Friendly"] .. reset
             if BetterBlizzFramesDB.classColorFramesSkipFriendly then
                 tooltipText = tooltipText .. check
             end
@@ -1479,16 +1430,13 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             local reset = "|r"
             local check = " |A:ParagonReputation_Checkmark:15:15|a"
 
-            local strPlayer = L["Ctrl_Right_Click_Keep_PlayerFrame_Green"] or "Ctrl+Right-Click to keep PlayerFrame green."
-            local strFriendly = L["Shift_Right_Click_Keep_Friendly_Units_Green"] or "Shift+Right-Click to keep Friendly units green."
-
             local tooltipText = "\n" .. yellow .. L["Right_Click_To_Open_Options"] .. reset
-            tooltipText = tooltipText .. "\n\n" .. green .. strPlayer .. reset
+            tooltipText = tooltipText .. "\n\n" .. green .. L["Tooltip_Class_Color_Keep_Player"] .. reset
             if BetterBlizzFramesDB.classColorFramesSkipPlayer then
                 tooltipText = tooltipText .. check
             end
 
-            tooltipText = tooltipText .. "\n\n" .. babyBlue .. strFriendly .. reset
+            tooltipText = tooltipText .. "\n\n" .. babyBlue .. L["Tooltip_Class_Color_Keep_Friendly"] .. reset
             if BetterBlizzFramesDB.classColorFramesSkipFriendly then
                 tooltipText = tooltipText .. check
             end
@@ -1522,7 +1470,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
-        if title == L["Show_Elite_Texture"] or title == L["Elite_Texture"] then
+        if title == L["Show_Elite_Texture"] then
             local tooltipText = L["Tooltip_Elite_Texture_Dark_Mode"]
             if BetterBlizzFramesDB.playerEliteFrameDarkmode then
                 tooltipText = L["Tooltip_Elite_Texture_Dark_Mode_Check"] .. "|A:ParagonReputation_Checkmark:15:15|a"
@@ -1530,7 +1478,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
-        if title == L["Tooltip_Pixel_Border_RaidFrames_Title"] or title == L["Pixel_Border"] then
+        if title == L["Tooltip_Pixel_Border_RaidFrames_Title"] then
             local green = "|cff32f795"
             local reset = "|r"
             local activeSize = BetterBlizzFramesDB.raidFramePixelBorderSize and "1.5px" or "1px"
@@ -1538,7 +1486,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
-        if title == L["Change_Party_Frame_Alpha"] or title == L["Party_Frame_Range_Alpha"] then
+        if title == L["Change_Party_Frame_Alpha"] then
             local green = "|cff32f795"
             local reset = "|r"
             local check = ""
@@ -1549,7 +1497,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
 
-        if title == L["Tooltip_Dark_Mode_Auras"] or title == L["Auras"] then
+        if title == L["Tooltip_Dark_Mode_Auras"] then
             local green = "|cff32f795"
             local reset = "|r"
             local check = ""
@@ -1559,7 +1507,6 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
             local tooltipText = "\n" .. green .. L["Tooltip_Remove_Debuff_Color_Border_Toggle"] .. reset .. check
             GameTooltip:AddLine(tooltipText, 1, 1, 1, true)
         end
-
 
         -- Set the subtext
         if subText then
@@ -1595,7 +1542,7 @@ local function CreateTooltipTwo(widget, title, mainText, subText, anchor, cvarNa
         end
         GameTooltip:Show()
     end)
-    widget:HookScript("OnLeave", function(self)
+    widget:SetScript("OnLeave", function(self)
         GameTooltip:Hide()
     end)
 end
@@ -1830,6 +1777,11 @@ local function CreateImportExportUI(parent, title, dataTable, posX, posY, tableN
 end
 
 local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggleFunc, point)
+    -- Create the dropdown frame using the library's creation function
+    local dropdown = LibDD:Create_UIDropDownMenu(name, parent)
+    LibDD:UIDropDownMenu_SetWidth(dropdown, 125)
+
+    -- Function to get the display text based on the setting value
     local function getDisplayTextForSetting(settingValue)
         if name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown" then
             if settingValue == "LEFT" then
@@ -1849,25 +1801,24 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
         elseif settingValue == "RIGHT" then
             return L["Anchor_RIGHT"]
         end
-        return settingValue or defaultText
+        return settingValue
     end
 
-    local dropdown = CreateFrame("DropdownButton", name, parent, "WowStyle1DropdownTemplate")
-    dropdown:SetWidth(150)
-    if point and point.anchorFrame then
-        dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x or 0, point.y or 0)
+    -- Set the initial dropdown text
+    LibDD:UIDropDownMenu_SetText(dropdown, getDisplayTextForSetting(BetterBlizzFramesDB[settingKey]) or defaultText)
+
+    local anchorPointsToUse = anchorPoints
+    if name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown" then
+        anchorPointsToUse = anchorPoints2
     end
 
-    local currentSetting = BetterBlizzFramesDB[settingKey]
-    dropdown:SetDefaultText(getDisplayTextForSetting(currentSetting) or defaultText)
-    dropdown.Background:SetVertexColor(0.9, 0.9, 0.9)
-    dropdown.Arrow:SetVertexColor(0.9, 0.9, 0.9)
-
-    local anchorPointsToUse = (name == "combatIndicatorDropdown" or name == "playerAbsorbAnchorDropdown") and anchorPoints2 or anchorPoints
-
-    local function GeneratorFunction(owner, rootDescription)
+    -- Initialize the dropdown using the library's initialize function
+    LibDD:UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
+        local info = LibDD:UIDropDownMenu_CreateInfo()
         for _, anchor in ipairs(anchorPointsToUse) do
             local displayText = anchor
+
+            -- Customize display text for specific dropdowns
             if anchor == "TOP" then
                 displayText = L["Anchor_TOP"]
             elseif anchor == "BOTTOM" then
@@ -1888,666 +1839,44 @@ local function CreateAnchorDropdown(name, parent, defaultText, settingKey, toggl
                 end
             end
 
-            rootDescription:CreateRadio(displayText, function()
-                return BetterBlizzFramesDB[settingKey] == anchor
-            end, function()
-                if BetterBlizzFramesDB[settingKey] ~= anchor then
-                    BetterBlizzFramesDB[settingKey] = anchor
-                    dropdown:SetDefaultText(displayText)
-                    if toggleFunc then toggleFunc(anchor) end
-                    if BBF.MoveToTFrames then BBF.MoveToTFrames() end
+            info.text = displayText
+            info.arg1 = anchor
+            info.func = function(self, arg1)
+                if BetterBlizzFramesDB[settingKey] ~= arg1 then
+                    BetterBlizzFramesDB[settingKey] = arg1
+                    LibDD:UIDropDownMenu_SetText(dropdown, getDisplayTextForSetting(arg1))
+                    toggleFunc(arg1)
+                    BBF.MoveToTFrames()
                 end
-            end)
+            end
+            info.checked = (BetterBlizzFramesDB[settingKey] == anchor)
+            LibDD:UIDropDownMenu_AddButton(info)
         end
-    end
-
-    hooksecurefunc(dropdown, "OnMenuClosed", function()
-        dropdown:SetDefaultText(getDisplayTextForSetting(BetterBlizzFramesDB[settingKey]))
     end)
 
-    dropdown:SetupMenu(GeneratorFunction)
+    -- Position the dropdown
+    dropdown:SetPoint("TOPLEFT", point.anchorFrame, "TOPLEFT", point.x, point.y)
 
-    if point and point.label and point.label ~= "" then
-        local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
-        dropdownText:SetText(point.label)
+    -- Create and set up the label
+    local dropdownText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    dropdownText:SetPoint("BOTTOM", dropdown, "TOP", 0, 3)
+    dropdownText:SetText(point.label)
+
+    -- Enable or disable the dropdown based on the parent's check state
+    if parent:GetObjectType() == "CheckButton" and parent:GetChecked() == false then
+        LibDD:UIDropDownMenu_DisableDropDown(dropdown)
+    else
+        LibDD:UIDropDownMenu_EnableDropDown(dropdown)
     end
 
     return dropdown
 end
 
-local classOptionsFrame
-function BBF.OpenClassSpecificWindow()
-    if not classOptionsFrame then
-        classOptionsFrame = CreateFrame("Frame", "ClassOptionsFrame", UIParent, "ButtonFrameTemplate")
-        tinsert(UISpecialFrames, "ClassOptionsFrame")
-        ButtonFrameTemplate_HidePortrait(classOptionsFrame)
-        if classOptionsFrame.Inset then classOptionsFrame.Inset:Hide() end
-        if classOptionsFrame.Bg then
-            classOptionsFrame.Bg:SetColorTexture(0.0784, 0.0784, 0.0784, 1)
-        end
-        classOptionsFrame:SetSize(260, 310)
-        classOptionsFrame:SetPoint("CENTER")
-        classOptionsFrame:SetFrameStrata("DIALOG")
-        classOptionsFrame:SetMovable(true)
-        classOptionsFrame:EnableMouse(true)
-        classOptionsFrame:RegisterForDrag("LeftButton")
-        classOptionsFrame:SetScript("OnDragStart", classOptionsFrame.StartMoving)
-        classOptionsFrame:SetScript("OnDragStop", classOptionsFrame.StopMovingOrSizing)
-        if classOptionsFrame.SetTitle then
-            classOptionsFrame:SetTitle(L["Class_Specific_Options"])
-        else
-            classOptionsFrame.title = classOptionsFrame:CreateFontString(nil, "OVERLAY")
-            classOptionsFrame.title:SetFontObject("GameFontHighlight")
-            classOptionsFrame.title:SetPoint("TOP", classOptionsFrame, "TOP", 0, -5)
-            classOptionsFrame.title:SetText(L["Class_Specific_Options"])
-        end
-
-        local classes = {
-            { classID = 11, var = "hidePlayerPowerNoDruid", color = RAID_CLASS_COLORS["DRUID"] },
-            { classID = 4, var = "hidePlayerPowerNoRogue", color = RAID_CLASS_COLORS["ROGUE"] },
-            { classID = 9, var = "hidePlayerPowerNoWarlock", color = RAID_CLASS_COLORS["WARLOCK"] },
-            { classID = 2, var = "hidePlayerPowerNoPaladin", color = RAID_CLASS_COLORS["PALADIN"] },
-            { classID = 6, var = "hidePlayerPowerNoDeathKnight", color = RAID_CLASS_COLORS["DEATHKNIGHT"] },
-            { classID = 13, var = "hidePlayerPowerNoEvoker", color = RAID_CLASS_COLORS["EVOKER"] },
-            { classID = 10, var = "hidePlayerPowerNoMonk", color = RAID_CLASS_COLORS["MONK"] },
-            { classID = 8, var = "hidePlayerPowerNoMage", color = RAID_CLASS_COLORS["MAGE"] },
-        }
-
-        for i, classData in ipairs(classes) do
-            local rowFrame = CreateFrame("Frame", nil, classOptionsFrame)
-            rowFrame:SetHeight(30)
-            rowFrame:SetPoint("TOPLEFT", classOptionsFrame, "TOPLEFT", 16, -32 - (i - 1) * 33)
-            rowFrame:SetPoint("TOPRIGHT", classOptionsFrame, "TOPRIGHT", 4, -32 - (i - 1) * 33)
-
-            local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
-            rowHighlight:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", -10, 0)
-            rowHighlight:SetPoint("BOTTOMRIGHT", rowFrame, "BOTTOMRIGHT", -10, 0)
-            rowHighlight:SetAtlas("options-item-highlight")
-            if not rowHighlight:GetTexture() then
-                rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-            end
-            rowHighlight:SetBlendMode("ADD")
-            rowHighlight:Hide()
-
-            local classCheckbox = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
-            if classCheckbox:GetHighlightTexture() then
-                classCheckbox:GetHighlightTexture():SetTexture("")
-                classCheckbox:GetHighlightTexture():SetAlpha(0)
-                classCheckbox:GetHighlightTexture():Hide()
-                classCheckbox:GetHighlightTexture().Show = function() end
-            end
-            if classCheckbox.HoverBackground then
-                classCheckbox.HoverBackground:SetAlpha(0)
-                classCheckbox.HoverBackground:Hide()
-                classCheckbox.HoverBackground.Show = function() end
-            end
-
-            local function UpdateHighlight()
-                if MouseIsOver(rowFrame) then
-                    rowHighlight:Show()
-                else
-                    rowHighlight:Hide()
-                end
-            end
-            classCheckbox:SetSize(26, 26)
-            classCheckbox:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
-            if not classCheckbox.Text then
-                classCheckbox.Text = classCheckbox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                classCheckbox.Text:SetPoint("LEFT", classCheckbox, "RIGHT", 6, 0)
-            end
-            local localizedClassName = GetClassInfo(classData.classID)
-            classCheckbox.Text:SetText(string.format(L["Ignore_Class"], localizedClassName or ""))
-
-            if classData.color then
-                local r, g, b = classData.color.r, classData.color.g, classData.color.b
-                classCheckbox.Text:SetTextColor(r, g, b)
-            end
-
-            classCheckbox:SetHitRectInsets(0, -180, 0, 0)
-            classCheckbox:SetChecked(BetterBlizzFramesDB[classData.var])
-
-            classCheckbox:SetScript("OnClick", function(self)
-                BetterBlizzFramesDB[classData.var] = self:GetChecked() or nil
-                if BBF.HideFrames then BBF.HideFrames() end
-            end)
-
-            rowFrame:EnableMouse(true)
-            rowFrame:SetScript("OnEnter", UpdateHighlight)
-            rowFrame:SetScript("OnLeave", UpdateHighlight)
-            rowFrame:SetScript("OnMouseDown", function() classCheckbox:Click() end)
-            classCheckbox:HookScript("OnEnter", UpdateHighlight)
-            classCheckbox:HookScript("OnLeave", UpdateHighlight)
-        end
-        classOptionsFrame:Show()
-    else
-        if classOptionsFrame:IsShown() then
-            classOptionsFrame:Hide()
-        else
-            classOptionsFrame:Show()
-        end
-    end
-end
-
-local customColorFrame
-function BBF.OpenColorOptions()
-    if not customColorFrame then
-        customColorFrame = CreateFrame("Frame", "BBFCustomColorOptionsFrame", UIParent, "ButtonFrameTemplate")
-        tinsert(UISpecialFrames, "BBFCustomColorOptionsFrame")
-        ButtonFrameTemplate_HidePortrait(customColorFrame)
-        if customColorFrame.Inset then customColorFrame.Inset:Hide() end
-        if customColorFrame.Bg then
-            customColorFrame.Bg:SetColorTexture(0.0784, 0.0784, 0.0784, 1)
-        end
-        customColorFrame:SetSize(360, 560)
-        customColorFrame:SetPoint("CENTER")
-        customColorFrame:SetFrameStrata("DIALOG")
-        customColorFrame:SetMovable(true)
-        customColorFrame:EnableMouse(true)
-        customColorFrame:RegisterForDrag("LeftButton")
-        customColorFrame:SetScript("OnDragStart", customColorFrame.StartMoving)
-        customColorFrame:SetScript("OnDragStop", customColorFrame.StopMovingOrSizing)
-        if customColorFrame.SetTitle then
-            customColorFrame:SetTitle(L["Custom_Health_Colors"])
-        else
-            customColorFrame.title = customColorFrame:CreateFontString(nil, "OVERLAY")
-            customColorFrame.title:SetFontObject("GameFontHighlight")
-            customColorFrame.title:SetPoint("TOP", customColorFrame, "TOP", 0, -5)
-            customColorFrame.title:SetText(L["Custom_Health_Colors"])
-        end
-
-        local scrollFrame = CreateFrame("ScrollFrame", nil, customColorFrame, "ScrollFrameTemplate")
-        scrollFrame:SetPoint("TOPLEFT", customColorFrame, "TOPLEFT", 10, -30)
-        scrollFrame:SetPoint("BOTTOMRIGHT", customColorFrame, "BOTTOMRIGHT", -30, 10)
-
-        local content = CreateFrame("Frame", nil, scrollFrame)
-        content:SetSize(315, 780)
-        scrollFrame:SetScrollChild(content)
-
-        local currentY = -10
-
-        local function AddHeader(textStr)
-            local header = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            header:SetPoint("TOPLEFT", content, "TOPLEFT", 10, currentY)
-            header:SetText(textStr)
-            currentY = currentY - 22
-            return header
-        end
-        local function AddCheckbox(dbKey, labelStr, callback, indentX, ttTitle, ttDesc)
-            local posX = 6 + (indentX or 0)
-            local width = 295 - (indentX or 0)
-            local rowFrame = CreateFrame("Frame", nil, content)
-            rowFrame:SetSize(width, 28)
-            rowFrame:SetPoint("TOPLEFT", content, "TOPLEFT", posX, currentY)
-
-            local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
-            rowHighlight:SetAllPoints()
-            rowHighlight:SetAtlas("options-item-highlight")
-            if not rowHighlight:GetTexture() then
-                rowHighlight:SetColorTexture(1, 1, 1, 0.12)
-            end
-            rowHighlight:SetBlendMode("ADD")
-            rowHighlight:Hide()
-
-            local cb = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
-            if cb:GetHighlightTexture() then
-                cb:GetHighlightTexture():SetTexture("")
-                cb:GetHighlightTexture():SetAlpha(0)
-                cb:GetHighlightTexture():Hide()
-                cb:GetHighlightTexture().Show = function() end
-            end
-            if cb.HoverBackground then
-                cb.HoverBackground:SetAlpha(0)
-                cb.HoverBackground:Hide()
-                cb.HoverBackground.Show = function() end
-            end
-
-            local function UpdateHighlight()
-                if MouseIsOver(rowFrame) then
-                    rowHighlight:Show()
-                else
-                    rowHighlight:Hide()
-                end
-            end
-            cb:SetSize(24, 24)
-            cb:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
-            if not cb.Text then
-                cb.Text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                cb.Text:SetPoint("LEFT", cb, "RIGHT", 6, 0)
-            end
-            cb.Text:SetText(labelStr)
-            cb:SetHitRectInsets(0, -(width - 45), 0, 0)
-            cb:SetChecked(BetterBlizzFramesDB[dbKey])
-            cb:SetScript("OnClick", function(self)
-                BetterBlizzFramesDB[dbKey] = self:GetChecked() or nil
-                if callback then callback() end
-                if BBF.UpdateFrames then BBF.UpdateFrames() end
-            end)
-
-            if ttTitle or ttDesc then
-                CreateTooltipTwo(cb, ttTitle or labelStr, ttDesc, nil, "ANCHOR_RIGHT")
-                CreateTooltipTwo(rowFrame, ttTitle or labelStr, ttDesc, nil, "ANCHOR_RIGHT")
-            end
-
-            rowFrame:EnableMouse(true)
-            rowFrame:SetScript("OnEnter", UpdateHighlight)
-            rowFrame:SetScript("OnLeave", UpdateHighlight)
-            rowFrame:SetScript("OnMouseDown", function() if cb:IsEnabled() then cb:Click() end end)
-            cb:HookScript("OnEnter", UpdateHighlight)
-            cb:HookScript("OnLeave", UpdateHighlight)
-
-            currentY = currentY - 32
-            return cb
-        end
-
-        local function SetSwatchEnabled(swatchBtn, enabled)
-            if swatchBtn then
-                swatchBtn:SetEnabled(enabled)
-                swatchBtn:SetAlpha(enabled and 1 or 0.4)
-            end
-        end
-
-        local function AddColorSwatch(dbKey, labelStr, posX, posY, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
-            local btn = CreateFrame("Button", nil, content)
-            btn:SetSize(18, 18)
-            btn:SetPoint("TOPLEFT", content, "TOPLEFT", posX, posY)
-            btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-
-            local swatch = btn:CreateTexture(nil, "OVERLAY")
-            swatch:SetAllPoints()
-            swatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
-
-            local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            txt:SetPoint("LEFT", btn, "RIGHT", 4, 0)
-            if maxTextWidth then
-                txt:SetWidth(maxTextWidth)
-                txt:SetWordWrap(true)
-                txt:SetJustifyH("LEFT")
-            end
-            txt:SetText(labelStr)
-
-            btn:SetHitRectInsets(0, -(maxTextWidth or 70), 0, 0)
-
-            local titleText = ttTitle or labelStr
-            local descText = ttDesc or L["Tooltip_Color_Picker_Desc"]
-            CreateTooltipTwo(btn, titleText, descText, nil, "ANCHOR_RIGHT")
-
-            local function RefreshSwatch()
-                local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
-                local r = col.r or col[1] or 1
-                local g = col.g or col[2] or 1
-                local b = col.b or col[3] or 1
-                swatch:SetVertexColor(r, g, b)
-            end
-            RefreshSwatch()
-
-            btn:SetScript("OnClick", function(self, mouseButton)
-                if mouseButton == "RightButton" and IsShiftKeyDown() then
-                    BetterBlizzFramesDB[dbKey] = nil
-                    RefreshSwatch()
-                    if callback then callback() end
-                    if BBF.UpdateFrames then BBF.UpdateFrames() end
-                    return
-                end
-
-                local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
-                local r = col.r or col[1] or 1
-                local g = col.g or col[2] or 1
-                local b = col.b or col[3] or 1
-
-                local info = {
-                    r = r, g = g, b = b,
-                    hasOpacity = false,
-                    swatchFunc = function()
-                        local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-                        BetterBlizzFramesDB[dbKey] = {r = nr, g = ng, b = nb}
-                        swatch:SetVertexColor(nr, ng, nb)
-                        if callback then callback() end
-                        if BBF.UpdateFrames then BBF.UpdateFrames() end
-                    end,
-                    cancelFunc = function(prev)
-                        BetterBlizzFramesDB[dbKey] = {r = prev.r, g = prev.g, b = prev.b}
-                        swatch:SetVertexColor(prev.r, prev.g, prev.b)
-                        if callback then callback() end
-                        if BBF.UpdateFrames then BBF.UpdateFrames() end
-                    end
-                }
-                ColorPickerFrame:SetupColorPickerAndShow(info)
-            end)
-
-            return btn
-        end
-
-        -- SECTION 1: General Custom Colors
-        AddHeader(L["Custom_Colors"])
-        AddCheckbox("customColorsUnitFrames", L["Enable_On_UnitFrames"], nil, nil, L["Enable_On_UnitFrames"], L["Tooltip_Enable_On_UnitFrames_Desc"])
-        AddCheckbox("customColorsRaidFrames", L["Enable_On_Raid_Party_Frames"], nil, nil, L["Enable_On_Raid_Party_Frames"], L["Tooltip_Enable_On_Raid_Party_Frames_Desc"])
-
-        -- SECTION 2: Reaction Colors
-        currentY = currentY - 10
-        AddHeader(L["Reaction_Colors"])
-        local startY = currentY
-        AddColorSwatch("enemyHealthColor", _G["ENEMY"] or L["Enemy"], 10, startY, {r = 1, g = 0.2, b = 0.2}, 76, nil, L["Enemy_Health_Color"], L["Tooltip_Color_Picker_Desc"])
-        AddColorSwatch("friendlyHealthColor", _G["FRIENDLY"] or L["Friendly"], 110, startY, {r = 0.2, g = 1, b = 0.2}, 76, nil, L["Friendly_Health_Color"], L["Tooltip_Color_Picker_Desc"])
-        AddColorSwatch("neutralHealthColor", _G["NEUTRAL"] or L["Neutral"], 210, startY, {r = 1, g = 1, b = 0.2}, 76, nil, L["Neutral_Health_Color"], L["Tooltip_Color_Picker_Desc"])
-        currentY = currentY - 28
-
-        -- SECTION 3: Class Colors
-        currentY = currentY - 10
-        AddHeader(L["Class_Colors"])
-
-        local classSwatches = {}
-        local singleClassBtn
-        local useOneClassCb
-
-        local function UpdateClassColorsState()
-            local parentEnabled = BetterBlizzFramesDB.overrideClassColors
-            local useOne = BetterBlizzFramesDB.useOneClassColor
-
-            useOneClassCb:SetEnabled(parentEnabled and true or false)
-            useOneClassCb:SetAlpha(parentEnabled and 1 or 0.4)
-
-            SetSwatchEnabled(singleClassBtn, parentEnabled and useOne)
-
-            for _, btn in ipairs(classSwatches) do
-                SetSwatchEnabled(btn, parentEnabled and not useOne)
-            end
-        end
-
-        AddCheckbox("overrideClassColors", L["Override_Class_Colors"], function() UpdateClassColorsState() end, nil, L["Override_Class_Colors"], L["Tooltip_Override_Class_Colors_Desc"])
-        useOneClassCb = AddCheckbox("useOneClassColor", L["Use_One_Color"], function() UpdateClassColorsState() end, 16, L["Use_One_Color"], L["Tooltip_Use_One_Color_For_All_Classes_Desc"])
-        singleClassBtn = AddColorSwatch("singleClassColor", L["All_Classes"], 26, currentY, {r = 0.8, g = 0.8, b = 0.8}, nil, nil, L["Single_Class_Color"], L["Tooltip_Color_Picker_Desc"])
-        currentY = currentY - 26
-
-        local function GetNativePowerName(key, spellID)
-            if _G[key] then return _G[key] end
-            if _G["POWER_TYPE_" .. key] then return _G["POWER_TYPE_" .. key] end
-            if spellID then
-                local name = C_Spell.GetSpellName(spellID)
-                if name then return name end
-            end
-            return key
-        end
-
-        local classes = {}
-        for classID = 1, GetNumClasses() do
-            local localizedClassName, classTag = GetClassInfo(classID)
-            if classTag and localizedClassName then
-                table.insert(classes, {key = classTag, name = localizedClassName})
-            end
-        end
-        table.sort(classes, function(a, b) return a.name < b.name end)
-
-        local thirdCount = math.ceil(#classes / 3)
-        local gridStartY = currentY
-        local rowHeight = 28
-        for i, classData in ipairs(classes) do
-            local colIndex = math.floor((i - 1) / thirdCount)
-            local rowIndex = (i - 1) % thirdCount
-            local posX = 10 + colIndex * 102
-            local posY = gridStartY - rowIndex * rowHeight
-            local classDefColor = RAID_CLASS_COLORS[classData.key] or {r = 1, g = 1, b = 1}
-            local btn = AddColorSwatch("classColor" .. classData.key, classData.name, posX, posY, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b}, 76, nil, classData.name, L["Tooltip_Color_Picker_Desc"])
-            table.insert(classSwatches, btn)
-        end
-        currentY = gridStartY - thirdCount * rowHeight - 12
-
-        -- SECTION 4: Power Colors
-        AddHeader(L["Power_Colors"])
-
-        local powerSwatches = {}
-        local singlePowerBtn
-        local useOnePowerCb
-
-        local function UpdatePowerColorsState()
-            local parentEnabled = BetterBlizzFramesDB.customPowerColors
-            local useOne = BetterBlizzFramesDB.useOnePowerColor
-
-            useOnePowerCb:SetEnabled(parentEnabled and true or false)
-            useOnePowerCb:SetAlpha(parentEnabled and 1 or 0.4)
-
-            SetSwatchEnabled(singlePowerBtn, parentEnabled and useOne)
-
-            for _, btn in ipairs(powerSwatches) do
-                SetSwatchEnabled(btn, parentEnabled and not useOne)
-            end
-        end
-
-        AddCheckbox("customPowerColors", L["Enable_Power_Colors"], function() UpdatePowerColorsState() end, nil, L["Enable_Power_Colors"], L["Tooltip_Enable_Power_Colors_Desc"])
-        useOnePowerCb = AddCheckbox("useOnePowerColor", L["Use_One_Color"], function() UpdatePowerColorsState() end, 16, L["Use_One_Color"], L["Tooltip_Use_One_Color_For_All_Powers_Desc"])
-        singlePowerBtn = AddColorSwatch("singlePowerColor", L["All_Classes"], 26, currentY, {r = 0, g = 0.8, b = 1}, nil, nil, L["Single_Power_Color"], L["Tooltip_Color_Picker_Desc"])
-        currentY = currentY - 26
-
-        local powerTypes = {
-            { key = "MANA", color = {r = 0, g = 0.5, b = 1} },
-            { key = "RAGE", color = {r = 1, g = 0, b = 0} },
-            { key = "FOCUS", color = {r = 1, g = 0.5, b = 0.25} },
-            { key = "ENERGY", color = {r = 1, g = 1, b = 0} },
-            { key = "RUNIC_POWER", color = {r = 0, g = 0.82, b = 1} },
-            { key = "LUNAR_POWER", color = {r = 0, g = 0.9, b = 1} },
-            { key = "MAELSTROM", color = {r = 0, g = 0.5, b = 1} },
-            { key = "INSANITY", color = {r = 0.4, g = 0, b = 0.8} },
-            { key = "CHI", color = {r = 0.71, g = 1, b = 0.92} },
-            { key = "FURY", color = {r = 0.788, g = 0.259, b = 0.992} },
-            { key = "EBON_MIGHT", spellID = 395152, color = {r = 0.2, g = 0.58, b = 0.5} },
-            { key = "STAGGER", color = {r = 0.52, g = 1, b = 0.52} },
-            { key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
-        }
-
-        local pThird = math.ceil(#powerTypes / 3)
-        local pGridStartY = currentY
-        for i, pData in ipairs(powerTypes) do
-            local colIndex = math.floor((i - 1) / pThird)
-            local rowIndex = (i - 1) % pThird
-            local posX = 10 + colIndex * 102
-            local posY = pGridStartY - rowIndex * rowHeight
-            local labelName = GetNativePowerName(pData.key, pData.spellID)
-            local btn = AddColorSwatch("powerColor" .. pData.key, labelName, posX, posY, pData.color, 76, nil, labelName, L["Tooltip_Color_Picker_Desc"])
-            table.insert(powerSwatches, btn)
-        end
-        currentY = pGridStartY - pThird * rowHeight - 14
-
-        -- SECTION 5: Background Colors
-        AddHeader(L["Background_Colors"])
-        local unitHealthBgBtn, unitManaBgBtn, unitBgDd
-
-        local function UpdateUnitBgState()
-            local parentEnabled = BetterBlizzFramesDB.customBgColorUnitFrames
-            SetSwatchEnabled(unitHealthBgBtn, parentEnabled)
-            SetSwatchEnabled(unitManaBgBtn, parentEnabled)
-            if unitBgDd then unitBgDd:SetEnabled(parentEnabled) end
-        end
-
-        local unitBgCb = AddCheckbox("customBgColorUnitFrames", L["Change_UnitFrame_Background_Color"], function() UpdateUnitBgState() end, nil, L["Change_UnitFrame_Background_Color"], L["Tooltip_Change_UnitFrame_Background_Color_Desc"])
-        if CreateTextureDropdown then
-            unitBgDd = CreateTextureDropdown(
-                "unitFrameBgTexture",
-                content,
-                L["Select_Texture"],
-                "unitFrameBgTexture",
-                function()
-                    if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
-                    if BBF.UnitFrameBackgroundTexture then BBF.UnitFrameBackgroundTexture() end
-                end,
-                { anchorFrame = unitBgCb, x = 20, y = -4, label = L["Select_Texture"] }
-            )
-            currentY = currentY - 32
-        end
-        unitHealthBgBtn = AddColorSwatch("customHealthBgColor", L["Health_BG"], 26, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Health_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
-        unitManaBgBtn = AddColorSwatch("customManaBgColor", L["Mana_BG"], 146, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Mana_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
-        currentY = currentY - 28
-
-        local raidHealthBgBtn, raidManaBgBtn, raidBgDd
-
-        local function UpdateRaidBgState()
-            local parentEnabled = BetterBlizzFramesDB.customBgColorRaidFrames
-            SetSwatchEnabled(raidHealthBgBtn, parentEnabled)
-            SetSwatchEnabled(raidManaBgBtn, parentEnabled)
-            if raidBgDd then raidBgDd:SetEnabled(parentEnabled) end
-        end
-
-        local raidBgCb = AddCheckbox("customBgColorRaidFrames", L["Change_Party_RaidFrame_Background_Color"], function() UpdateRaidBgState() end, nil, L["Change_Party_RaidFrame_Background_Color"], L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"])
-        if CreateTextureDropdown then
-            raidBgDd = CreateTextureDropdown(
-                "raidFrameBgTexture",
-                content,
-                L["Select_Texture"],
-                "raidFrameBgTexture",
-                function()
-                    if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
-                    if BBF.SetCompactUnitFramesBackground then BBF.SetCompactUnitFramesBackground() end
-                end,
-                { anchorFrame = raidBgCb, x = 20, y = -4, label = L["Select_Texture"] }
-            )
-            currentY = currentY - 32
-        end
-        raidHealthBgBtn = AddColorSwatch("customRaidHealthBgColor", L["Health_BG"], 26, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Party_Raid_Health_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
-        raidManaBgBtn = AddColorSwatch("customRaidManaBgColor", L["Mana_BG"], 146, currentY, {r = 0, g = 0, b = 0}, 100, nil, L["Party_Raid_Mana_Bar_Background_Color"], L["Tooltip_Color_Picker_Desc"])
-        currentY = currentY - 28
-
-        -- Sync initial states
-        UpdateClassColorsState()
-        UpdatePowerColorsState()
-        UpdateUnitBgState()
-        UpdateRaidBgState()
-
-        content:SetHeight(math.abs(currentY) + 30)
-
-        customColorFrame:Show()
-    else
-        if customColorFrame:IsShown() then
-            customColorFrame:Hide()
-        else
-            customColorFrame:Show()
-        end
-    end
-end
-
-function BBF.HandleRightClick(option, titleStr, widget)
-    local isShift = IsShiftKeyDown()
-    local isCtrl = IsControlKeyDown()
-
-    if option == "formatStatusBarText" or titleStr == L["Format_Numbers"] then
-        BetterBlizzFramesDB.formatStatusBarTextExtraDecimals = not BetterBlizzFramesDB.formatStatusBarTextExtraDecimals
-        if BBF.HookStatusBarText then BBF.HookStatusBarText() end
-
-    elseif option == "playerEliteFrame" or titleStr == L["Show_Elite_Texture"] then
-        if isShift then
-            BetterBlizzFramesDB.playerEliteFrameDarkmode = not BetterBlizzFramesDB.playerEliteFrameDarkmode
-        else
-            local textures = BetterBlizzFramesDB.classicFrames and 7 or 4
-            BetterBlizzFramesDB.playerEliteFrameMode = ((BetterBlizzFramesDB.playerEliteFrameMode or 1) % textures) + 1
-        end
-        if BBF.PlayerElite then BBF.PlayerElite(BetterBlizzFramesDB.playerEliteFrameMode) end
-        if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end
-        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
-
-    elseif option == "darkModeEliteTexture" or titleStr == L["Tooltip_Dark_Mode_Elite_Title"] or titleStr == L["Dark_Mode_Elite_Texture"] then
-        BetterBlizzFramesDB.darkModeEliteTextureDesaturated = not BetterBlizzFramesDB.darkModeEliteTextureDesaturated
-        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
-
-    elseif option == "classColorFrames" or titleStr == L["Class_Color_Health"] or titleStr == L["Tooltip_Class_Color_Healthbars_Title"] then
-        if isShift and not isCtrl then
-            BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
-        else
-            BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
-        end
-
-        if BetterBlizzFramesDB.classColorFramesSkipPlayer then
-            if PlayerFrame and PlayerFrame.healthbar then
-                PlayerFrame.healthbar:SetStatusBarDesaturated(false)
-                PlayerFrame.healthbar:SetStatusBarColor(1, 1, 1)
-            end
-            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
-                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
-            end
-        else
-            if PlayerFrame and PlayerFrame.healthbar and BBF.updateFrameColorToggleVer then
-                BBF.updateFrameColorToggleVer(PlayerFrame.healthbar, "player")
-            end
-            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
-                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
-            end
-        end
-
-        if BBF.ClassColorFramesCaller then
-            BBF.ClassColorFramesCaller()
-        elseif BBF.ClassColorFrames then
-            BBF.ClassColorFrames()
-        end
-        if BBF.UpdateFrames then
-            BBF.UpdateFrames()
-        end
-
-        if GameTooltip:IsShown() and widget and widget.HasScript and widget:HasScript("OnEnter") then
-            widget:GetScript("OnEnter")(widget)
-        end
-
-    elseif option == "customHealthbarColors" or titleStr == L["Custom_Colors"] or titleStr == L["Custom_Color_Health_Mana"] then
-        if isShift and not isCtrl then
-            BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
-            if BBF.UpdateFrames then BBF.UpdateFrames() end
-        elseif isCtrl and not isShift then
-            BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
-            if BetterBlizzFramesDB.classColorFramesSkipPlayer then
-                if PlayerFrame and PlayerFrame.healthbar then
-                    PlayerFrame.healthbar:SetStatusBarDesaturated(false)
-                    PlayerFrame.healthbar:SetStatusBarColor(1, 1, 1)
-                end
-                if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
-                    BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
-                end
-            else
-                if PlayerFrame and PlayerFrame.healthbar and BBF.updateFrameColorToggleVer then
-                    BBF.updateFrameColorToggleVer(PlayerFrame.healthbar, "player")
-                end
-                if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
-                    BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
-                end
-            end
-            if BBF.UpdateFrames then BBF.UpdateFrames() end
-        else
-            if BBF.OpenColorOptions then BBF.OpenColorOptions() end
-        end
-
-        if GameTooltip:IsShown() and widget and widget.HasScript and widget:HasScript("OnEnter") then
-            widget:GetScript("OnEnter")(widget)
-        end
-
-    elseif option == "hidePartyDispelOverlay" or titleStr == L["Hide_Dispel_Overlay"] then
-        if isCtrl then
-            BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons = not BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons
-        elseif isShift then
-            BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient
-        else
-            BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder
-        end
-        if BBF.HideFrames then BBF.HideFrames() end
-
-    elseif option == "raidFramePixelBorder" or titleStr == L["Pixel_Border"] or titleStr == L["Tooltip_Pixel_Border_RaidFrames_Title"] then
-        BetterBlizzFramesDB.raidFramePixelBorderSize = not BetterBlizzFramesDB.raidFramePixelBorderSize
-
-    elseif option == "partyFrameRangeAlpha" or titleStr == L["Party_Frame_Range_Alpha"] or titleStr == L["Change_Party_Frame_Alpha"] then
-        BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground = not BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground
-
-    elseif option == "hidePlayerPower" or titleStr == L["Hide_Resource_Power"] then
-        if BBF.OpenClassSpecificWindow then BBF.OpenClassSpecificWindow() end
-
-    elseif option == "showSpecName" or titleStr == L["Show_Spec_Name"] then
-        BetterBlizzFramesDB.partyArenaNames = not BetterBlizzFramesDB.partyArenaNames
-        if BBF.UpdateNameSettings then BBF.UpdateNameSettings() end
-    end
-
-    if widget and widget:IsMouseOver() then
-        local onEnter = widget:GetScript("OnEnter")
-        if onEnter then
-            onEnter(widget)
-        end
-    end
-end
-
 local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
     local checkBox = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
+    if not checkBox then
+        checkBox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
+    end
     if checkBox:GetHighlightTexture() then
         checkBox:GetHighlightTexture():SetTexture("")
         checkBox:GetHighlightTexture():SetAlpha(0)
@@ -2563,19 +1892,25 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         checkBox.Text = checkBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         checkBox.Text:SetPoint("LEFT", checkBox, "RIGHT", 4, 0)
     end
-    checkBox.Text:SetText(label)
-    checkBox:SetSize(23,23)
-    checkBox:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-
-
+    checkBox.Text:SetText(label or "")
+    checkBox:SetSize(24, 24)
+    if checkBox.Text then
+        checkBox.Text:SetFont(fontSmall, 12)
+    end
 
     local category
-    if parent.name then
+    if type(parent) == "table" and parent.name then
         category = parent.name
-    elseif parent:GetParent() and parent:GetParent().name then
-        category = parent:GetParent().name
-    elseif parent:GetParent() and parent:GetParent():GetParent() and parent:GetParent():GetParent().name then
-        category = parent:GetParent():GetParent().name
+    elseif type(parent) == "table" and parent.GetParent then
+        local p1 = parent:GetParent()
+        if p1 and p1.name then
+            category = p1.name
+        elseif p1 and p1.GetParent then
+            local p2 = p1:GetParent()
+            if p2 and p2.name then
+                category = p2.name
+            end
+        end
     end
 
     if category == "Better|cff00c0ffBlizz|rFrames |A:gmchat-icon-blizz:16:16|a" then
@@ -2586,64 +1921,6 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
 
     table.insert(checkBoxList, {checkbox = checkBox, label = label})
-
-    if parent and parent:GetObjectType() == "CheckButton" then
-        checkBox.parentCheckButton = parent
-        parent.childrenCheckButtons = parent.childrenCheckButtons or {}
-        table.insert(parent.childrenCheckButtons, checkBox)
-    end
-
-    local function UpdateEnabledState()
-        local isParentDisabled = false
-        if checkBox.parentCheckButtons then
-            local anyParentActive = false
-            for _, parentCB in ipairs(checkBox.parentCheckButtons) do
-                if parentCB:GetChecked() and parentCB:IsEnabled() then
-                    anyParentActive = true
-                    break
-                end
-            end
-            if not anyParentActive then
-                isParentDisabled = true
-            end
-        elseif checkBox.parentCheckButton then
-            local parentCB = checkBox.parentCheckButton
-            if not parentCB:GetChecked() or not parentCB:IsEnabled() then
-                isParentDisabled = true
-            end
-        end
-
-        if isParentDisabled then
-            checkBox:Disable()
-            checkBox:SetAlpha(0.5)
-            if checkBox.associatedTitle then
-                checkBox.associatedTitle:SetFontObject("GameFontDisableSmall")
-            end
-            if checkBox.associatedRow then
-                checkBox.associatedRow:SetAlpha(0.5)
-            end
-        else
-            checkBox:Enable()
-            checkBox:SetAlpha(1)
-            if checkBox.associatedTitle then
-                checkBox.associatedTitle:SetFontObject("GameFontHighlightSmall")
-            end
-            if checkBox.associatedRow then
-                checkBox.associatedRow:SetAlpha(1)
-            end
-        end
-
-        if checkBox.childrenCheckButtons then
-            for _, child in ipairs(checkBox.childrenCheckButtons) do
-                if child.UpdateEnabledState then
-                    child:UpdateEnabledState()
-                end
-            end
-        end
-    end
-
-
-    checkBox.UpdateEnabledState = UpdateEnabledState
 
     local function UpdateOption(value)
         if option == 'friendlyFrameClickthrough' and BBF.checkCombatAndWarn() then
@@ -2662,7 +1939,27 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
         end
         SetChecked()
 
-        UpdateEnabledState()
+        local grandparent = parent:GetParent()
+
+        local isParentDisabled = false
+        if type(parent) == "table" and parent.GetObjectType and parent:GetObjectType() == "CheckButton" then
+            if parent.GetChecked and parent:GetChecked() == false then
+                isParentDisabled = true
+            else
+                local gParent = parent.GetParent and parent:GetParent()
+                if gParent and gParent.GetObjectType and gParent:GetObjectType() == "CheckButton" and gParent.GetChecked and gParent:GetChecked() == false then
+                    isParentDisabled = true
+                end
+            end
+        end
+
+        if isParentDisabled then
+            checkBox:Disable()
+            checkBox:SetAlpha(0.5)
+        else
+            checkBox:Enable()
+            checkBox:SetAlpha(1)
+        end
 
         if extraFunc and not BetterBlizzFramesDB.wasOnLoadingScreen and BetterBlizzFrames.guiLoaded then
             extraFunc(option, value)
@@ -2680,20 +1977,13 @@ local function CreateCheckbox(option, label, parent, cvarName, extraFunc)
 
     UpdateOption(BetterBlizzFramesDB[option])
 
-    checkBox:SetScript("OnClick", function(self, button)
-        if button == "RightButton" then
-            checkBox:SetChecked(BetterBlizzFramesDB[option])
-            if BBF.HandleRightClick then
-                BBF.HandleRightClick(option, label, checkBox)
-            end
-        else
+    checkBox:HookScript("OnClick", function(self, button)
+        if button == "LeftButton" then
             UpdateOption(checkBox:GetChecked())
-            UpdateEnabledState()
         end
     end)
 
     return checkBox
-
 end
 
 
@@ -3965,10 +3255,19 @@ end
 ------------------------------------------------------------
 
 
+BBF.fontSmall = fontSmall
+BBF.fontMedium = fontMedium
+BBF.fontLarge = fontLarge
+BBF.anchorPoints = anchorPoints
+BBF.anchorPoints2 = anchorPoints2
+BBF.pixelsBetweenBoxes = pixelsBetweenBoxes
+BBF.pixelsOnFirstBox = pixelsOnFirstBox
+BBF.sliderUnderBoxX = sliderUnderBoxX
+BBF.sliderUnderBoxY = sliderUnderBoxY
+BBF.sliderUnderBox = sliderUnderBox
+BBF.playerClass = playerClass
+BBF.playerClassResourceScale = playerClassResourceScale
 
-------------------------------------------------------------
--- Shared Helper Function Exports for BBF Settings Modules
-------------------------------------------------------------
 BBF.LibDD = LibDD
 BBF.LSM = LSM
 BBF.CreateCheckbox = CreateCheckbox
@@ -3988,6 +3287,7 @@ BBF.CreateList = CreateList
 BBF.CreateAnchorDropdown = CreateAnchorDropdown
 BBF.CreateIconChangeWindow = CreateIconChangeWindow
 BBF.CreateBorderedFrame = CreateBorderedFrame
+BBF.OpenColorOptions = OpenColorOptions
 BBF.RecolorEntireAuraWhitelist = RecolorEntireAuraWhitelist
 BBF.UpdateColorSquare = UpdateColorSquare
 BBF.CreateSearchFrame = CreateSearchFrame
@@ -4000,6 +3300,143 @@ BBF.ShowProfileConfirmation = ShowProfileConfirmation
 BBF.HandleEditBoxInput = HandleEditBoxInput
 BBF.SetSliderValue = SetSliderValue
 BBF.UpdateSliderRange = UpdateSliderRange
+
+local classOptionsFrame
+function BBF.OpenClassSpecificWindow()
+    if BBF.GUI and BBF.GUI.OpenPopup then
+        BBF.GUI.OpenPopup("classSpecific")
+    end
+end
+
+local customColorFrame
+function BBF.OpenColorOptions()
+    if BBF.GUI and BBF.GUI.OpenPopup then
+        BBF.GUI.OpenPopup("customColors")
+    end
+end
+
+function BBF.HandleRightClick(option, titleStr, widget)
+    local isShift = IsShiftKeyDown()
+    local isCtrl = IsControlKeyDown()
+
+    if option == "formatStatusBarText" or titleStr == L["Format_Numbers"] then
+        BetterBlizzFramesDB.formatStatusBarTextExtraDecimals = not BetterBlizzFramesDB.formatStatusBarTextExtraDecimals
+        if BBF.HookStatusBarText then BBF.HookStatusBarText() end
+
+    elseif option == "playerEliteFrame" or titleStr == L["Show_Elite_Texture"] then
+        if isShift then
+            BetterBlizzFramesDB.playerEliteFrameDarkmode = not BetterBlizzFramesDB.playerEliteFrameDarkmode
+        else
+            local textures = BetterBlizzFramesDB.classicFrames and 7 or 4
+            BetterBlizzFramesDB.playerEliteFrameMode = ((BetterBlizzFramesDB.playerEliteFrameMode or 1) % textures) + 1
+        end
+        if BBF.PlayerElite then BBF.PlayerElite(BetterBlizzFramesDB.playerEliteFrameMode) end
+        if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end
+        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
+
+    elseif option == "darkModeEliteTexture" or titleStr == L["Tooltip_Dark_Mode_Elite_Title"] or titleStr == L["Dark_Mode_Elite_Texture"] then
+        BetterBlizzFramesDB.darkModeEliteTextureDesaturated = not BetterBlizzFramesDB.darkModeEliteTextureDesaturated
+        if BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end
+
+    elseif option == "classColorFrames" or titleStr == L["Class_Color_Health"] or titleStr == L["Tooltip_Class_Color_Healthbars_Title"] then
+        if isShift and not isCtrl then
+            BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
+        else
+            BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
+        end
+
+        if BetterBlizzFramesDB.classColorFramesSkipPlayer then
+            if PlayerFrame and PlayerFrame.healthbar then
+                PlayerFrame.healthbar:SetStatusBarDesaturated(false)
+                PlayerFrame.healthbar:SetStatusBarColor(1, 1, 1)
+            end
+            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+            end
+        else
+            if PlayerFrame and PlayerFrame.healthbar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(PlayerFrame.healthbar, "player")
+            end
+            if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+            end
+        end
+
+        if BBF.ClassColorFramesCaller then
+            BBF.ClassColorFramesCaller()
+        elseif BBF.ClassColorFrames then
+            BBF.ClassColorFrames()
+        end
+        if BBF.UpdateFrames then
+            BBF.UpdateFrames()
+        end
+
+        if GameTooltip:IsShown() and widget and widget.HasScript and widget:HasScript("OnEnter") then
+            widget:GetScript("OnEnter")(widget)
+        end
+
+    elseif option == "customHealthbarColors" or titleStr == L["Custom_Colors"] or titleStr == L["Custom_Color_Health_Mana"] then
+        if isShift and not isCtrl then
+            BetterBlizzFramesDB.classColorFramesSkipFriendly = not BetterBlizzFramesDB.classColorFramesSkipFriendly
+            if BBF.UpdateFrames then BBF.UpdateFrames() end
+        elseif isCtrl and not isShift then
+            BetterBlizzFramesDB.classColorFramesSkipPlayer = not BetterBlizzFramesDB.classColorFramesSkipPlayer
+            if BetterBlizzFramesDB.classColorFramesSkipPlayer then
+                if PlayerFrame and PlayerFrame.healthbar then
+                    PlayerFrame.healthbar:SetStatusBarDesaturated(false)
+                    PlayerFrame.healthbar:SetStatusBarColor(1, 1, 1)
+                end
+                if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                    BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+                end
+            else
+                if PlayerFrame and PlayerFrame.healthbar and BBF.updateFrameColorToggleVer then
+                    BBF.updateFrameColorToggleVer(PlayerFrame.healthbar, "player")
+                end
+                if CfPlayerFrameHealthBar and BBF.updateFrameColorToggleVer then
+                    BBF.updateFrameColorToggleVer(CfPlayerFrameHealthBar, "player")
+                end
+            end
+            if BBF.UpdateFrames then BBF.UpdateFrames() end
+        else
+            if BBF.OpenColorOptions then BBF.OpenColorOptions() end
+        end
+
+        if GameTooltip:IsShown() and widget and widget.HasScript and widget:HasScript("OnEnter") then
+            widget:GetScript("OnEnter")(widget)
+        end
+
+    elseif option == "hidePartyDispelOverlay" or titleStr == L["Hide_Dispel_Overlay"] then
+        if isCtrl then
+            BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons = not BetterBlizzFramesDB.hidePartyDispelOverlayHideIcons
+        elseif isShift then
+            BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepGradient
+        else
+            BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder = not BetterBlizzFramesDB.hidePartyDispelOverlayKeepBorder
+        end
+        if BBF.HideFrames then BBF.HideFrames() end
+
+    elseif option == "raidFramePixelBorder" or titleStr == L["Pixel_Border"] or titleStr == L["Tooltip_Pixel_Border_RaidFrames_Title"] then
+        BetterBlizzFramesDB.raidFramePixelBorderSize = not BetterBlizzFramesDB.raidFramePixelBorderSize
+
+    elseif option == "partyFrameRangeAlpha" or titleStr == L["Party_Frame_Range_Alpha"] or titleStr == L["Change_Party_Frame_Alpha"] then
+        BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground = not BetterBlizzFramesDB.partyFrameRangeAlphaSolidBackground
+
+    elseif option == "hidePlayerPower" or titleStr == L["Hide_Resource_Power"] then
+        if BBF.OpenClassSpecificWindow then BBF.OpenClassSpecificWindow() end
+
+    elseif option == "showSpecName" or titleStr == L["Show_Spec_Name"] then
+        BetterBlizzFramesDB.partyArenaNames = not BetterBlizzFramesDB.partyArenaNames
+        if BBF.UpdateNameSettings then BBF.UpdateNameSettings() end
+    end
+
+    if widget and widget:IsMouseOver() then
+        local onEnter = widget:GetScript("OnEnter")
+        if onEnter then
+            onEnter(widget)
+        end
+    end
+end
 
 local function CombatOnGUICreation()
     if InCombatLockdown() then
@@ -4059,16 +3496,16 @@ function BBF.LoadGUI()
         return
     end
 
-    guiGeneralTab()
-    guiPositionAndScale()
-    guiFrameAuras()
-    guiFrameLook()
-    guiCastbars()
-    guiImportAndExport()
-    guiMisc()
+    if guiGeneralTab then guiGeneralTab() end
+    if guiPositionAndScale then guiPositionAndScale() end
+    if guiFrameAuras then guiFrameAuras() end
+    if guiFrameLook then guiFrameLook() end
+    if guiCastbars then guiCastbars() end
+    if guiImportAndExport then guiImportAndExport() end
+    if guiMisc then guiMisc() end
     --guiChatFrame()
-    guiCustomCode()
-    guiSupport()
+    if guiCustomCode then guiCustomCode() end
+    if guiSupport then guiSupport() end
     BetterBlizzFrames.guiLoaded = true
 
     if SettingsPanel:IsShown() then
