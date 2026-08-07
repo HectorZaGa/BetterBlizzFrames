@@ -49,8 +49,7 @@ function guiGeneralTab()
     -- SCHEMA
     -- Each entry is a tab: { id, label, atlas, size, ... , cards }
     -- Each card: { title, options = { { type, key, label, ... } } }
-    -- Option types: "checkbox", "slider", "header", "dualchild",
-    --               "multiparentchild", "preview"
+    -- Option types: "checkbox", "slider", "header", "preview", "dualchild"
     -- Children are declared inline with: children = { {...}, {...} }
     -- Multi-parent children use: type="checkbox", parents={"id1","id2"}
     -- ============================================================
@@ -80,22 +79,22 @@ function guiGeneralTab()
                     { type="colorGrid", parent="useOneClassColor", inline=true, options = {
                         { key="singleClassColor", label=L["All_Classes"], default={r=0.8, g=0.8, b=0.8} }
                     }},
-                    { type="allClassSwatches", parent="overrideClassColors" },
+                    { type="allClassSwatches", parent="overrideClassColors", marginTop = 4 },
 
                     { type="header", label=L["Power_Colors"] },
                     { type="checkbox", key="customPowerColors", label=L["Enable_Power_Colors"], tooltip=L["Tooltip_Enable_Power_Colors_Desc"] },
-                    { type="checkbox", key="useOnePowerColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Powers_Desc"], father="customPowerColors" },
-                    { type="colorGrid", father="useOnePowerColor", inline=true, options = {
+                    { type="checkbox", key="useOnePowerColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Powers_Desc"], parent="customPowerColors" },
+                    { type="colorGrid", parent="useOnePowerColor", inline=true, options = {
                         { key="singlePowerColor", label=L["All_Classes"], default={r=0, g=0.8, b=1} }
                     }},
-                    { type="allPowerSwatches", father="customPowerColors" },
+                    { type="allPowerSwatches", parent="customPowerColors", marginTop = 4 },
 
                     { type="header", label=L["Background_Colors"] },
                     { type="checkbox", key="customBgColorUnitFrames", label=L["Change_UnitFrame_Background_Color"], tooltip=L["Tooltip_Change_UnitFrame_Background_Color_Desc"] },
                     { type="colorSwatchDual", parent="customBgColorUnitFrames", key1="customHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
 
                     { type="checkbox", key="customBgColorRaidFrames", label=L["Change_Party_RaidFrame_Background_Color"], tooltip=L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"] },
-                    { type="colorSwatchDual", father="customBgColorRaidFrames", key1="customRaidHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customRaidManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
+                    { type="colorSwatchDual", parent="customBgColorRaidFrames", key1="customRaidHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customRaidManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
                 },
             },
             classSpecific = {

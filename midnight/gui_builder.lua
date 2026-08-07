@@ -690,6 +690,42 @@ end
 -- POPUP WINDOW SCHEMA ENGINE
 -- ============================================================
 
+
+
+local function ParseMargin(opt)
+    local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
+    if type(opt.margin) == "table" then
+        mTop    = tonumber(opt.margin[1] or opt.margin.top)    or 0
+        mRight  = tonumber(opt.margin[2] or opt.margin.right)  or 0
+        mBottom = tonumber(opt.margin[3] or opt.margin.bottom) or 0
+        mLeft   = tonumber(opt.margin[4] or opt.margin.left)   or 0
+    elseif type(opt.margin) == "number" then
+        mTop, mRight, mBottom, mLeft = opt.margin, opt.margin, opt.margin, opt.margin
+    end
+    mTop    = mTop    + (tonumber(opt.marginTop)    or 0)
+    mRight  = mRight  + (tonumber(opt.marginRight)  or 0)
+    mBottom = mBottom + (tonumber(opt.marginBottom) or 0)
+    mLeft   = mLeft   + (tonumber(opt.marginLeft)   or 0)
+    return mTop, mRight, mBottom, mLeft
+end
+
+local function ParsePadding(opt)
+    local pTop, pRight, pBottom, pLeft = 0, 0, 0, 0
+    if type(opt.padding) == "table" then
+        pTop    = tonumber(opt.padding[1] or opt.padding.top)    or 0
+        pRight  = tonumber(opt.padding[2] or opt.padding.right)  or 0
+        pBottom = tonumber(opt.padding[3] or opt.padding.bottom) or 0
+        pLeft   = tonumber(opt.padding[4] or opt.padding.left)   or 0
+    elseif type(opt.padding) == "number" then
+        pTop, pRight, pBottom, pLeft = opt.padding, opt.padding, opt.padding, opt.padding
+    end
+    pTop    = pTop    + (tonumber(opt.paddingTop)    or 0)
+    pRight  = pRight  + (tonumber(opt.paddingRight)  or 0)
+    pBottom = pBottom + (tonumber(opt.paddingBottom) or 0)
+    pLeft   = pLeft   + (tonumber(opt.paddingLeft)   or 0)
+    return pTop, pRight, pBottom, pLeft
+end
+
 local function CalculateGridCoords(cIdx, cData, numItems, opt)
     local specifiedRows = tonumber(opt.rows or opt.row)
     local specifiedCols = tonumber(opt.cols or opt.columns)
@@ -840,12 +876,15 @@ function GUI.OpenPopup(popupId, schema)
 
         local function RenderPopupOption(opt, parentCb)
             local t = opt.type
+            local mTop, mRight, mBottom, mLeft = ParseMargin(opt)
+            if mTop > 0 then currentY = currentY - mTop end
+
             local parentKey = opt.parent or opt.father
             if not parentCb and parentKey and createdWidgets[parentKey] then
                 parentCb = createdWidgets[parentKey]
             end
             local isChild = parentCb ~= nil
-            local indentX = isChild and ((parentCb.indentX or 0) + 16) or 0
+            local indentX = (isChild and ((parentCb.indentX or 0) + 16) or 0) + mLeft
 
             if t == "header" then
                 local header = contentParent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -947,9 +986,18 @@ function GUI.OpenPopup(popupId, schema)
             elseif t == "colorGrid" then
                 local isInline = opt.inline ~= nil and opt.inline ~= false
                 local refWidget = (type(opt.inline) == "string" and createdWidgets[opt.inline]) or parentCb
-                local startY = (isInline and refWidget and refWidget.lastPosY) or currentY
+                local pTop, pRight, pBottom, pLeft = ParsePadding(opt)
+
+                local vMidOffset = 0
+                if isInline and refWidget then
+                    local refH = (refWidget.associatedRow and refWidget.associatedRow:GetHeight()) or (refWidget.GetHeight and refWidget:GetHeight()) or 30
+                    local itemH = 18
+                    vMidOffset = math.floor((refH - itemH) / 2)
+                end
+
+                local startY = (isInline and refWidget and (refWidget.lastPosY - vMidOffset - pTop)) or (currentY - pTop)
                 local savedY = currentY
-                local basePosX = (isInline and (opt.inlineX or (160 + indentX))) or (10 + indentX)
+                local basePosX = ((isInline and (opt.inlineX or (160 + indentX))) or (10 + indentX)) + pLeft
 
                 local cols = opt.options or {}
                 local numItems = #cols
@@ -960,7 +1008,8 @@ function GUI.OpenPopup(popupId, schema)
                     local colIndex, rowIndex, numCols = CalculateGridCoords(cIdx, cData, numItems, opt)
                     if rowIndex > maxRow then maxRow = rowIndex end
 
-                    local colWidth = tonumber(opt.colWidth) or math.floor(((315 - indentX) - 20) / numCols)
+                    local availWidth = (315 - indentX - pLeft - pRight) - 20
+                    local colWidth = tonumber(opt.colWidth) or math.floor(availWidth / numCols)
                     local posX = basePosX + colIndex * colWidth
                     local posY = startY - rowIndex * rowHeight
                     local labelW = opt.maxTextWidth or (colWidth - 26)
@@ -982,7 +1031,7 @@ function GUI.OpenPopup(popupId, schema)
                 if isInline then
                     currentY = savedY
                 else
-                    currentY = startY - (maxRow + 1) * rowHeight
+                    currentY = startY - (maxRow + 1) * rowHeight - pBottom
                 end
 
             elseif t == "allClassSwatches" then
@@ -1085,8 +1134,14 @@ function GUI.OpenPopup(popupId, schema)
             end
         end
 
+        local function RenderPopupOptionWrapper(opt, parentCb)
+            RenderPopupOption(opt, parentCb)
+            local _, _, mBottom = ParseMargin(opt)
+            if mBottom > 0 then currentY = currentY - mBottom end
+        end
+
         for i, opt in ipairs(schema.options or {}) do
-            RenderPopupOption(opt, nil)
+            RenderPopupOptionWrapper(opt, nil)
         end
 
 if schema.scrollable and contentParent.SetHeight then
