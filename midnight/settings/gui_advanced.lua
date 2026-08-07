@@ -229,7 +229,7 @@ function guiPositionAndScale()
 
     local reloadUiButton2 = CreateFrame("Button", nil, BetterBlizzFramesSubPanel, "UIPanelButtonTemplate")
     reloadUiButton2:SetText(L["Label_Reload_Ui"])
-    reloadUiButton2:SetWidth(85)
+    reloadUiButton2:SetWidth(96)
     reloadUiButton2:SetPoint("TOP", BetterBlizzFramesSubPanel, "BOTTOMRIGHT", -140, -9)
     reloadUiButton2:SetScript("OnClick", function()
         BetterBlizzFramesDB.reopenOptions = true

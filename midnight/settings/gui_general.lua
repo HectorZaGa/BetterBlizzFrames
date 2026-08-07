@@ -90,11 +90,14 @@ function guiGeneralTab()
                     { type="allPowerSwatches", parent="customPowerColors", marginTop = 4 },
 
                     { type="header", label=L["Background_Colors"] },
-                    { type="checkbox", key="customBgColorUnitFrames", label=L["Change_UnitFrame_Background_Color"], tooltip=L["Tooltip_Change_UnitFrame_Background_Color_Desc"], onChange=BBF.UpdateFrames },
-                    { type="colorSwatchDual", parent="customBgColorUnitFrames", key1="customHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
+                    { type="checkbox", key="addUnitFrameBgTexture", label=L["Change_UnitFrame_Background_Color"], tooltip=L["Tooltip_Change_UnitFrame_Background_Color_Desc"], onChange=function() if BBF.UnitFrameBackgroundTexture then BBF.UnitFrameBackgroundTexture() end if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end end },
+                    { type="colorSwatchDual", parent="addUnitFrameBgTexture", key1="unitFrameBgTextureColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="unitFrameBgTextureManaColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
+                    { type="dropdown", preset="texture", parent="addUnitFrameBgTexture", key="unitFrameBgTexture", onChange=function() if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end if BBF.UnitFrameBackgroundTexture then BBF.UnitFrameBackgroundTexture() end end },
 
-                    { type="checkbox", key="customBgColorRaidFrames", label=L["Change_Party_RaidFrame_Background_Color"], tooltip=L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"] },
-                    { type="colorSwatchDual", parent="customBgColorRaidFrames", key1="customRaidHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customRaidManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
+                    { type="checkbox", key="changePartyRaidFrameBackgroundColor", label=L["Change_Party_RaidFrame_Background_Color"], tooltip=L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"], onChange=function() if BBF.SetCompactUnitFramesBackground then BBF.SetCompactUnitFramesBackground() end if BBF.UpdateFrames then BBF.UpdateFrames() end if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end end },
+                    { type="colorSwatchDual", parent="changePartyRaidFrameBackgroundColor", key1="partyRaidFrameBackgroundHealthColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="partyRaidFrameBackgroundManaColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
+                    { type="dropdown", preset="texture", parent="changePartyRaidFrameBackgroundColor", key="raidFrameBgTexture", onChange=function() if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end if BBF.SetCompactUnitFramesBackground then BBF.SetCompactUnitFramesBackground() end end },
+
                 },
             },
             classSpecific = {

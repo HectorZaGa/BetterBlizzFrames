@@ -180,6 +180,15 @@ GUI.WidgetType = {
     Preview           = 11,
 }
 
+local classColors = RAID_CLASS_COLORS
+local classKeys = {}
+if classColors then
+    for class in pairs(classColors) do
+        table.insert(classKeys, class)
+    end
+end
+
+
 -- ============================================================
 -- INTERNAL HELPERS
 -- ============================================================
@@ -530,9 +539,22 @@ local function BuildDropdownRow(card, info, parentCb)
         choices = ANCHOR_PRESET_CHOICES
     elseif info.preset == "anchorInnerOuter" then
         choices = ANCHOR_INNER_OUTER_CHOICES
+    elseif info.preset == "texture" or info.preset == "statusbar" then
+        choices = {}
+        local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+        if LSM then
+            local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
+            local sorted = {}
+            for name in pairs(textures) do table.insert(sorted, name) end
+            table.sort(sorted)
+            for _, name in ipairs(sorted) do
+                table.insert(choices, { value = name, label = name })
+            end
+        end
     else
         choices = info.choices or {}
     end
+
 
     -- Build native WoW DropdownButton
     local dropdownWidth = info.width or 130
@@ -554,20 +576,64 @@ local function BuildDropdownRow(card, info, parentCb)
         dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select"] or "Select"))
     end
 
+    local isTextureDropdown = (info.preset == "texture" or info.preset == "statusbar")
+    if isTextureDropdown then
+        dropdown.texturePool = dropdown.texturePool or {}
+    end
+
     dropdown:SetupMenu(function(owner, rootDescription)
-        for _, c in ipairs(choices) do
+        if #choices > 20 then
+            rootDescription:SetScrollMode(20 * 20)
+        end
+        local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+        local lsmTextures = isTextureDropdown and LSM and LSM:HashTable(LSM.MediaType.STATUSBAR)
+
+        for index, c in ipairs(choices) do
             local displayText = (L and L[c.label]) or c.label
-            rootDescription:CreateButton(displayText, function()
+            local button = rootDescription:CreateButton(displayText, function()
                 BetterBlizzFramesDB[info.key] = c.value
                 dropdown:SetDefaultText(displayText)
                 if info.onChange then info.onChange(c.value) end
+                if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
                 if BBF.UpdateFrames then BBF.UpdateFrames() end
             end)
+
+            if isTextureDropdown and lsmTextures and lsmTextures[c.value] then
+                local texturePath = lsmTextures[c.value]
+                button:AddInitializer(function(btnFrame)
+                    local textureBg = dropdown.texturePool[index]
+                    if not textureBg then
+                        textureBg = dropdown:CreateTexture(nil, "BACKGROUND")
+                        dropdown.texturePool[index] = textureBg
+                    end
+                    textureBg:SetParent(btnFrame)
+                    textureBg:SetAllPoints(btnFrame)
+                    textureBg:SetTexture(texturePath)
+
+                    if classKeys and #classKeys > 0 then
+                        local randomClass = classKeys[math.random(#classKeys)]
+                        local col = classColors[randomClass]
+                        if col then
+                            textureBg:SetVertexColor(col.r, col.g, col.b)
+                        end
+                    end
+                    textureBg:Show()
+                end)
+            end
         end
     end)
+
     RefreshText()
 
-    hooksecurefunc(dropdown, "OnMenuClosed", RefreshText)
+    hooksecurefunc(dropdown, "OnMenuClosed", function()
+        if dropdown.texturePool then
+            for _, texture in pairs(dropdown.texturePool) do
+                texture:Hide()
+            end
+        end
+        RefreshText()
+    end)
+
 
     dropdown.associatedRow        = row
     dropdown.associatedTitle      = title
@@ -1408,7 +1474,109 @@ function GUI.OpenPopup(popupId, schema)
                     WireChildToParent(parentCb, b2, nil)
                 end
                 currentY = currentY - 28
+
+            elseif t == "textureDropdown" or t == "dropdown" then
+                local dropdownWidth = opt.width or 180
+                local posX = opt.posX or (26 + indentX)
+                local dropdown = CreateFrame("DropdownButton", nil, contentParent, "WowStyle1DropdownTemplate")
+                dropdown:SetWidth(dropdownWidth)
+                dropdown:SetPoint("TOPLEFT", contentParent, "TOPLEFT", posX, currentY)
+
+                local choices = {}
+                if opt.preset == "texture" or opt.preset == "statusbar" or t == "textureDropdown" then
+                    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+                    if LSM then
+                        local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
+                        local sorted = {}
+                        for name in pairs(textures) do table.insert(sorted, name) end
+                        table.sort(sorted)
+                        for _, name in ipairs(sorted) do
+                            table.insert(choices, { value = name, label = name })
+                        end
+                    end
+                elseif opt.preset == "anchor" then
+                    choices = ANCHOR_PRESET_CHOICES
+                elseif opt.preset == "anchorInnerOuter" then
+                    choices = ANCHOR_INNER_OUTER_CHOICES
+                else
+                    choices = opt.choices or {}
+                end
+
+                local function GetChoiceLabel(val)
+                    for _, c in ipairs(choices) do
+                        if c.value == val then return (L and L[c.label]) or c.label end
+                    end
+                    return val
+                end
+
+                local function RefreshText()
+                    local current = BetterBlizzFramesDB[opt.key]
+                    dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select_Texture"] or "Select Texture"))
+                end
+
+                local isTextureDropdown = (opt.preset == "texture" or opt.preset == "statusbar" or t == "textureDropdown")
+                if isTextureDropdown then
+                    dropdown.texturePool = dropdown.texturePool or {}
+                end
+
+                dropdown:SetupMenu(function(owner, rootDescription)
+                    if #choices > 20 then rootDescription:SetScrollMode(20 * 20) end
+                    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+                    local lsmTextures = isTextureDropdown and LSM and LSM:HashTable(LSM.MediaType.STATUSBAR)
+
+                    for index, c in ipairs(choices) do
+                        local displayText = (L and L[c.label]) or c.label
+                        local button = rootDescription:CreateButton(displayText, function()
+                            BetterBlizzFramesDB[opt.key] = c.value
+                            dropdown:SetDefaultText(displayText)
+                            if opt.onChange then opt.onChange(c.value) end
+                            if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
+                            if BBF.UpdateFrames then BBF.UpdateFrames() end
+                        end)
+
+                        if isTextureDropdown and lsmTextures and lsmTextures[c.value] then
+                            local texturePath = lsmTextures[c.value]
+                            button:AddInitializer(function(btnFrame)
+                                local textureBg = dropdown.texturePool[index]
+                                if not textureBg then
+                                    textureBg = dropdown:CreateTexture(nil, "BACKGROUND")
+                                    dropdown.texturePool[index] = textureBg
+                                end
+                                textureBg:SetParent(btnFrame)
+                                textureBg:SetAllPoints(btnFrame)
+                                textureBg:SetTexture(texturePath)
+
+                                if classKeys and #classKeys > 0 then
+                                    local randomClass = classKeys[math.random(#classKeys)]
+                                    local col = classColors[randomClass]
+                                    if col then
+                                        textureBg:SetVertexColor(col.r, col.g, col.b)
+                                    end
+                                end
+                                textureBg:Show()
+                            end)
+                        end
+                    end
+                end)
+                RefreshText()
+
+                hooksecurefunc(dropdown, "OnMenuClosed", function()
+                    if dropdown.texturePool then
+                        for _, texture in pairs(dropdown.texturePool) do
+                            texture:Hide()
+                        end
+                    end
+                    RefreshText()
+                end)
+
+
+                if isChild and parentCb then
+                    WireChildToParent(parentCb, dropdown, nil)
+                end
+
+                currentY = currentY - 32
             end
+
         end
 
         local function RenderPopupOptionWrapper(opt, parentCb)
