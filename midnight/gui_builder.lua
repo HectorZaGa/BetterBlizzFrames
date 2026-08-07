@@ -330,6 +330,10 @@ local function TriggerRightClick(info, widget, keyOverride, labelOverride)
     end
 end
 
+-- Forward declare so BuildCheckboxRow (and BuildDropdownRow) can call it
+-- before the full definition further below.
+local BuildColorSwatchBtn
+
 local function BuildCheckboxRow(card, info, parentCb)
     local isChild      = (parentCb ~= nil) or (info.inverseParent ~= nil) or (info.disableTarget ~= nil)
     local rc           = T.Row.checkbox
@@ -353,7 +357,7 @@ local function BuildCheckboxRow(card, info, parentCb)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rc.height)
 
-    local cb = BBF.CreateCheckbox(info.key, "", parentCb or row, nil, info.onChange)
+    local cb = BBF.CreateCheckbox(info.key, "", row, nil, info.onChange)
     cb:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     cb:HookScript("OnClick", function(self, btn)
         if btn == "RightButton" then
@@ -363,6 +367,17 @@ local function BuildCheckboxRow(card, info, parentCb)
     end)
     StyleCheckbox(cb)
     cb:SetPoint("RIGHT", row, "RIGHT", rc.cbOffsetRight, 0)
+
+    -- colorPicker = {r, g, b} — inline color swatch anchored left of the checkbox toggle
+    if info.colorPicker then
+        local cpDefault = info.colorPicker
+        local cpKey     = info.colorPickerKey or (info.key .. "Color")
+        local swatchBtn = BuildColorSwatchBtn(row, 0, 0, cpKey, nil, {r = cpDefault.r or cpDefault[1] or 1, g = cpDefault.g or cpDefault[2] or 1, b = cpDefault.b or cpDefault[3] or 1}, nil, info.onChange)
+        swatchBtn:ClearAllPoints()
+        swatchBtn:SetPoint("RIGHT", cb, "LEFT", -6, 0)
+        swatchBtn:SetSize(16, 16)
+        cb.colorSwatchBtn = swatchBtn
+    end
 
     cb.associatedTitle      = title
     cb.associatedRow        = row
@@ -394,6 +409,7 @@ local function BuildCheckboxRow(card, info, parentCb)
 
     HookHighlight(titleFrame, updateHL)
     HookHighlight(cb, updateHL)
+
 
     card.currentY = card.currentY - rc.height - rc.gap
     card:SetHeight(-card.currentY + 6)
@@ -467,6 +483,110 @@ local function BuildSliderRow(card, info, parentCb)
     card.currentY = card.currentY - rs.height - rs.gap
     card:SetHeight(-card.currentY + 6)
     return slider
+end
+
+-- Anchor point presets (mirrors CreateAnchorDropdown in gui.lua)
+local ANCHOR_PRESET_CHOICES = {
+    { value = "CENTER", label = "Anchor_CENTER" },
+    { value = "TOP",    label = "Anchor_TOP"    },
+    { value = "LEFT",   label = "Anchor_LEFT"   },
+    { value = "RIGHT",  label = "Anchor_RIGHT"  },
+    { value = "BOTTOM", label = "Anchor_BOTTOM" },
+}
+local ANCHOR_INNER_OUTER_CHOICES = {
+    { value = "TOP",    label = "Anchor_TOP"   },
+    { value = "LEFT",   label = "Anchor_INNER" },
+    { value = "RIGHT",  label = "Anchor_OUTER" },
+    { value = "BOTTOM", label = "Anchor_BOTTOM"},
+}
+
+local function BuildDropdownRow(card, info, parentCb)
+    local isChild     = parentCb ~= nil
+    local rs          = T.Row.slider   -- reuse slider row metrics
+    local leftInset   = isChild and rs.leftInsetChild  or rs.leftInset
+    local widthShrink = isChild and rs.widthShrinkChild or rs.widthShrink
+    local titleFont   = isChild and rs.titleFontChild  or rs.titleFont
+    local titleWidth  = isChild and rs.titleWidthChild or rs.titleWidth
+    local L           = BBF.L
+
+    local row = CreateFrame("Frame", nil, card)
+    row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
+    row:SetSize(card.cardWidth - widthShrink, rs.height)
+    local _, updateHL = AddRowHighlight(row)
+
+    local title = row:CreateFontString(nil, "OVERLAY", titleFont)
+    title:SetPoint("LEFT", row, "LEFT", rs.titleOffsetLeft, 0)
+    title:SetText(info.label)
+    title:SetWidth(titleWidth)
+    title:SetJustifyH("LEFT")
+
+    local titleFrame = CreateFrame("Frame", nil, row)
+    titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
+    titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rs.height)
+
+    -- Resolve choices list
+    local choices
+    if info.preset == "anchor" then
+        choices = ANCHOR_PRESET_CHOICES
+    elseif info.preset == "anchorInnerOuter" then
+        choices = ANCHOR_INNER_OUTER_CHOICES
+    else
+        choices = info.choices or {}
+    end
+
+    -- Build native WoW DropdownButton
+    local dropdownWidth = info.width or 130
+    local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(dropdownWidth)
+    dropdown:SetPoint("RIGHT", row, "RIGHT", -8, 0)
+
+    local function GetChoiceLabel(value)
+        for _, c in ipairs(choices) do
+            if c.value == value then
+                return (L and L[c.label]) or c.label
+            end
+        end
+        return value
+    end
+
+    local function RefreshText()
+        local current = BetterBlizzFramesDB[info.key]
+        dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select"] or "Select"))
+    end
+
+    dropdown:SetupMenu(function(owner, rootDescription)
+        for _, c in ipairs(choices) do
+            local displayText = (L and L[c.label]) or c.label
+            rootDescription:CreateButton(displayText, function()
+                BetterBlizzFramesDB[info.key] = c.value
+                dropdown:SetDefaultText(displayText)
+                if info.onChange then info.onChange(c.value) end
+                if BBF.UpdateFrames then BBF.UpdateFrames() end
+            end)
+        end
+    end)
+    RefreshText()
+
+    hooksecurefunc(dropdown, "OnMenuClosed", RefreshText)
+
+    dropdown.associatedRow        = row
+    dropdown.associatedTitle      = title
+    dropdown.associatedTitleFrame = titleFrame
+
+    if isChild then
+        WireChildToParent(parentCb, dropdown, title, row, info)
+    end
+
+    if info.tooltip and info.tooltip ~= "" then
+        BBF.CreateTooltipTwo(titleFrame, info.label, info.tooltip)
+        BBF.CreateTooltipTwo(dropdown,   info.label, info.tooltip)
+    end
+
+    HookHighlight(titleFrame, updateHL)
+
+    card.currentY = card.currentY - rs.height - rs.gap
+    card:SetHeight(-card.currentY + 6)
+    return dropdown
 end
 
 local function BuildDualChildCheckboxRow(card, info, parentCb)
@@ -766,6 +886,13 @@ local function BuildOption(card, info, resolvedRefs)
         if info.key then resolvedRefs[info.key] = sl end
         return sl
 
+    elseif t == "dropdown" then
+        local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent])
+        local dd = BuildDropdownRow(card, info, parentCb)
+        if info.id  then resolvedRefs[info.id]  = dd end
+        if info.key then resolvedRefs[info.key] = dd end
+        return dd
+
     elseif t == "dualchild" then
         local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
         local cb1, cb2 = BuildDualChildCheckboxRow(card, info, parentCb)
@@ -779,6 +906,7 @@ local function BuildOption(card, info, resolvedRefs)
     elseif t == "preview" or t == "frameBox" or t == "previewBox" then
         return BuildPreviewRow(card, info)
     end
+
 end
 
 -- ============================================================
@@ -899,7 +1027,7 @@ end
 local popupFrames = {}
 
 
-local function BuildColorSwatchBtn(parent, posX, posY, dbKey, labelStr, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
+BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(18, 18)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", posX, posY)

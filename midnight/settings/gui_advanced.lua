@@ -25,6 +25,7 @@ local schema = {
                         { type="slider",   key="absorbIndicatorScale",        label=L["Size"],            tooltip=L["Tooltip_Absorb_Indicator"], min=0.1, max=1.9, step=0.01 },
                         { type="slider",   key="playerAbsorbXPos",            label=L["X_Offset"],        tooltip="",                             min=-100, max=100, step=1 },
                         { type="slider",   key="playerAbsorbYPos",            label=L["Y_Offset"],        tooltip="",                             min=-100, max=100, step=1 },
+                        { type="dropdown", key="playerAbsorbAnchor",          label=L["Anchor"],          tooltip="",                             preset="anchorInnerOuter", onChange=BBF.AbsorbCaller },
                         { type="checkbox", key="absorbIndicatorTestMode",     label=L["Test"],            tooltip="",                             onChange=BBF.AbsorbCaller },
                         { type="checkbox", key="absorbIndicatorFlipIconText", label=L["Flip_Icon_Text"],  tooltip="",                             onChange=BBF.AbsorbCaller },
                     }
@@ -52,9 +53,10 @@ local schema = {
                 {
                     title   = L["Combat_Indicator"],
                     options = {
-                        { type="slider", key="combatIndicatorScale", label=L["Size"],     tooltip=L["Tooltip_Combat_Indicator"], min=0.1, max=1.9, step=0.01 },
-                        { type="slider", key="combatIndicatorXPos",  label=L["X_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
-                        { type="slider", key="combatIndicatorYPos",  label=L["Y_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="slider",   key="combatIndicatorScale",  label=L["Size"],     tooltip=L["Tooltip_Combat_Indicator"], min=0.1, max=1.9, step=0.01 },
+                        { type="slider",   key="combatIndicatorXPos",   label=L["X_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="slider",   key="combatIndicatorYPos",   label=L["Y_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="dropdown", key="combatIndicatorAnchor", label=L["Anchor"],   tooltip="",                            preset="anchorInnerOuter", onChange=BBF.CombatIndicatorCaller },
                     }
                 },
                 {
@@ -89,9 +91,10 @@ local schema = {
                 {
                     title   = L["Healer_Indicator"],
                     options = {
-                        { type="slider", key="healerIndicatorScale", label=L["Size"],     tooltip=L["Tooltip_Healer_Indicator"], min=0.8, max=2.5, step=0.01 },
-                        { type="slider", key="healerIndicatorXPos",  label=L["X_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
-                        { type="slider", key="healerIndicatorYPos",  label=L["Y_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="slider",   key="healerIndicatorScale",  label=L["Size"],     tooltip=L["Tooltip_Healer_Indicator"], min=0.8, max=2.5, step=0.01 },
+                        { type="slider",   key="healerIndicatorXPos",   label=L["X_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="slider",   key="healerIndicatorYPos",   label=L["Y_Offset"], tooltip="",                            min=-50, max=50,  step=1 },
+                        { type="dropdown", key="healerIndicatorAnchor", label=L["Anchor"],   tooltip="",                            preset="anchor" },
                     }
                 },
                 {
@@ -155,9 +158,10 @@ local schema = {
                 {
                     title   = L["Interrupt_Icon_AS"],
                     options = {
-                        { type="slider", key="castBarInterruptIconScale", label=L["Size"],     tooltip=L["Show_Interrupt_Icon_Next_Castbar"], min=0.1, max=1.9, step=0.01 },
-                        { type="slider", key="castBarInterruptIconXPos",  label=L["X_Offset"], tooltip="",                                      min=-100, max=100, step=1 },
-                        { type="slider", key="castBarInterruptIconYPos",  label=L["Y_Offset"], tooltip="",                                      min=-100, max=100, step=1 },
+                        { type="slider",   key="castBarInterruptIconScale",  label=L["Size"],     tooltip=L["Show_Interrupt_Icon_Next_Castbar"], min=0.1, max=1.9, step=0.01 },
+                        { type="slider",   key="castBarInterruptIconXPos",   label=L["X_Offset"], tooltip="",                                      min=-100, max=100, step=1 },
+                        { type="slider",   key="castBarInterruptIconYPos",   label=L["Y_Offset"], tooltip="",                                      min=-100, max=100, step=1 },
+                        { type="dropdown", key="castBarInterruptIconAnchor", label=L["Anchor"],   tooltip="",                                      preset="anchor" },
                     }
                 },
                 {

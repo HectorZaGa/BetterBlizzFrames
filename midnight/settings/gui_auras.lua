@@ -84,7 +84,7 @@ local schema = {
                 {
                     title   = L["Aura_Styling"],
                     options = {
-                        { type="checkbox", key="changePurgeTextureColor",     label=L["Change_Purge_Texture_Color"],    tooltip=L["Change_Purge_Texture_Color_Desc"] },
+                        { type="checkbox", key="changePurgeTextureColor", label=L["Change_Purge_Texture_Color"], tooltip=L["Change_Purge_Texture_Color_Desc"], colorPicker={r=0, g=1, b=0}, colorPickerKey="purgeTextureColorRGB" },
                         { type="checkbox", key="increaseAuraStrata",          label=L["Increase_Aura_Frame_Strata"],   tooltip=L["Tooltip_Increase_Aura_Frame_Strata"] },
                         { type="checkbox", key="hideUnitframeAuraTooltips",   label=L["Hide_UnitFrame_Aura_Tooltips"],  tooltip=L["Tooltip_Hide_UnitFrame_Aura_Tooltips"] },
                         { type="checkbox", key="pixelBorderAuras",            label=L["Pixel_Border_Auras"],           tooltip=L["Tooltip_Pixel_Border_Auras_Desc"] },
