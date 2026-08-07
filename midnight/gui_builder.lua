@@ -210,19 +210,73 @@ local function HookHighlight(frame, updateFn)
     end
 end
 
-local function WireChildToParent(parentCb, cb, title)
-    if not parentCb then return end
-    local function UpdateState()
-        if parentCb:GetChecked() then
-            cb:Enable()
-            if title then title:SetAlpha(1) end
-            cb:SetAlpha(1)
-        else
-            cb:Disable()
-            if title then title:SetAlpha(0.4) end
-            cb:SetAlpha(0.4)
+local function SetWidgetState(widget, enabled)
+    if not widget then return end
+    local alpha = enabled and 1.0 or (T.Row and T.Row.disabledAlpha or 0.4)
+    local isDesaturated = not enabled
+
+    -- 1. Outer Row Frame (only use explicit associatedRow — never fall back to GetParent()
+    --    to avoid accidentally dimming the entire popup panel for color swatches)
+    local row = widget.associatedRow
+    if row and row ~= UIParent and row.SetAlpha then
+        row:SetAlpha(alpha)
+    end
+
+    -- Widget itself (for standalone widgets with no associatedRow, e.g. color swatches)
+    if not row and widget.SetAlpha then
+        widget:SetAlpha(alpha)
+    end
+
+    local sliderFrame = widget.sliderFrame or widget
+    if sliderFrame and sliderFrame ~= row and sliderFrame ~= widget and sliderFrame.SetAlpha then
+        sliderFrame:SetAlpha(alpha)
+    end
+
+    -- 2. Interactivity (Enable/Disable mouse & buttons)
+    if enabled then
+        if widget.Enable then widget:Enable() end
+        if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+            widget.associatedTitleFrame:EnableMouse(true)
+        end
+    else
+        if widget.Disable then widget:Disable() end
+        if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+            widget.associatedTitleFrame:EnableMouse(false)
         end
     end
+
+    -- 3. MinimalSliderWithSteppersTemplate stepper buttons enablement
+    local sliderFrame = widget.sliderFrame or widget
+    if sliderFrame and sliderFrame ~= widget then
+        if sliderFrame.Back and sliderFrame.Back.SetEnabled then
+            sliderFrame.Back:SetEnabled(enabled)
+        end
+        if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then
+            sliderFrame.Forward:SetEnabled(enabled)
+        end
+    end
+
+    -- 4. Desaturate texture elements if available
+    if widget.GetNormalTexture and widget:GetNormalTexture() then
+        local tex = widget:GetNormalTexture()
+        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
+    end
+end
+
+local function WireChildToParent(parentCb, widget, title, row, info)
+    if not parentCb then return end
+    
+    -- Check if child explicitly ignores parent state
+    if info and (info.ignoreParentState or info.ignoreParent) then
+        SetWidgetState(widget, true)
+        return
+    end
+
+    local function UpdateState()
+        local isParentEnabled = parentCb:GetChecked() and (not parentCb.IsEnabled or parentCb:IsEnabled())
+        SetWidgetState(widget, isParentEnabled)
+    end
+
     parentCb:HookScript("OnClick", UpdateState)
     UpdateState()
 end
@@ -277,7 +331,7 @@ local function TriggerRightClick(info, widget, keyOverride, labelOverride)
 end
 
 local function BuildCheckboxRow(card, info, parentCb)
-    local isChild      = parentCb ~= nil
+    local isChild      = (parentCb ~= nil) or (info.inverseParent ~= nil) or (info.disableTarget ~= nil)
     local rc           = T.Row.checkbox
     local leftInset    = isChild and rc.leftInsetChild   or rc.leftInset
     local widthShrink  = isChild and rc.widthShrinkChild  or rc.widthShrink
@@ -310,13 +364,17 @@ local function BuildCheckboxRow(card, info, parentCb)
     StyleCheckbox(cb)
     cb:SetPoint("RIGHT", row, "RIGHT", rc.cbOffsetRight, 0)
 
+    cb.associatedTitle      = title
+    cb.associatedRow        = row
+    cb.associatedTitleFrame = titleFrame
+
     if isChild then
-        cb.associatedTitle = title
-        cb.associatedRow   = row
-        if cb.UpdateEnabledState then
+        if info.inverseParent or info.disableTarget then
+            -- Inverse parent child: child controls target enablement in reverse
+        elseif cb.UpdateEnabledState then
             cb:UpdateEnabledState()
         else
-            WireChildToParent(parentCb, cb, title)
+            WireChildToParent(parentCb, cb, title, row, info)
         end
     end
 
@@ -370,8 +428,7 @@ local function BuildSliderRow(card, info, parentCb)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rs.height)
 
-    local sliderParent = parentCb or row
-    local slider = BBF.CreateSlider(sliderParent, "", minVal, maxVal, stepVal, info.key, nil, rs.sliderWidth, isPercent)
+    local slider = BBF.CreateSlider(row, "", minVal, maxVal, stepVal, info.key, nil, rs.sliderWidth, isPercent)
     slider:SetPoint("RIGHT", row, "RIGHT", rs.sliderOffsetRight, 0)
     slider:EnableMouse(true)
     slider:HookScript("OnMouseDown", function(self, btn)
@@ -380,10 +437,16 @@ local function BuildSliderRow(card, info, parentCb)
         end
     end)
 
+    slider.associatedTitle      = title
+    slider.associatedRow        = row
+    slider.associatedTitleFrame = titleFrame
+
     if isChild then
-        slider.associatedTitle = title
-        slider.associatedRow   = row
-        if slider.UpdateEnabledState then slider:UpdateEnabledState() end
+        if slider.UpdateEnabledState then
+            slider:UpdateEnabledState()
+        else
+            WireChildToParent(parentCb, slider, title, row, info)
+        end
     end
 
     titleFrame:EnableMouse(true)
@@ -545,6 +608,22 @@ local function BuildSectionHeaderRow(card, info)
     return title
 end
 
+local function ResolveTextureFromInfo(info)
+    if not info then return nil, nil end
+    if info.atlas then
+        return "atlas", info.atlas
+    elseif info.icon or info.texture then
+        return "texture", info.icon or info.texture
+    elseif info.spell then
+        local spellID = tonumber(info.spell) or info.spell
+        local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(spellID)) or (GetSpellTexture and GetSpellTexture(spellID))
+        if tex then
+            return "texture", tex
+        end
+    end
+    return nil, nil
+end
+
 local function BuildPreviewRow(card, info)
     local cw = info.previewWidth  or 260
     local ch = info.previewHeight or 56
@@ -562,8 +641,12 @@ local function BuildPreviewRow(card, info)
     frame:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.8)
 
     local tex = frame:CreateTexture(nil, "ARTWORK")
-    if info.atlas then tex:SetAtlas(info.atlas)
-    elseif info.texture then tex:SetTexture(info.texture) end
+    local tType, tVal = ResolveTextureFromInfo(info)
+    if tType == "atlas" then
+        tex:SetAtlas(tVal)
+    elseif tType == "texture" then
+        tex:SetTexture(tVal)
+    end
     tex:SetSize(info.texWidth or 180, info.texHeight or 18)
     tex:SetPoint("CENTER", frame, "CENTER", 0, 0)
     if info.desaturated then tex:SetDesaturated(true) end
@@ -633,15 +716,37 @@ local function BuildOption(card, info, resolvedRefs)
             end
         end
 
+        local targetKey
+        if type(info.inverseParent) == "string" then
+            targetKey = info.inverseParent
+        elseif type(info.disableTarget) == "string" then
+            targetKey = info.disableTarget
+        elseif info.inverseParent == true or info.disableTarget == true then
+            targetKey = info.parent
+        end
+
+        local targetWidget = targetKey and resolvedRefs[targetKey]
+        local parentCb = info._parentCb or (not info.inverseParent and not info.disableTarget and info.parent and resolvedRefs[info.parent])
+
         local cb
         if #parents > 0 then
             cb = BuildMultiParentChildRow(card, info, parents)
         else
-            local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
             cb = BuildCheckboxRow(card, info, parentCb)
         end
 
         if info.id then resolvedRefs[info.id] = cb end
+        if info.key then resolvedRefs[info.key] = cb end
+
+        if targetWidget then
+            local function UpdateInverseState()
+                local isChecked = cb:GetChecked()
+                SetWidgetState(cb, true)
+                SetWidgetState(targetWidget, not isChecked)
+            end
+            cb:HookScript("OnClick", UpdateInverseState)
+            UpdateInverseState()
+        end
 
         -- Recurse into nested children
         if info.children then
@@ -658,6 +763,7 @@ local function BuildOption(card, info, resolvedRefs)
         local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
         local sl = BuildSliderRow(card, info, parentCb)
         if info.id then resolvedRefs[info.id] = sl end
+        if info.key then resolvedRefs[info.key] = sl end
         return sl
 
     elseif t == "dualchild" then
@@ -670,7 +776,7 @@ local function BuildOption(card, info, resolvedRefs)
     elseif t == "header" then
         return BuildSectionHeaderRow(card, info)
 
-    elseif t == "preview" then
+    elseif t == "preview" or t == "frameBox" or t == "previewBox" then
         return BuildPreviewRow(card, info)
     end
 end
@@ -679,15 +785,37 @@ end
 -- ICON HELPER
 -- ============================================================
 
+local function ResolveTextureFromInfo(info)
+    if info.atlas then
+        return "atlas", info.atlas
+    elseif info.icon or info.texture then
+        return "texture", info.icon or info.texture
+    elseif info.spell then
+        local spellID = tonumber(info.spell) or info.spell
+        local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(spellID)) or (GetSpellTexture and GetSpellTexture(spellID))
+        if tex then
+            return "texture", tex
+        end
+    end
+    return nil, nil
+end
+
 local function ApplyIconToFrame(iconFrame, cat)
     local iconTex = iconFrame:CreateTexture(nil, "ARTWORK")
     local w, h = unpack(cat.atlasSize or cat.size or {20, 20})
     iconTex:SetSize(w, h)
     iconTex:SetPoint("CENTER", iconFrame, "CENTER", 0, 0)
-    if cat.atlas then iconTex:SetAtlas(cat.atlas)
-    elseif cat.icon then iconTex:SetTexture(cat.icon) end
+
+    local tType, tVal = ResolveTextureFromInfo(cat)
+    if tType == "atlas" then
+        iconTex:SetAtlas(tVal)
+    elseif tType == "texture" then
+        iconTex:SetTexture(tVal)
+    end
+
     if cat.atlasDesaturated or cat.desaturated then iconTex:SetDesaturated(true) end
     if cat.atlasColor or cat.color then iconTex:SetVertexColor(unpack(cat.atlasColor or cat.color)) end
+
     if cat.overlays then
         for _, ov in ipairs(cat.overlays) do
             local ovTex = iconFrame:CreateTexture(nil, ov.layer or "OVERLAY")
@@ -695,7 +823,12 @@ local function ApplyIconToFrame(iconFrame, cat)
             ovTex:SetSize(ow, oh)
             local ox, oy = unpack(ov.offset or {0, 0})
             ovTex:SetPoint("CENTER", iconTex, "CENTER", ox, oy)
-            if ov.atlas then ovTex:SetAtlas(ov.atlas) elseif ov.icon then ovTex:SetTexture(ov.icon) end
+            local ovType, ovVal = ResolveTextureFromInfo(ov)
+            if ovType == "atlas" then
+                ovTex:SetAtlas(ovVal)
+            elseif ovType == "texture" then
+                ovTex:SetTexture(ovVal)
+            end
             if ov.desaturated then ovTex:SetDesaturated(true) end
             if ov.color then ovTex:SetVertexColor(unpack(ov.color)) end
         end
@@ -1100,8 +1233,8 @@ function GUI.OpenPopup(popupId, schema)
                         { key = "FURY", color = {r = 0.788, g = 0.259, b = 0.992} },
                         { key = "EBON_MIGHT", spellID = 395152, color = {r = 0.2, g = 0.58, b = 0.5} },
                         { key = "STAGGER", color = {r = 0.52, g = 1, b = 0.52} },
-                        { key = "SOUL_FRAGMENTS", color = {r = 0.35, g = 0.25, b = 0.73} },
-                        { key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
+                        { key = "SOUL_FRAGMENTS", spellID = 71905, color = {r = 0.35, g = 0.25, b = 0.73} },
+                        --{ key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
                     }
                 end
 
@@ -1128,7 +1261,11 @@ function GUI.OpenPopup(popupId, schema)
 
                     local rawColor = pData.default or pData.color or {r = 1, g = 1, b = 1}
                     local pDefColor = { r = rawColor.r or rawColor[1] or 1, g = rawColor.g or rawColor[2] or 1, b = rawColor.b or rawColor[3] or 1 }
-                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "powerColor" .. pData.key, labelName, pDefColor, colWidth - 26, pData.onChange)
+                    local powerOnChange = pData.onChange or function()
+                        if BBF.UpdatePowerColorCache then BBF.UpdatePowerColorCache() end
+                        if BBF.UpdateFrames then BBF.UpdateFrames() end
+                    end
+                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "powerColor" .. pData.key, labelName, pDefColor, colWidth - 26, powerOnChange)
                     if isChild and parentCb then
                         WireChildToParent(parentCb, btn, nil)
                     end

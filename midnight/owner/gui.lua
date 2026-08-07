@@ -2073,7 +2073,8 @@ function BBF.OpenColorOptions()
             currentY = currentY - 22
             return header
         end
-        local function AddCheckbox(dbKey, labelStr, callback, indentX, ttTitle, ttDesc)
+
+        local function AddCheckbox(dbKey, labelStr, callback, indentX, ttTitle, ttDesc)
             local posX = 6 + (indentX or 0)
             local width = 295 - (indentX or 0)
             local rowFrame = CreateFrame("Frame", nil, content)

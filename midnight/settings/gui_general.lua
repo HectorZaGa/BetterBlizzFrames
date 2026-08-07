@@ -74,23 +74,23 @@ function guiGeneralTab()
                     }},
 
                     { type="header", label=L["Class_Colors"] },
-                    { type="checkbox", key="overrideClassColors", label=L["Override_Class_Colors"], tooltip=L["Tooltip_Override_Class_Colors_Desc"] },
-                    { type="checkbox", key="useOneClassColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Classes_Desc"], parent="overrideClassColors" },
+                    { type="checkbox", key="overrideClassColors", label=L["Override_Class_Colors"], tooltip=L["Tooltip_Override_Class_Colors_Desc"], onChange=BBF.UpdateFrames },
+                    { type="checkbox", key="useOneClassColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Classes_Desc"], parent="overrideClassColors", onChange=BBF.UpdateFrames },
                     { type="colorGrid", parent="useOneClassColor", inline=true, options = {
                         { key="singleClassColor", label=L["All_Classes"], default={r=0.8, g=0.8, b=0.8} }
                     }},
                     { type="allClassSwatches", parent="overrideClassColors", marginTop = 4 },
 
                     { type="header", label=L["Power_Colors"] },
-                    { type="checkbox", key="customPowerColors", label=L["Enable_Power_Colors"], tooltip=L["Tooltip_Enable_Power_Colors_Desc"] },
-                    { type="checkbox", key="useOnePowerColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Powers_Desc"], parent="customPowerColors" },
+                    { type="checkbox", key="customPowerColors", label=L["Enable_Power_Colors"], tooltip=L["Tooltip_Enable_Power_Colors_Desc"], onChange=function() if BBF.UpdatePowerColorCache then BBF.UpdatePowerColorCache() end if BBF.UpdateFrames then BBF.UpdateFrames() end end },
+                    { type="checkbox", key="useOnePowerColor", label=L["Use_One_Color"], tooltip=L["Tooltip_Use_One_Color_For_All_Powers_Desc"], parent="customPowerColors", onChange=function() if BBF.UpdatePowerColorCache then BBF.UpdatePowerColorCache() end if BBF.UpdateFrames then BBF.UpdateFrames() end end },
                     { type="colorGrid", parent="useOnePowerColor", inline=true, options = {
-                        { key="singlePowerColor", label=L["All_Classes"], default={r=0, g=0.8, b=1} }
+                        { key="singlePowerColor", label=L["All_Classes"], default={r=0, g=0.8, b=1}, onChange=function() if BBF.UpdatePowerColorCache then BBF.UpdatePowerColorCache() end if BBF.UpdateFrames then BBF.UpdateFrames() end end }
                     }},
                     { type="allPowerSwatches", parent="customPowerColors", marginTop = 4 },
 
                     { type="header", label=L["Background_Colors"] },
-                    { type="checkbox", key="customBgColorUnitFrames", label=L["Change_UnitFrame_Background_Color"], tooltip=L["Tooltip_Change_UnitFrame_Background_Color_Desc"] },
+                    { type="checkbox", key="customBgColorUnitFrames", label=L["Change_UnitFrame_Background_Color"], tooltip=L["Tooltip_Change_UnitFrame_Background_Color_Desc"], onChange=BBF.UpdateFrames },
                     { type="colorSwatchDual", parent="customBgColorUnitFrames", key1="customHealthBgColor", label1=L["Health_BG"], default1={r=0, g=0, b=0}, key2="customManaBgColor", label2=L["Mana_BG"], default2={r=0, g=0, b=0} },
 
                     { type="checkbox", key="customBgColorRaidFrames", label=L["Change_Party_RaidFrame_Background_Color"], tooltip=L["Tooltip_Change_Party_RaidFrame_Background_Color_Desc"] },
@@ -310,7 +310,6 @@ function guiGeneralTab()
                             { type="checkbox", key="classColorTargetNames",   label=L["Class_Color_Names"],    tooltip=L["Tooltip_Class_Color_Names"] },
                             { type="checkbox", key="removeRealmNames",        label=L["Hide_Realm"],           tooltip=L["Tooltip_Hide_Realm_Desc"] },
                             { type="checkbox", key="formatStatusBarText",     label=L["Format_Numbers"],       tooltip=L["Tooltip_Format_Numbers_Desc"] .. " |A:glueannouncementpopup-arrow:16:16|a", onChange=BBF.HookStatusBarText, id="cbFormatNum", onRightClick=BBF.ToggleFormatNumbersRightClick,
-                                
                                 children = {
                                     { type="checkbox", key="singleValueStatusBarText", label=L["No_Max_Value"], tooltip="|A:glueannouncementpopup-arrow:16:16|a " .. L["Tooltip_No_Max_Desc"] },
                                 }

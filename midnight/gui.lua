@@ -853,6 +853,9 @@ end
 local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, sliderWidth, isPercent)
     local sliderFrame = CreateFrame("Frame", nil, parent, "MinimalSliderWithSteppersTemplate")
     local slider = sliderFrame and (sliderFrame.Slider or sliderFrame)
+    if slider and sliderFrame then
+        slider.sliderFrame = sliderFrame
+    end
     if not slider or not slider.SetMinMaxValues then
         slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     end

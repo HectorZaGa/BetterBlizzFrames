@@ -59,7 +59,7 @@ tabs = {
 #### Atributos de Pestaña (`tabs`):
 - **`id`**: Identificador único de la pestaña (ej. `"party"`, `"general"`).
 - **`label`**: Texto visible en el botón lateral.
-- **`atlas` / `icon`**: Icono o atlas nativo de WoW para la pestaña.
+- **`atlas` / `icon` / `spell`**: Icono, atlas nativo de WoW o ID numérico de hechizo (`spell = 1766` / `spell = "1766"`). El motor resuelve automáticamente la textura oficial del hechizo vía `C_Spell.GetSpellTexture(spellID)`.
 - **`size`**: Tamaño `{ ancho, alto }` del icono (ej. `{20, 20}`).
 - **`desaturated`**: `true` para desaturar (escala de grises) la textura del icono.
 - **`color`**: Color RGB `{ r, g, b }` aplicado al icono mediante `SetVertexColor`.
@@ -94,6 +94,40 @@ popups = {
 ---
 
 ## 2. Tipos de Componentes (`type`)
+
+El motor `gui_builder` soporta los siguientes tipos de componentes declarativos:
+
+- **`checkbox`**: Casilla de verificación nativa con texto de título y soporte para dependencias planas (`parent`), múltiples padres (`parents`), e inhabilitación inversa (`inverseParent`).
+- **`slider`**: Barra deslizante numérica con soporte para valores de porcentaje (`percent = true`) y formateo nativo.
+- **`colorGrid`**: Matriz o fila fluida de muestras de color personalizadas.
+- **`allClassSwatches`**: Matriz dinámica autogenerada con las 13 clases de World of Warcraft.
+- **`allPowerSwatches`**: Matriz dinámica autogenerada con todos los recursos de poder (Maná, Enfoque, Rabia, Energía, etc.).
+- **`colorSwatchDual`**: Par de dos muestras de color en la misma fila (ej. Salud y Maná).
+- **`dualchild`**: Dos casillas de verificación en una única fila horizontal.
+- **`header`**: Separador o encabezado de sección con fuente dorada.
+- **`frameBox` / `previewBox` / `preview`**: Marco contenedor decorativo con fondo oscuro y borde metálico para envolver imágenes, atlas o texturas de vista previa (ej. barras de casteo).
+
+---
+
+## Componentes de Vista Previa y Marcos (`frameBox` / `previewBox`)
+
+Los componentes `frameBox`, `previewBox` y `preview` permiten renderizar un contenedor con marco decorativo (`BackdropTemplate`) y borde nativo de WoW para presentar iconos o texturas de vista previa (como barras de casteo) dentro de una tarjeta.
+
+```lua
+-- Ejemplo: Marco de vista previa para la barra de casteo del jugador
+{ type = "frameBox", atlas = "ui-castingbar-full-applyingcrafting", height = 45 }
+
+-- Ejemplo con textura personalizada y dimensiones específicas:
+{ type = "previewBox", texture = "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill", height = 50, textureWidth = 200, textureHeight = 20 }
+```
+
+#### Atributos de `frameBox` / `previewBox`:
+- **`atlas`**: Nombre del atlas gráfico de WoW (ej. `"ui-castingbar-full-applyingcrafting"`).
+- **`texture`**: Ruta de textura de archivo (ej. `"Interface\\Icons\\Spell_Holy_FlashHeal"`).
+- **`height`**: Altura total del contenedor contenedor (por defecto `40`px).
+- **`textureWidth`**: Ancho específico de la textura interna (por defecto `width - 20`px).
+- **`textureHeight`**: Altura específica de la textura interna (por defecto `height - 12`px).
+
 
 | `type` | Descripción | Exclusivo / Compartido |
 | :--- | :--- | :--- |
@@ -201,7 +235,71 @@ end }
 
 ---
 
-## 7. Relaciones Padre e Hijo (`parent`, `parents`, `children`)
+## 7. Relaciones Padre e Hijo y Gestor Unificado de Estados (`parent`, `parents`, `children`, `inverseParent`, `ignoreParentState`)
+
+### A. Sistema Unificado de Estado Deshabilitado (`SetWidgetState`)
+El motor cuenta con un **Gestor Unificado de Estados** (`SetWidgetState`). Cuando cualquier componente entra en estado inhabilitado/desactivado, la función engloba de forma centralizada todas las transformaciones visuales e interactivas:
+
+1. **Opacidad Centralizada (`GUI.Theme.Row.disabledAlpha = 0.4`)**: Cambiar este valor en la configuración del tema ajusta la transparencia inactiva en todo el addon.
+2. **Desaturacin de Texturas**: Aplica `SetDesaturated(true)` a las texturas nativas del componente.
+3. **Bloqueo de Interaccin**: Inhabilita botones, casillas, la barra del slider y sus flechas de incremento (`Back` y `Forward`).
+4. **Sincronizacin de Elementos**: Ajusta conjuntamente la fila externa (`row`), el título de texto (`associatedTitle`), el indicador numérico y los botones laterales.
+
+---
+
+### B. Referencia Plana Limpia (`parent="clave"`)
+Al establecer `parent = "clave"`, el componente secundario adopta la jerarquía estándar:
+- Se indenta 16 píxeles a la derecha con fuente secundaria.
+- Entra en estado inhabilitado (`SetWidgetState(widget, false)`) cuando el padre está desmarcado.
+
+---
+
+### C. Ignorar Estado del Padre (`ignoreParentState = true` o `ignoreParent = true`)
+Si una opción secundaria requiere estar indentada visualmente pero **permanecer activa independientemente de la casilla del padre**, se declara el atributo `ignoreParentState = true`:
+
+```lua
+{ type="checkbox", key="customOption", label=L["Option"], parent="parentKey", ignoreParentState=true }
+```
+
+---
+
+### D. Inhabilitacin Inversa (`inverseParent = "clave"` o `disableTarget = "clave"`)
+Una opción secundaria con `inverseParent` ignora el estado del padre pero **controla inversamente al padre**: al marcarse la casilla secundaria (`true`), coloca al componente padre objetivo en estado inhabilitado (`SetWidgetState(targetParent, false)`).
+
+```lua
+-- El slider define el tamaño pequeño
+{ type="slider", key="targetAndFocusSmallAuraScale", label=L["Small_Aura_Size"], min=0.5, max=2, step=0.01 },
+
+-- Sintaxis A: Con la clave del objetivo directa
+{ type="checkbox", key="sameSizeAuras", label=L["Same_Size"], inverseParent="targetAndFocusSmallAuraScale" }
+
+-- Sintaxis B (Recomendada): Declarando parent="clave" y el indicador booleano inverseParent=true
+{ type="checkbox", key="sameSizeAuras", label=L["Same_Size"], parent="targetAndFocusSmallAuraScale", inverseParent=true }
+```
+
+
+### Opcin A: Referencia Plana Limpia (`parent="clave"`)
+Al establecer `parent = "clave"`, el motor infiere automáticamente la jerarquía:
+- Indenta la fila 16 píxeles a la derecha.
+- Reduce el ancho del elemento para alinearlo visualmente.
+- Inhabilita automáticamente esta casilla o deslizador cuando el padre esté desmarcado (`false`).
+
+### Opcin B: Inhabilitacin Inversa (`inverseParent = "clave"` o `disableTarget = "clave"`)
+Existen casos especiales donde una opción secundaria (indented) no debe ser inhabilitada por el padre, sino todo lo contrario: **al activarse esta casilla secundaria, inactiva al elemento objetivo**.
+
+```lua
+-- Ejemplo: El slider define el tamaño pequeño de las auras
+{ type="slider", key="targetAndFocusSmallAuraScale", label=L["Small_Aura_Size"], min=0.5, max=2, step=0.01 },
+
+-- Al marcar "Mismo Tamaño", la casilla se indenta como un hijo pero DESHABILITA al slider superior
+{ type="checkbox", key="sameSizeAuras", label=L["Same_Size"], inverseParent="targetAndFocusSmallAuraScale" }
+```
+
+**Comportamiento Interno:**
+- **Casilla Marcada (`true`):** Invocará `targetWidget:Disable()` y fijará una transparencia de `0.4` en el elemento objetivo y su título.
+- **Casilla Desmarcada (`false`):** Invocará `targetWidget:Enable()` y restaurará la opacidad completa `1.0`.
+- **Alias:** Puede utilizarse tanto `inverseParent = "targetKey"` como `disableTarget = "targetKey"`.
+
 
 El motor soporta **dos formas equivalentes** de declarar dependencias entre opciones:
 
