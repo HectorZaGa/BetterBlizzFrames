@@ -76,6 +76,22 @@ GUI.Theme = {
         },
     },
     -- Rows
+    -- Tooltips
+    Tooltip = {
+        anchor          = "ANCHOR_RIGHT",
+        titleFont       = "GameTooltipHeaderText",
+        titleColor      = { 1, 0.82, 0, 1 },
+        bodyFont        = "GameTooltipText",
+        bodyColor       = { 1, 1, 1, 1 },
+        subtextFont     = "GameTooltipTextSmall",
+        subtextColor    = { 0.8, 0.8, 0.8, 1 },
+        cvarColor       = { 0.2, 1, 0.6, 1 },
+        dividerColor    = { 0.8, 0.8, 0.8, 1 },
+        defaultIconSize = { 16, 16 },
+        starAtlas       = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star",
+        noStarAtlas     = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-IconRing",
+        checkmarkAtlas  = "ParagonReputation_Checkmark",
+    },
     Row = {
         checkbox = {
             height            = 34,
@@ -334,6 +350,11 @@ local function BuildSliderRow(card, info, parentCb)
     local titleFont    = isChild and rs.titleFontChild    or rs.titleFont
     local titleWidth   = isChild and rs.titleWidthChild   or rs.titleWidth
 
+    local isPercent    = info.percent == true
+    local minVal       = info.min or (isPercent and 0 or 0)
+    local maxVal       = info.max or (isPercent and 100 or 100)
+    local stepVal      = info.step or (isPercent and 1 or 1)
+
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
     row:SetSize(card.cardWidth - widthShrink, rs.height)
@@ -350,7 +371,7 @@ local function BuildSliderRow(card, info, parentCb)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rs.height)
 
     local sliderParent = parentCb or row
-    local slider = BBF.CreateSlider(sliderParent, "", info.min, info.max, info.step, info.key, nil, rs.sliderWidth)
+    local slider = BBF.CreateSlider(sliderParent, "", minVal, maxVal, stepVal, info.key, nil, rs.sliderWidth, isPercent)
     slider:SetPoint("RIGHT", row, "RIGHT", rs.sliderOffsetRight, 0)
     slider:EnableMouse(true)
     slider:HookScript("OnMouseDown", function(self, btn)
@@ -616,7 +637,7 @@ local function BuildOption(card, info, resolvedRefs)
         if #parents > 0 then
             cb = BuildMultiParentChildRow(card, info, parents)
         else
-            local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) or (info.father and resolvedRefs[info.father])
+            local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
             cb = BuildCheckboxRow(card, info, parentCb)
         end
 
@@ -634,13 +655,13 @@ local function BuildOption(card, info, resolvedRefs)
         return cb
 
     elseif t == "slider" then
-        local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) or (info.father and resolvedRefs[info.father])
+        local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
         local sl = BuildSliderRow(card, info, parentCb)
         if info.id then resolvedRefs[info.id] = sl end
         return sl
 
     elseif t == "dualchild" then
-        local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) or (info.father and resolvedRefs[info.father])
+        local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
         local cb1, cb2 = BuildDualChildCheckboxRow(card, info, parentCb)
         if info.id1 then resolvedRefs[info.id1] = cb1 end
         if info.id2 then resolvedRefs[info.id2] = cb2 end
@@ -709,22 +730,7 @@ local function ParseMargin(opt)
     return mTop, mRight, mBottom, mLeft
 end
 
-local function ParsePadding(opt)
-    local pTop, pRight, pBottom, pLeft = 0, 0, 0, 0
-    if type(opt.padding) == "table" then
-        pTop    = tonumber(opt.padding[1] or opt.padding.top)    or 0
-        pRight  = tonumber(opt.padding[2] or opt.padding.right)  or 0
-        pBottom = tonumber(opt.padding[3] or opt.padding.bottom) or 0
-        pLeft   = tonumber(opt.padding[4] or opt.padding.left)   or 0
-    elseif type(opt.padding) == "number" then
-        pTop, pRight, pBottom, pLeft = opt.padding, opt.padding, opt.padding, opt.padding
-    end
-    pTop    = pTop    + (tonumber(opt.paddingTop)    or 0)
-    pRight  = pRight  + (tonumber(opt.paddingRight)  or 0)
-    pBottom = pBottom + (tonumber(opt.paddingBottom) or 0)
-    pLeft   = pLeft   + (tonumber(opt.paddingLeft)   or 0)
-    return pTop, pRight, pBottom, pLeft
-end
+
 
 local function CalculateGridCoords(cIdx, cData, numItems, opt)
     local specifiedRows = tonumber(opt.rows or opt.row)
@@ -814,14 +820,15 @@ local function BuildColorSwatchBtn(parent, posX, posY, dbKey, labelStr, defaultC
             hasOpacity = false,
             swatchFunc = function()
                 local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-                BetterBlizzFramesDB[dbKey] = {r = nr, g = ng, b = nb}
+                BetterBlizzFramesDB[dbKey] = { nr, ng, nb, r = nr, g = ng, b = nb }
                 swatch:SetVertexColor(nr, ng, nb)
                 if callback then callback() end
                 if BBF.UpdateFrames then BBF.UpdateFrames() end
             end,
             cancelFunc = function(prev)
-                BetterBlizzFramesDB[dbKey] = {r = prev.r, g = prev.g, b = prev.b}
-                swatch:SetVertexColor(prev.r, prev.g, prev.b)
+                local pr, pg, pb = prev.r or prev[1], prev.g or prev[2], prev.b or prev[3]
+                BetterBlizzFramesDB[dbKey] = { pr, pg, pb, r = pr, g = pg, b = pb }
+                swatch:SetVertexColor(pr, pg, pb)
                 if callback then callback() end
                 if BBF.UpdateFrames then BBF.UpdateFrames() end
             end
@@ -879,7 +886,7 @@ function GUI.OpenPopup(popupId, schema)
             local mTop, mRight, mBottom, mLeft = ParseMargin(opt)
             if mTop > 0 then currentY = currentY - mTop end
 
-            local parentKey = opt.parent or opt.father
+            local parentKey = opt.parent
             if not parentCb and parentKey and createdWidgets[parentKey] then
                 parentCb = createdWidgets[parentKey]
             end
@@ -986,7 +993,6 @@ function GUI.OpenPopup(popupId, schema)
             elseif t == "colorGrid" then
                 local isInline = opt.inline ~= nil and opt.inline ~= false
                 local refWidget = (type(opt.inline) == "string" and createdWidgets[opt.inline]) or parentCb
-                local pTop, pRight, pBottom, pLeft = ParsePadding(opt)
 
                 local vMidOffset = 0
                 if isInline and refWidget then
@@ -995,9 +1001,9 @@ function GUI.OpenPopup(popupId, schema)
                     vMidOffset = math.floor((refH - itemH) / 2)
                 end
 
-                local startY = (isInline and refWidget and (refWidget.lastPosY - vMidOffset - pTop)) or (currentY - pTop)
+                local startY = (isInline and refWidget and (refWidget.lastPosY - vMidOffset)) or currentY
                 local savedY = currentY
-                local basePosX = ((isInline and (opt.inlineX or (160 + indentX))) or (10 + indentX)) + pLeft
+                local basePosX = (isInline and (opt.inlineX or (160 + indentX))) or (10 + indentX)
 
                 local cols = opt.options or {}
                 local numItems = #cols
@@ -1008,7 +1014,7 @@ function GUI.OpenPopup(popupId, schema)
                     local colIndex, rowIndex, numCols = CalculateGridCoords(cIdx, cData, numItems, opt)
                     if rowIndex > maxRow then maxRow = rowIndex end
 
-                    local availWidth = (315 - indentX - pLeft - pRight) - 20
+                    local availWidth = (315 - indentX) - 20
                     local colWidth = tonumber(opt.colWidth) or math.floor(availWidth / numCols)
                     local posX = basePosX + colIndex * colWidth
                     local posY = startY - rowIndex * rowHeight
@@ -1017,8 +1023,10 @@ function GUI.OpenPopup(popupId, schema)
                     local dbKey = cData.key
                     if RAID_CLASS_COLORS[dbKey] and not dbKey:find("^classColor") then
                         dbKey = "classColor" .. dbKey
+                    elseif (dbKey == "MANA" or dbKey == "RAGE" or dbKey == "FOCUS" or dbKey == "ENERGY" or dbKey == "RUNIC_POWER" or dbKey == "LUNAR_POWER" or dbKey == "MAELSTROM" or dbKey == "INSANITY" or dbKey == "CHI" or dbKey == "FURY" or dbKey == "EBON_MIGHT" or dbKey == "STAGGER" or dbKey == "SOUL_FRAGMENTS" or dbKey == "SOUL_SHARDS") and not dbKey:find("^powerColor") then
+                        dbKey = "powerColor" .. dbKey
                     end
-                    local defColor = cData.default
+                    local defColor = cData.default or cData.color
                     if not defColor and RAID_CLASS_COLORS[cData.key] then
                         local rc = RAID_CLASS_COLORS[cData.key]
                         defColor = { r = rc.r, g = rc.g, b = rc.b }
@@ -1031,7 +1039,7 @@ function GUI.OpenPopup(popupId, schema)
                 if isInline then
                     currentY = savedY
                 else
-                    currentY = startY - (maxRow + 1) * rowHeight - pBottom
+                    currentY = startY - (maxRow + 1) * rowHeight
                 end
 
             elseif t == "allClassSwatches" then
@@ -1066,9 +1074,10 @@ function GUI.OpenPopup(popupId, schema)
                     local colWidth = tonumber(opt.colWidth) or math.floor(((315 - indentX) - 20) / numCols)
                     local posX = 10 + indentX + colIndex * colWidth
                     local posY = gridStartY - rowIndex * rowHeight
-                    local classDefColor = RAID_CLASS_COLORS[classTag] or classData.color or {r = 1, g = 1, b = 1}
+                    local rawColor = classData.default or classData.color or RAID_CLASS_COLORS[classTag] or {r = 1, g = 1, b = 1}
+                    local classDefColor = { r = rawColor.r or rawColor[1] or 1, g = rawColor.g or rawColor[2] or 1, b = rawColor.b or rawColor[3] or 1 }
 
-                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "classColor" .. classTag, className, {r = classDefColor.r, g = classDefColor.g, b = classDefColor.b}, colWidth - 26, classData.onChange)
+                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "classColor" .. classTag, className, classDefColor, colWidth - 26, classData.onChange)
                     if isChild and parentCb then
                         WireChildToParent(parentCb, btn, nil)
                     end
@@ -1091,6 +1100,7 @@ function GUI.OpenPopup(popupId, schema)
                         { key = "FURY", color = {r = 0.788, g = 0.259, b = 0.992} },
                         { key = "EBON_MIGHT", spellID = 395152, color = {r = 0.2, g = 0.58, b = 0.5} },
                         { key = "STAGGER", color = {r = 0.52, g = 1, b = 0.52} },
+                        { key = "SOUL_FRAGMENTS", spellID = 246985, color = {r = 0.35, g = 0.25, b = 0.73} },
                         { key = "SOUL_SHARDS", spellID = 246985, color = {r = 0.64, g = 0.2, b = 0.93} },
                     }
                 end
@@ -1116,7 +1126,9 @@ function GUI.OpenPopup(popupId, schema)
                         if sn then labelName = sn end
                     end
 
-                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "powerColor" .. pData.key, labelName, pData.color, colWidth - 26, pData.onChange)
+                    local rawColor = pData.default or pData.color or {r = 1, g = 1, b = 1}
+                    local pDefColor = { r = rawColor.r or rawColor[1] or 1, g = rawColor.g or rawColor[2] or 1, b = rawColor.b or rawColor[3] or 1 }
+                    local btn = BuildColorSwatchBtn(contentParent, posX, posY, "powerColor" .. pData.key, labelName, pDefColor, colWidth - 26, pData.onChange)
                     if isChild and parentCb then
                         WireChildToParent(parentCb, btn, nil)
                     end

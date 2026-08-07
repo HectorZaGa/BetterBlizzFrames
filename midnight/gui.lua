@@ -850,7 +850,7 @@ local function CreateBorderedFrame(point, width, height, xPos, yPos, parent)
     return border
 end
 
-local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, sliderWidth)
+local function CreateSlider(parent, label, minValue, maxValue, stepValue, element, axis, sliderWidth, isPercent)
     local sliderFrame = CreateFrame("Frame", nil, parent, "MinimalSliderWithSteppersTemplate")
     local slider = sliderFrame and (sliderFrame.Slider or sliderFrame)
     if not slider or not slider.SetMinMaxValues then
@@ -938,6 +938,9 @@ local function CreateSlider(parent, label, minValue, maxValue, stepValue, elemen
 
                 slider:SetValue(initialValue) -- Set the initial value
                 local textValue = initialValue % 1 == 0 and tostring(math.floor(initialValue)) or string.format("%.2f", initialValue)
+                if isPercent then
+                    textValue = (initialValue <= 1 and initialValue > 0 and (initialValue % 1 ~= 0)) and string.format("%.0f%%", initialValue * 100) or (textValue .. "%")
+                end
                 slider.Text:SetText(label ~= "" and (label .. ": " .. textValue) or textValue)
             end
         else

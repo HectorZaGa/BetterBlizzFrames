@@ -160,8 +160,7 @@ function guiGeneralTab()
                                     { type="checkbox", key="darkModeGameTooltip",          label=L["Tooltip"],            tooltip=L["Tooltip_Dark_Mode_Tooltip_Desc"],   onChange=function() BBF.DarkmodeFrames(true) end },
                                     { type="checkbox", key="darkModeObjectiveFrame",       label=L["Objectives"],         tooltip=L["Tooltip_Dark_Mode_Objectives_Desc"],onChange=function() BBF.DarkmodeFrames(true) end },
                                     { type="checkbox", key="darkModeVigor",                label=L["Vigor"],              tooltip=L["Tooltip_Dark_Mode_Vigor_Desc"],     onChange=function() BBF.DarkmodeFrames(true) end },
-                                    { type="checkbox", key="darkModeEliteTexture",         label=L["Elite_Texture"],      tooltip=L["Tooltip_Dark_Mode_Elite_Desc"],     onChange=function() BBF.DarkmodeFrames(true) end,
-                                        },
+                                    { type="checkbox", key="darkModeEliteTexture",         label=L["Elite_Texture"],      tooltip=L["Tooltip_Dark_Mode_Elite_Desc"],     onChange=function() BBF.DarkmodeFrames(true) end },
                                 }
                             },
                         },
