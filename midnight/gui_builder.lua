@@ -666,7 +666,12 @@ local function BuildDropdownRow(card, info, parentCb)
         dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select"] or "Select"))
     end
 
-    local isTextureDropdown = (info.preset == "texture" or info.preset == "statusbar")
+    local isFontDropdown = (info.kind == "font" or info.preset == "font" or info.preview == "font" or (info.preview == true and info.kind == "font"))
+    local isTextureDropdown = (info.kind == "texture" or info.preset == "texture" or info.preset == "statusbar" or info.preview == "texture" or (info.preview == true and (info.kind == "texture" or info.preset == "texture" or info.preset == "statusbar")))
+
+    if isFontDropdown then
+        dropdown.fontPool = dropdown.fontPool or {}
+    end
     if isTextureDropdown then
         dropdown.texturePool = dropdown.texturePool or {}
     end
@@ -677,6 +682,7 @@ local function BuildDropdownRow(card, info, parentCb)
         end
         local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
         local lsmTextures = isTextureDropdown and LSM and LSM:HashTable(LSM.MediaType.STATUSBAR)
+        local lsmFonts    = isFontDropdown and LSM and LSM:HashTable(LSM.MediaType.FONT)
 
         for index, c in ipairs(choices) do
             local displayText = (L and L[c.label]) or c.label
@@ -685,6 +691,7 @@ local function BuildDropdownRow(card, info, parentCb)
                 dropdown:SetDefaultText(displayText)
                 if info.onChange then info.onChange(c.value) end
                 if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
+                if BBF.SetCustomFonts then BBF.SetCustomFonts() end
                 if BBF.UpdateFrames then BBF.UpdateFrames() end
             end)
 
@@ -709,6 +716,33 @@ local function BuildDropdownRow(card, info, parentCb)
                     end
                     textureBg:Show()
                 end)
+            elseif isFontDropdown and lsmFonts and lsmFonts[c.value] then
+                local fontPath = lsmFonts[c.value]
+                button:AddInitializer(function(btnFrame)
+                    local defaultFS = btnFrame.fontString or btnFrame.Text
+                    if defaultFS then
+                        defaultFS:SetAlpha(0)
+                    end
+
+                    local fs = dropdown.fontPool[index]
+                    if not fs then
+                        fs = dropdown:CreateFontString(nil, "OVERLAY")
+                        dropdown.fontPool[index] = fs
+                    end
+                    fs:SetParent(btnFrame)
+                    fs:ClearAllPoints()
+                    fs:SetPoint("LEFT", btnFrame, "LEFT", 19, 0)
+                    fs:SetPoint("RIGHT", btnFrame, "RIGHT", -10, 0)
+                    fs:SetJustifyH("LEFT")
+
+                    if fontPath and fs then
+                        pcall(function()
+                            fs:SetFont(fontPath, 13, "OUTLINE")
+                        end)
+                    end
+                    fs:SetText(displayText)
+                    fs:Show()
+                end)
             end
         end
     end)
@@ -719,6 +753,11 @@ local function BuildDropdownRow(card, info, parentCb)
         if dropdown.texturePool then
             for _, texture in pairs(dropdown.texturePool) do
                 texture:Hide()
+            end
+        end
+        if dropdown.fontPool then
+            for _, fs in pairs(dropdown.fontPool) do
+                fs:Hide()
             end
         end
         RefreshText()
@@ -1643,7 +1682,12 @@ function GUI.OpenPopup(popupId, schema)
                     dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select_Texture"] or "Select Texture"))
                 end
 
-                local isTextureDropdown = (opt.preset == "texture" or opt.preset == "statusbar" or t == "textureDropdown")
+                local isFontDropdown = (opt.kind == "font" or opt.preset == "font" or opt.preview == "font" or (opt.preview == true and opt.kind == "font"))
+                local isTextureDropdown = (opt.kind == "texture" or opt.preset == "texture" or opt.preset == "statusbar" or opt.preview == "texture" or (opt.preview == true and (opt.kind == "texture" or opt.preset == "texture" or opt.preset == "statusbar")) or t == "textureDropdown")
+
+                if isFontDropdown then
+                    dropdown.fontPool = dropdown.fontPool or {}
+                end
                 if isTextureDropdown then
                     dropdown.texturePool = dropdown.texturePool or {}
                 end
@@ -1652,6 +1696,7 @@ function GUI.OpenPopup(popupId, schema)
                     if #choices > 20 then rootDescription:SetScrollMode(20 * 20) end
                     local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
                     local lsmTextures = isTextureDropdown and LSM and LSM:HashTable(LSM.MediaType.STATUSBAR)
+                    local lsmFonts    = isFontDropdown and LSM and LSM:HashTable(LSM.MediaType.FONT)
 
                     for index, c in ipairs(choices) do
                         local displayText = (L and L[c.label]) or c.label
@@ -1660,6 +1705,7 @@ function GUI.OpenPopup(popupId, schema)
                             dropdown:SetDefaultText(displayText)
                             if opt.onChange then opt.onChange(c.value) end
                             if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
+                            if BBF.SetCustomFonts then BBF.SetCustomFonts() end
                             if BBF.UpdateFrames then BBF.UpdateFrames() end
                         end)
 
@@ -1684,6 +1730,33 @@ function GUI.OpenPopup(popupId, schema)
                                 end
                                 textureBg:Show()
                             end)
+                        elseif isFontDropdown and lsmFonts and lsmFonts[c.value] then
+                            local fontPath = lsmFonts[c.value]
+                            button:AddInitializer(function(btnFrame)
+                                local defaultFS = btnFrame.fontString or btnFrame.Text
+                                if defaultFS then
+                                    defaultFS:SetAlpha(0)
+                                end
+
+                                local fs = dropdown.fontPool[index]
+                                if not fs then
+                                    fs = dropdown:CreateFontString(nil, "OVERLAY")
+                                    dropdown.fontPool[index] = fs
+                                end
+                                fs:SetParent(btnFrame)
+                                fs:ClearAllPoints()
+                                fs:SetPoint("LEFT", btnFrame, "LEFT", 19, 0)
+                                fs:SetPoint("RIGHT", btnFrame, "RIGHT", -10, 0)
+                                fs:SetJustifyH("LEFT")
+
+                                if fontPath and fs then
+                                    pcall(function()
+                                        fs:SetFont(fontPath, 13, "OUTLINE")
+                                    end)
+                                end
+                                fs:SetText(displayText)
+                                fs:Show()
+                            end)
                         end
                     end
                 end)
@@ -1693,6 +1766,11 @@ function GUI.OpenPopup(popupId, schema)
                     if dropdown.texturePool then
                         for _, texture in pairs(dropdown.texturePool) do
                             texture:Hide()
+                        end
+                    end
+                    if dropdown.fontPool then
+                        for _, fs in pairs(dropdown.fontPool) do
+                            fs:Hide()
                         end
                     end
                     RefreshText()
@@ -1807,15 +1885,11 @@ function GUI.BuildPanel(panelFrame, schema)
                 local dividerFrame = CreateFrame("Frame", nil, cf)
                 dividerFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -8)
                 dividerFrame:SetPoint("RIGHT", cf, "RIGHT", -10, 0)
-                dividerFrame:SetHeight(3)
+                dividerFrame:SetHeight(2)
 
                 local dividerTex = dividerFrame:CreateTexture(nil, "ARTWORK")
                 dividerTex:SetAllPoints(dividerFrame)
-                dividerTex:SetAtlas("Options_HorizontalDivider")
-                if not dividerTex:GetTexture() then
-                    dividerTex:SetTexture("Interface\\Common\\UI-TooltipDivider-Transparent")
-                    dividerFrame:SetHeight(2)
-                end
+                dividerTex:SetColorTexture(1, 1, 1, 0.15)
                 lastCard = dividerFrame
             end
         end
