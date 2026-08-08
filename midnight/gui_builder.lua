@@ -9,6 +9,11 @@ if not BBF.isMidnight then return end
 
 BBF.GUI = BBF.GUI or {}
 local GUI = BBF.GUI
+GUI.Providers = GUI.Providers or {}
+
+function GUI.RegisterProvider(name, providerFunc)
+    GUI.Providers[name] = providerFunc
+end
 
 -- ============================================================
 -- THEME -- Single source of truth for all visual constants
@@ -24,7 +29,7 @@ GUI.Theme = {
     -- Content area
     Content = {
         gapLeft      = 10,
-        marginRight  = -38,
+        marginRight  = -12,
         marginBottom = 15,
     },
     -- Scroll child (card container)
@@ -189,10 +194,56 @@ if classColors then
 end
 
 
--- ============================================================
--- INTERNAL HELPERS
--- ============================================================
 local T = GUI.Theme
+
+local function ParseMargin(opt)
+    local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
+    if not opt then return mTop, mRight, mBottom, mLeft end
+    if type(opt.margin) == "table" then
+        mTop    = tonumber(opt.margin[1] or opt.margin.top)    or 0
+        mRight  = tonumber(opt.margin[2] or opt.margin.right)  or 0
+        mBottom = tonumber(opt.margin[3] or opt.margin.bottom) or 0
+        mLeft   = tonumber(opt.margin[4] or opt.margin.left)   or 0
+    elseif type(opt.margin) == "number" then
+        mTop, mRight, mBottom, mLeft = opt.margin, opt.margin, opt.margin, opt.margin
+    end
+    mTop    = mTop    + (tonumber(opt.marginTop)    or 0)
+    mRight  = mRight  + (tonumber(opt.marginRight)  or 0)
+    mBottom = mBottom + (tonumber(opt.marginBottom) or 0)
+    mLeft   = mLeft   + (tonumber(opt.marginLeft)   or 0)
+    return mTop, mRight, mBottom, mLeft
+end
+
+local function UpdateCardHeight(card)
+    if not card then return end
+    local extraPad = card.isSection and 0 or 6
+    local mBottom = card.marginBottom or 0
+    card:SetHeight(-card.currentY + extraPad + mBottom)
+end
+
+local function AdjustScrollBar(sf, offsetX)
+    local sb = sf and (sf.ScrollBar or _G[(sf:GetName() or "") .. "ScrollBar"])
+    if sb then
+        sb:ClearAllPoints()
+        sb:SetPoint("TOPLEFT", sf, "TOPRIGHT", offsetX or -5, -16)
+        sb:SetPoint("BOTTOMLEFT", sf, "BOTTOMRIGHT", offsetX or -5, 16)
+    end
+end
+
+local function GetAvailableContentWidth(panelFrame, hasTabs)
+    local pWidth = (panelFrame and panelFrame:GetWidth() > 0) and panelFrame:GetWidth() or 650
+    local ts = T.Sidebar
+    local tc = T.Content
+
+    if hasTabs then
+        local leftOffset = ts.offsetX + ts.width + tc.gapLeft
+        local rightMargin = math.abs(tc.marginRight)
+        return math.max(300, pWidth - leftOffset - rightMargin)
+    else
+        local rightMargin = math.abs(tc.marginRight)
+        return math.max(300, pWidth - 12 - rightMargin)
+    end
+end
 
 local function AddRowHighlight(row)
     local hl = row:CreateTexture(nil, "BACKGROUND")
@@ -372,8 +423,13 @@ local function BuildCheckboxRow(card, info, parentCb)
         if btn == "RightButton" then
             self:SetChecked(not self:GetChecked()) -- Revert automatic check toggle on right-click
             TriggerRightClick(info, titleFrame or self)
+        else
+            if (info.requiresReload or info.reload) and StaticPopup_Show then
+                StaticPopup_Show("BBF_CONFIRM_RELOAD")
+            end
         end
     end)
+
     StyleCheckbox(cb)
     cb:SetPoint("RIGHT", row, "RIGHT", rc.cbOffsetRight, 0)
 
@@ -421,7 +477,7 @@ local function BuildCheckboxRow(card, info, parentCb)
 
 
     card.currentY = card.currentY - rc.height - rc.gap
-    card:SetHeight(-card.currentY + 6)
+    UpdateCardHeight(card)
     return cb
 end
 
@@ -490,7 +546,7 @@ local function BuildSliderRow(card, info, parentCb)
     HookHighlight(slider, updateHL)
 
     card.currentY = card.currentY - rs.height - rs.gap
-    card:SetHeight(-card.currentY + 6)
+    UpdateCardHeight(card)
     return slider
 end
 
@@ -533,14 +589,34 @@ local function BuildDropdownRow(card, info, parentCb)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rs.height)
 
-    -- Resolve choices list
-    local choices
-    if info.preset == "anchor" then
-        choices = ANCHOR_PRESET_CHOICES
+    -- Resolve choices list from Provider, Preset, or inline choices/options
+    local rawChoices
+    if type(info.provider) == "function" then
+        rawChoices = info.provider()
+    elseif type(info.provider) == "string" and GUI.Providers and GUI.Providers[info.provider] then
+        rawChoices = GUI.Providers[info.provider]()
+    elseif info.kind and GUI.Providers and GUI.Providers[info.kind] then
+        rawChoices = GUI.Providers[info.kind]()
+    elseif info.preset and GUI.Providers and GUI.Providers[info.preset] then
+        rawChoices = GUI.Providers[info.preset]()
+    elseif info.preset == "anchor" then
+        rawChoices = ANCHOR_PRESET_CHOICES
     elseif info.preset == "anchorInnerOuter" then
-        choices = ANCHOR_INNER_OUTER_CHOICES
-    elseif info.preset == "texture" or info.preset == "statusbar" then
-        choices = {}
+        rawChoices = ANCHOR_INNER_OUTER_CHOICES
+    elseif info.kind == "font" or info.preset == "font" then
+        rawChoices = {}
+        local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+        if LSM then
+            local fonts = LSM:HashTable(LSM.MediaType.FONT)
+            local sorted = {}
+            for name in pairs(fonts) do table.insert(sorted, name) end
+            table.sort(sorted)
+            for _, name in ipairs(sorted) do
+                table.insert(rawChoices, { value = name, label = name })
+            end
+        end
+    elseif info.kind == "texture" or info.preset == "texture" or info.preset == "statusbar" then
+        rawChoices = {}
         local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
         if LSM then
             local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
@@ -548,16 +624,30 @@ local function BuildDropdownRow(card, info, parentCb)
             for name in pairs(textures) do table.insert(sorted, name) end
             table.sort(sorted)
             for _, name in ipairs(sorted) do
-                table.insert(choices, { value = name, label = name })
+                table.insert(rawChoices, { value = name, label = name })
             end
         end
     else
-        choices = info.choices or {}
+        rawChoices = info.choices or info.options or {}
     end
 
+    -- Normalize choices to standard { value = ..., label = ... } format
+    local choices = {}
+    if type(rawChoices) == "table" then
+        for _, item in ipairs(rawChoices) do
+            if type(item) == "table" then
+                table.insert(choices, {
+                    value = item.value ~= nil and item.value or item[1],
+                    label = item.label ~= nil and item.label or item[2] or item.value or item[1]
+                })
+            else
+                table.insert(choices, { value = tostring(item), label = tostring(item) })
+            end
+        end
+    end
 
     -- Build native WoW DropdownButton
-    local dropdownWidth = info.width or 130
+    local dropdownWidth = info.width or info.size or 130
     local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
     dropdown:SetWidth(dropdownWidth)
     dropdown:SetPoint("RIGHT", row, "RIGHT", -8, 0)
@@ -651,7 +741,7 @@ local function BuildDropdownRow(card, info, parentCb)
     HookHighlight(titleFrame, updateHL)
 
     card.currentY = card.currentY - rs.height - rs.gap
-    card:SetHeight(-card.currentY + 6)
+    UpdateCardHeight(card)
     return dropdown
 end
 
@@ -729,7 +819,7 @@ local function BuildDualChildCheckboxRow(card, info, parentCb)
     HookHighlight(tf2, updateHL) HookHighlight(cb2, updateHL)
 
     card.currentY = card.currentY - rd.height - rd.gap
-    card:SetHeight(-card.currentY + 6)
+    UpdateCardHeight(card)
     return cb1, cb2
 end
 
@@ -777,7 +867,7 @@ local function BuildMultiParentChildRow(card, info, parentCbs)
     HookHighlight(cb, updateHL)
 
     card.currentY = card.currentY - rc.height - rc.gap
-    card:SetHeight(-card.currentY + 6)
+    UpdateCardHeight(card)
     return cb
 end
 
@@ -847,31 +937,85 @@ end
 -- CARD BUILDER
 -- ============================================================
 
-local function BuildCard(parentFrame, titleText, anchorFrame, yOffset)
+local function BuildCard(parentFrame, titleText, anchorFrame, yOffset, isSection, containerDef)
     local tc = T.Card
-    local cardWidth = tc.defaultWidth
 
-    local header = parentFrame:CreateFontString(nil, "OVERLAY", tc.header.font)
-    if anchorFrame then
-        header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, yOffset or tc.header.betweenCards)
+    local cardWidth
+    if containerDef and type(containerDef.width) == "number" then
+        cardWidth = containerDef.width
+    elseif containerDef and type(containerDef.size) == "number" then
+        cardWidth = containerDef.size
     else
-        header:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2, yOffset or tc.header.firstCardY)
+        -- Universal Fill by default for all cards/sections
+        local parentW = (parentFrame and parentFrame:GetWidth() > 0) and parentFrame:GetWidth() or nil
+        local parentParentW = (parentFrame and parentFrame:GetParent() and parentFrame:GetParent():GetWidth() > 0) and parentFrame:GetParent():GetWidth() or nil
+        local availW = parentW or parentParentW or 620
+        cardWidth = math.max(100, availW - 1)
     end
-    header:SetText(titleText)
-    header:SetTextColor(unpack(tc.header.color))
+    local hasTitle = titleText and titleText ~= ""
 
-    local card = CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
-    card:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
-    card:SetWidth(cardWidth)
-    card:SetBackdrop(tc.backdrop)
-    card:SetBackdropColor(unpack(tc.bgColor))
-    card:SetBackdropBorderColor(unpack(tc.borderColor))
+    local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
+    if containerDef then
+        mTop, mRight, mBottom, mLeft = ParseMargin(containerDef)
+    end
 
-    card.header    = header
-    card.currentY  = tc.cursorStart
-    card.cardWidth = cardWidth
+    local defaultBetween = isSection and -12 or tc.header.betweenCards
+    local baseSpacing = yOffset or defaultBetween
+    local effectiveYOffset = baseSpacing - mTop
+
+    local header
+    if hasTitle then
+        header = parentFrame:CreateFontString(nil, "OVERLAY", tc.header.font)
+        if anchorFrame then
+            header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
+        else
+            header:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
+        end
+        header:SetText(titleText)
+        header:SetTextColor(unpack(tc.header.color))
+    end
+
+    local card
+    local finalWidth = cardWidth - mLeft - mRight
+    if isSection then
+        card = CreateFrame("Frame", nil, parentFrame)
+        if hasTitle then
+            card:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
+        else
+            if anchorFrame then
+                card:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
+            else
+                card:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
+            end
+        end
+        card:SetWidth(finalWidth)
+        card.currentY = 0
+    else
+        card = CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
+        if hasTitle then
+            card:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
+        else
+            if anchorFrame then
+                card:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
+            else
+                card:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
+            end
+        end
+        card:SetWidth(finalWidth)
+        card:SetBackdrop(tc.backdrop)
+        card:SetBackdropColor(unpack(tc.bgColor))
+        card:SetBackdropBorderColor(unpack(tc.borderColor))
+        card.currentY = tc.cursorStart
+    end
+
+    card.header       = header
+    card.cardWidth    = finalWidth
+    card.isSection    = isSection
+    card.marginBottom = mBottom
     return card
 end
+
+
 
 local function FinalizeCardLayout(cf, lastCard)
     local sf = cf:GetParent()
@@ -1037,25 +1181,6 @@ end
 -- ============================================================
 -- POPUP WINDOW SCHEMA ENGINE
 -- ============================================================
-
-
-
-local function ParseMargin(opt)
-    local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
-    if type(opt.margin) == "table" then
-        mTop    = tonumber(opt.margin[1] or opt.margin.top)    or 0
-        mRight  = tonumber(opt.margin[2] or opt.margin.right)  or 0
-        mBottom = tonumber(opt.margin[3] or opt.margin.bottom) or 0
-        mLeft   = tonumber(opt.margin[4] or opt.margin.left)   or 0
-    elseif type(opt.margin) == "number" then
-        mTop, mRight, mBottom, mLeft = opt.margin, opt.margin, opt.margin, opt.margin
-    end
-    mTop    = mTop    + (tonumber(opt.marginTop)    or 0)
-    mRight  = mRight  + (tonumber(opt.marginRight)  or 0)
-    mBottom = mBottom + (tonumber(opt.marginBottom) or 0)
-    mLeft   = mLeft   + (tonumber(opt.marginLeft)   or 0)
-    return mTop, mRight, mBottom, mLeft
-end
 
 
 
@@ -1280,9 +1405,13 @@ function GUI.OpenPopup(popupId, schema)
                 cb:SetScript("OnClick", function(self)
                     BetterBlizzFramesDB[opt.key] = self:GetChecked() or nil
                     if opt.onChange then opt.onChange() end
+                    if (opt.requiresReload or opt.reload) and StaticPopup_Show then
+                        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+                    end
                     if BBF.UpdateFrames then BBF.UpdateFrames() end
                     if BBF.HideFrames then BBF.HideFrames() end
                 end)
+
 
                 cb.indentX = indentX
                 cb.lastPosY = currentY
@@ -1617,87 +1746,84 @@ function GUI.BuildPanel(panelFrame, schema)
     local ts = T.Sidebar
     local tc = T.Content
 
-    local sidebar = CreateFrame("Frame", nil, panelFrame)
-    sidebar:SetSize(ts.width, ts.height)
-    sidebar:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", ts.offsetX, ts.offsetY)
-
-    local contentParent = CreateFrame("Frame", nil, panelFrame)
-    contentParent:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", tc.gapLeft, 0)
-    contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
-
     local categoryFrames  = {}
     local categoryButtons = {}
-    local tabs = schema.tabs or {}
+    local hasTabs = schema.tabs and #schema.tabs > 0
 
-    local function SelectCategory(catId)
-        for id, sf in pairs(categoryFrames) do sf:Hide() end
-        for id, btn in pairs(categoryButtons) do
-            btn:SetBackdropBorderColor(unpack(tt.borderColor))
-            btn:SetBackdropColor(unpack(tt.bgColor))
-            btn.Text:SetTextColor(unpack(tt.textColor))
-        end
-        if categoryFrames[catId] then categoryFrames[catId]:Show() end
-        if categoryButtons[catId] then
-            categoryButtons[catId]:SetBackdropBorderColor(unpack(tt.borderColorActive))
-            categoryButtons[catId]:SetBackdropColor(unpack(tt.bgColorActive))
-            categoryButtons[catId].Text:SetTextColor(unpack(tt.textColorActive))
-        end
+    local sidebar, contentParent
+
+    if hasTabs then
+        sidebar = CreateFrame("Frame", nil, panelFrame)
+        sidebar:SetSize(ts.width, ts.height)
+        sidebar:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", ts.offsetX, ts.offsetY)
+
+        contentParent = CreateFrame("Frame", nil, panelFrame)
+        contentParent:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", tc.gapLeft, 0)
+        contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
+    else
+        contentParent = CreateFrame("Frame", nil, panelFrame)
+        contentParent:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", 12, -45)
+        contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
     end
 
-    for i, tab in ipairs(tabs) do
-        local sf = CreateFrame("ScrollFrame", "BBF_MidnightGUI_" .. tab.id, contentParent, "ScrollFrameTemplate")
-        sf:SetAllPoints(contentParent)
-        sf:Hide()
-
-        local cf = CreateFrame("Frame", nil, sf)
-        cf:SetSize(T.ScrollChild.width, T.ScrollChild.minHeight)
-        sf:SetScrollChild(cf)
-
-        categoryFrames[tab.id] = sf
-        sf.contentFrame = cf
-
-        local btn = CreateFrame("Button", nil, sidebar, "BackdropTemplate")
-        btn:SetSize(tt.width, tt.height)
-        btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * tt.stride))
-        btn:SetBackdrop(tt.backdrop)
-        btn:SetBackdropColor(unpack(tt.bgColor))
-        btn:SetBackdropBorderColor(unpack(tt.borderColor))
-
-        local iconFrame = CreateFrame("Frame", nil, btn)
-        iconFrame:SetSize(tt.iconFrameSize, tt.iconFrameSize)
-        iconFrame:SetPoint("LEFT", btn, "LEFT", tt.iconOffsetLeft, 0)
-        ApplyIconToFrame(iconFrame, tab)
-
-        local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        txt:SetPoint("LEFT", iconFrame, "RIGHT", tt.textOffsetLeft, 0)
-        txt:SetPoint("RIGHT", btn, "RIGHT", -5, 0)
-        txt:SetJustifyH("LEFT")
-        txt:SetText(tab.label)
-        txt:SetTextColor(unpack(tt.textColor))
-        btn.Text = txt
-
-        btn:SetScript("OnEnter", function(self)
-            if categoryButtons[tab.id] ~= self then
-                self:SetBackdropBorderColor(unpack(tt.borderColorHover))
-                self.Text:SetTextColor(unpack(tt.textColorHover))
-            end
-        end)
-        btn:SetScript("OnLeave", function(self)
-            if categoryButtons[tab.id] ~= self then
-                self:SetBackdropBorderColor(unpack(tt.borderColor))
-                self.Text:SetTextColor(unpack(tt.textColor))
-            end
-        end)
-        btn:SetScript("OnClick", function() SelectCategory(tab.id) end)
-
-        categoryButtons[tab.id] = btn
-
-        local lastCard    = nil
+    -- Helper to populate cards/sections into a ScrollChild
+    local function PopulateContainers(cf, containerList, parentSchema)
+        local lastCard = nil
         local resolvedRefs = {}
 
-        for _, cardDef in ipairs(tab.cards or {}) do
-            local card = BuildCard(cf, cardDef.title, lastCard)
-            for _, optInfo in ipairs(cardDef.options or {}) do
+        -- Render Top-Level Header & Divider if header/title is defined on parentSchema
+        if parentSchema and (parentSchema.header or parentSchema.title) then
+            local headerText = parentSchema.header or parentSchema.title
+            local headerFrame = CreateFrame("Frame", nil, cf)
+            headerFrame:SetPoint("TOPLEFT", cf, "TOPLEFT", 2, -6)
+            headerFrame:SetPoint("RIGHT", cf, "RIGHT", 0, 0)
+
+            local iconWidth, iconHeight = 22, 22
+            if parentSchema.size then
+                iconWidth, iconHeight = unpack(parentSchema.size)
+            end
+
+            local hasIcon = parentSchema.atlas or parentSchema.icon or parentSchema.texture or parentSchema.spell
+            local titleFontString = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+
+            if hasIcon then
+                local iconFrame = CreateFrame("Frame", nil, headerFrame)
+                iconFrame:SetSize(iconWidth, iconHeight)
+                iconFrame:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
+                ApplyIconToFrame(iconFrame, parentSchema)
+                titleFontString:SetPoint("LEFT", iconFrame, "RIGHT", 6, 0)
+            else
+                titleFontString:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
+            end
+
+            titleFontString:SetText(headerText)
+            titleFontString:SetTextColor(1, 0.82, 0) -- Gold
+
+            local headerHeight = math.max(iconHeight, (titleFontString:GetStringHeight() or 24))
+            headerFrame:SetHeight(headerHeight)
+            lastCard = headerFrame
+
+            if parentSchema.divider then
+                local dividerFrame = CreateFrame("Frame", nil, cf)
+                dividerFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -8)
+                dividerFrame:SetPoint("RIGHT", cf, "RIGHT", -10, 0)
+                dividerFrame:SetHeight(3)
+
+                local dividerTex = dividerFrame:CreateTexture(nil, "ARTWORK")
+                dividerTex:SetAllPoints(dividerFrame)
+                dividerTex:SetAtlas("Options_HorizontalDivider")
+                if not dividerTex:GetTexture() then
+                    dividerTex:SetTexture("Interface\\Common\\UI-TooltipDivider-Transparent")
+                    dividerFrame:SetHeight(2)
+                end
+                lastCard = dividerFrame
+            end
+        end
+
+        for _, containerDef in ipairs(containerList) do
+            local isSection = containerDef.isSection or (containerDef.type == "section") or (containerDef.section == true)
+            local card = BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, isSection, containerDef)
+            for _, optInfo in ipairs(containerDef.options or {}) do
                 BuildOption(card, optInfo, resolvedRefs)
             end
             lastCard = card
@@ -1708,13 +1834,139 @@ function GUI.BuildPanel(panelFrame, schema)
         end
     end
 
-    if tabs[1] then
-        SelectCategory(tabs[1].id)
+    if hasTabs then
+        local tabs = schema.tabs
+        local function SelectCategory(catId)
+            for id, sf in pairs(categoryFrames) do sf:Hide() end
+            for id, btn in pairs(categoryButtons) do
+                btn:SetBackdropBorderColor(unpack(tt.borderColor))
+                btn:SetBackdropColor(unpack(tt.bgColor))
+                btn.Text:SetTextColor(unpack(tt.textColor))
+            end
+            if categoryFrames[catId] then categoryFrames[catId]:Show() end
+            if categoryButtons[catId] then
+                categoryButtons[catId]:SetBackdropBorderColor(unpack(tt.borderColorActive))
+                categoryButtons[catId]:SetBackdropColor(unpack(tt.bgColorActive))
+                categoryButtons[catId].Text:SetTextColor(unpack(tt.textColorActive))
+            end
+        end
+
+        for i, tab in ipairs(tabs) do
+            local sf = CreateFrame("ScrollFrame", "BBF_MidnightGUI_" .. tab.id, contentParent, "ScrollFrameTemplate")
+            sf:SetAllPoints(contentParent)
+            sf:Hide()
+            AdjustScrollBar(sf, -5)
+
+            local contentW = GetAvailableContentWidth(panelFrame, true)
+            local cfWidth = contentW - 11
+            local cf = CreateFrame("Frame", nil, sf)
+            cf:SetSize(cfWidth, T.ScrollChild.minHeight)
+            sf:SetScrollChild(cf)
+
+            categoryFrames[tab.id] = sf
+            sf.contentFrame = cf
+
+            local btn = CreateFrame("Button", nil, sidebar, "BackdropTemplate")
+            btn:SetSize(tt.width, tt.height)
+            btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, -((i - 1) * tt.stride))
+            btn:SetBackdrop(tt.backdrop)
+            btn:SetBackdropColor(unpack(tt.bgColor))
+            btn:SetBackdropBorderColor(unpack(tt.borderColor))
+
+            local iconFrame = CreateFrame("Frame", nil, btn)
+            iconFrame:SetSize(tt.iconFrameSize, tt.iconFrameSize)
+            iconFrame:SetPoint("LEFT", btn, "LEFT", tt.iconOffsetLeft, 0)
+            ApplyIconToFrame(iconFrame, tab)
+
+            local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            txt:SetPoint("LEFT", iconFrame, "RIGHT", tt.textOffsetLeft, 0)
+            txt:SetPoint("RIGHT", btn, "RIGHT", -5, 0)
+            txt:SetJustifyH("LEFT")
+            txt:SetText(tab.label)
+            txt:SetTextColor(unpack(tt.textColor))
+            btn.Text = txt
+
+            btn:SetScript("OnEnter", function(self)
+                if categoryButtons[tab.id] ~= self then
+                    self:SetBackdropBorderColor(unpack(tt.borderColorHover))
+                    self.Text:SetTextColor(unpack(tt.textColorHover))
+                end
+            end)
+            btn:SetScript("OnLeave", function(self)
+                if categoryButtons[tab.id] ~= self then
+                    self:SetBackdropBorderColor(unpack(tt.borderColor))
+                    self.Text:SetTextColor(unpack(tt.textColor))
+                end
+            end)
+            btn:SetScript("OnClick", function() SelectCategory(tab.id) end)
+
+            categoryButtons[tab.id] = btn
+
+            local containers = {}
+            if tab.items then
+                containers = tab.items
+            else
+                if tab.cards then
+                    for _, cDef in ipairs(tab.cards) do table.insert(containers, cDef) end
+                end
+                if tab.sections then
+                    for _, sDef in ipairs(tab.sections) do
+                        local copy = {}
+                        for k, v in pairs(sDef) do copy[k] = v end
+                        copy.isSection = true
+                        table.insert(containers, copy)
+                    end
+                end
+            end
+
+            PopulateContainers(cf, containers, tab)
+        end
+
+        if tabs[1] then
+            SelectCategory(tabs[1].id)
+        end
+
+        schema._selectCategory  = SelectCategory
+        schema._categoryFrames  = categoryFrames
+        schema._categoryButtons = categoryButtons
+
+        return sidebar, contentParent, categoryFrames, categoryButtons
+    else
+        -- Single scrollable panel (No tabs)
+        local sf = CreateFrame("ScrollFrame", "BBF_MidnightGUI_" .. (schema.id or "single"), contentParent, "ScrollFrameTemplate")
+        sf:SetAllPoints(contentParent)
+        AdjustScrollBar(sf, -5)
+
+        local contentW = GetAvailableContentWidth(panelFrame, false)
+        local cfWidth = contentW - 11
+        local cf = CreateFrame("Frame", nil, sf)
+        cf.isSinglePanel = true
+        cf:SetSize(cfWidth, T.ScrollChild.minHeight)
+        sf:SetScrollChild(cf)
+
+        categoryFrames["main"] = sf
+        sf.contentFrame = cf
+
+        local containers = {}
+        if schema.items then
+            containers = schema.items
+        else
+            if schema.cards then
+                for _, cDef in ipairs(schema.cards) do table.insert(containers, cDef) end
+            end
+            if schema.sections then
+                for _, sDef in ipairs(schema.sections) do
+                    local copy = {}
+                    for k, v in pairs(sDef) do copy[k] = v end
+                    copy.isSection = true
+                    table.insert(containers, copy)
+                end
+            end
+        end
+
+        PopulateContainers(cf, containers, schema)
+
+        return nil, contentParent, categoryFrames, categoryButtons
     end
-
-    schema._selectCategory  = SelectCategory
-    schema._categoryFrames  = categoryFrames
-    schema._categoryButtons = categoryButtons
-
-    return sidebar, contentParent, categoryFrames, categoryButtons
 end
+

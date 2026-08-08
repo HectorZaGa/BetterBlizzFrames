@@ -190,7 +190,7 @@ function guiGeneralTab()
                             { type="checkbox", key="symmetricPlayerFrame",       label=L["Mirror_TargetFrame"],   tooltip=L["Tooltip_Mirror_TargetFrame_Desc"] },
                             { type="checkbox", key="hideTotemFrame",             label=L["Hide_Totem_Frame"],     tooltip=L["Tooltip_Hide_Totem_Frame"],             onChange=BBF.HideFrames },
                             { type="checkbox", key="playerReputationClassColor", label=L["Class_Color_Combo"],   tooltip=L["Tooltip_Class_Color_Reputation"],       onChange=BBF.PlayerReputationColor },
-                            { type="checkbox", key="playerReputationColor",      label=L["Add_Reputation_Color"],tooltip=L["Tooltip_Add_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:14:76|a", onChange=BBF.PlayerReputationColor },
+                            { type="checkbox", key="playerReputationColor",      label=L["Add_Reputation_Color"],tooltip=L["Tooltip_Add_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:18:98|a", onChange=BBF.PlayerReputationColor },
                             { type="checkbox", key="playerEliteFrame",           label=L["Show_Elite_Texture"],  tooltip=L["Tooltip_Show_Elite_Texture_Desc"],      onChange=function() if BBF.PlayerEliteFrame then BBF.PlayerEliteFrame() end end},
                         },
                     },
@@ -208,20 +208,20 @@ function guiGeneralTab()
                         title = L["Visual_Effects_Glows"],
                         options = {
                             { type="checkbox", key="hidePlayerHealthLossAnim", label=L["Hide_Health_Loss_FX"],      tooltip=L["Tooltip_Hide_Health_Loss_FX_Desc"], onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideFullPower",            label=L["Tooltip_Hide_Full_Mana_FX"],tooltip=L["Tooltip_Hide_Full_Mana_FX_Desc"] .. " |A:FullAlert-FrameGlow:16:30|a", onChange=BBF.HideFrames },
-                            { type="checkbox", key="hidePlayerRestGlow",       label=L["Hide_Rest_Glow"],           tooltip=L["Tooltip_Hide_Rest_Glow"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-Status:16:42|a", onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideFullPower",            label=L["Tooltip_Hide_Full_Mana_FX"],tooltip=L["Tooltip_Hide_Full_Mana_FX_Desc"] .. " |A:FullAlert-FrameGlow:27:51|a", onChange=BBF.HideFrames },
+                            { type="checkbox", key="hidePlayerRestGlow",       label=L["Hide_Rest_Glow"],           tooltip=L["Tooltip_Hide_Rest_Glow"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-Status:30:80|a", onChange=BBF.HideFrames },
                             { type="checkbox", key="hidePlayerRestAnimation",  label=L["Hide_Zzz_Rest_Animation"],  tooltip=L["Tooltip_Hide_Zzz_Rest"],          onChange=BBF.HideFrames },
                         },
                     },
                     {
                         title = L["Icons_Indicators"],
                         options = {
-                            { type="checkbox", key="hideCombatIcon",         label=L["Hide_Combat_Icon"],      tooltip=L["Tooltip_Hide_Combat_Icon"] .. " |A:UI-HUD-UnitFrame-Player-CombatIcon:16:16|a",                     onChange=BBF.HideFrames },
-                            { type="checkbox", key="hidePlayerRoleIcon",     label=L["Hide_Role_Icon"],        tooltip=L["Tooltip_Hide_Role_Icon"] .. " |A:roleicon-tiny-dps:16:16|a",                                        onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideCombatIcon",         label=L["Hide_Combat_Icon"],      tooltip=L["Tooltip_Hide_Combat_Icon"] .. " |A:UI-HUD-UnitFrame-Player-CombatIcon:22:22|a",                     onChange=BBF.HideFrames },
+                            { type="checkbox", key="hidePlayerRoleIcon",     label=L["Hide_Role_Icon"],        tooltip=L["Tooltip_Hide_Role_Icon"] .. " |A:roleicon-tiny-dps:22:22|a",                                        onChange=BBF.HideFrames },
                             { type="checkbox", key="hideGroupIndicator",     label=L["Hide_Group_Indicator"],  tooltip=L["Tooltip_Hide_Group_Indicator"],                                                                  onChange=BBF.HideFrames },
-                            { type="checkbox", key="hidePlayerLeaderIcon",   label=L["Hide_Leader_Icon"],      tooltip=L["Tooltip_Hide_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:16:16|a",              onChange=BBF.HideFrames },
-                            { type="checkbox", key="hidePlayerGuideIcon",    label=L["Hide_Guide_Icon"],       tooltip=L["Tooltip_Hide_Guide_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-GuideIcon:16:16|a",               onChange=BBF.HideFrames },
-                            { type="checkbox", key="hidePlayerCornerIcon",   label=L["Hide_Corner_Icon"],      tooltip=L["Tooltip_Hide_Corner_Icon"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-CornerEmbellishment:16:16|a",onChange=BBF.HideFrames },
+                            { type="checkbox", key="hidePlayerLeaderIcon",   label=L["Hide_Leader_Icon"],      tooltip=L["Tooltip_Hide_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:22:22|a",              onChange=BBF.HideFrames },
+                            { type="checkbox", key="hidePlayerGuideIcon",    label=L["Hide_Guide_Icon"],       tooltip=L["Tooltip_Hide_Guide_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-GuideIcon:22:22|a",               onChange=BBF.HideFrames },
+                            { type="checkbox", key="hidePlayerCornerIcon",   label=L["Hide_Corner_Icon"],      tooltip=L["Tooltip_Hide_Corner_Icon"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-CornerEmbellishment:22:22|a",onChange=BBF.HideFrames },
                             { type="checkbox", key="hideHitIndicator",       label=L["Hide_Hit_Indicator"],    tooltip=L["Tooltip_Hide_Hit_Indicator_Desc"],                                                               onChange=BBF.HideFrames },
                             { type="checkbox", key="hidePvpTimerText",       label=L["Hide_PvP_Timer"],        tooltip=L["Tooltip_Hide_PvP_Timer_Desc"],                                                                  onChange=BBF.HideFrames },
                         },
@@ -296,40 +296,38 @@ function guiGeneralTab()
                     {
                         title = L["Frame_Layout"],
                         options = {
-                            { type="checkbox", key="classicFrames",            label=L["Classic_Frames"],         tooltip=L["Tooltip_Classic_Frames_Desc"] },
-                            { type="checkbox", key="noPortraitModes",          label=L["No_Portrait"],            tooltip=L["Tooltip_No_Portrait_Desc"] },
-                            { type="checkbox", key="noPortraitPixelBorder",    label=L["No_Portrait_PixelBorder"],tooltip=L["Tooltip_NP_PixelBorder_Desc"] },
-                            { type="checkbox", key="classColorFrameTexture",   label=L["Class_Color_FrameTexture"],tooltip=L["Tooltip_Border_Status_Color_Desc"] },
-                            { type="checkbox", key="hideUnitFrameShadow",      label=L["Hide_Shadow"],            tooltip=L["Tooltip_Hide_Shadow_Desc"],              onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideRareDragonTexture",    label=L["Hide_Dragon"],            tooltip=L["Tooltip_Hide_Dragon"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Boss-Gold:22:16|a", onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideThreatOnFrame",        label=L["Hide_Threat_Meter"],      tooltip=L["Tooltip_Hide_Threat_Desc"],              onChange=BBF.HideFrames },
+                            { type="checkbox", key="classicFrames",            label=L["Classic_Frames"],         tooltip=L["Tooltip_Classic_Frames_Desc"], requiresReload=true },
+                            { type="checkbox", key="noPortraitModes",          label=L["No_Portrait"],            tooltip=L["Tooltip_No_Portrait_Desc"], requiresReload=true },
+                            { type="checkbox", key="noPortraitPixelBorder",    label=L["No_Portrait_PixelBorder"],tooltip=L["Tooltip_NP_PixelBorder_Desc"], requiresReload=true },
+                            { type="checkbox", key="classColorFrameTexture",   label=L["Class_Color_FrameTexture"],tooltip=L["Tooltip_Border_Status_Color_Desc"], onChange=BBF.SetCenteredNamesCaller, requiresReload=true },
+                            { type="checkbox", key="hideUnitFrameShadow",      label=L["Hide_Shadow"],            tooltip=L["Tooltip_Hide_Shadow_Desc"],              onChange=BBF.HideFrames, requiresReload=true },
+                            { type="checkbox", key="hideRareDragonTexture",    label=L["Hide_Dragon"],            tooltip=L["Tooltip_Hide_Dragon"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Boss-Gold:38:28|a", onChange=BBF.HideFrames, requiresReload=true },
+                            { type="checkbox", key="hideThreatOnFrame",        label=L["Hide_Threat_Meter"],      tooltip=L["Tooltip_Hide_Threat_Desc"],              onChange=BBF.HideFrames, requiresReload=true },
                         },
                     },
                     {
                         title = L["Display_Text"],
                         options = {
-                            { type="checkbox", key="classColorLevelText",     label=L["Level"],                tooltip=L["Tooltip_Level"] },
-                            { type="checkbox", key="centerNames",             label=L["Center_Names"],         tooltip=L["Tooltip_Center_Name_Desc"],           onChange=BBF.SetCenteredNamesCaller },
+                            { type="checkbox", key="classColorLevelText",     label=L["Level"],                tooltip=L["Tooltip_Level"], requiresReload=true },
+                            { type="checkbox", key="centerNames",             label=L["Center_Names"],         tooltip=L["Tooltip_Center_Name_Desc"],           onChange=BBF.SetCenteredNamesCaller, requiresReload=true },
                             { type="checkbox", key="classColorTargetNames",   label=L["Class_Color_Names"],    tooltip=L["Tooltip_Class_Color_Names"] },
-                            { type="checkbox", key="removeRealmNames",        label=L["Hide_Realm"],           tooltip=L["Tooltip_Hide_Realm_Desc"] },
-                            { type="checkbox", key="formatStatusBarText",     label=L["Format_Numbers"],       tooltip=L["Tooltip_Format_Numbers_Desc"] .. " |A:glueannouncementpopup-arrow:16:16|a", onChange=BBF.HookStatusBarText, id="cbFormatNum", onRightClick=BBF.ToggleFormatNumbersRightClick,
+                            { type="checkbox", key="removeRealmNames",        label=L["Hide_Realm"],           tooltip=L["Tooltip_Hide_Realm_Desc"], requiresReload=true },
+                            { type="checkbox", key="formatStatusBarText",     label=L["Format_Numbers"],       tooltip=L["Tooltip_Format_Numbers_Desc"] .. " |A:glueannouncementpopup-arrow:20:20|a", onChange=BBF.HookStatusBarText, id="cbFormatNum", onRightClick=BBF.ToggleFormatNumbersRightClick, requiresReload=true,
                                 children = {
-                                    { type="checkbox", key="singleValueStatusBarText", label=L["No_Max_Value"], tooltip="|A:glueannouncementpopup-arrow:16:16|a " .. L["Tooltip_No_Max_Desc"] },
+                                    { type="checkbox", key="singleValueStatusBarText", label=L["No_Max_Value"], tooltip="|A:glueannouncementpopup-arrow:20:20|a " .. L["Tooltip_No_Max_Desc"] },
                                 }
                             },
-                            { type="checkbox", key="hideLevelText",           label=L["Hide_Max_Level_Text"],  tooltip=L["Tooltip_Hide_Max_Level_Text"],         onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideLevelText",           label=L["Hide_Max_Level_Text"],  tooltip=L["Tooltip_Hide_Max_Level_Text"],         onChange=BBF.HideFrames, requiresReload=true },
                         },
                     },
                     {
                         title = L["Colors_Icons_FX"],
                         options = {
-                            { type="checkbox", key="classColorFrames",             label=L["Class_Color_Health"],                  tooltip=L["Tooltip_Class_Color_Healthbars"],
-                                },
-                            { type="checkbox", key="customHealthbarColors",        label=L["Custom_Color_Health_Mana"],            tooltip=L["Tooltip_Custom_Colors_Desc"],
-                                },
-                            { type="checkbox", key="hidePrestigeBadge",            label=L["Hide_Prestige_Honor_Badge_PvP_Icon"],  tooltip=L["Tooltip_Hide_Prestige_PvP_Icon_Desc"], onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideCombatGlow",              label=L["Hide_Combat_Glow"],                   tooltip=L["Tooltip_Hide_Combat_Glow"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-InCombat:16:42|a", onChange=BBF.HideFrames },
-                            { type="checkbox", key="classPortraitsUseSpecIcons",  label=L["Use_Spec_Icons"],                     tooltip=L["Tooltip_Use_Spec_Icons"],              onChange=BBF.SpecPortraits },
+                            { type="checkbox", key="classColorFrames",             label=L["Class_Color_Health"],                  tooltip=L["Tooltip_Class_Color_Healthbars"], requiresReload=true },
+                            { type="checkbox", key="customHealthbarColors",        label=L["Custom_Color_Health_Mana"],            tooltip=L["Tooltip_Custom_Colors_Desc"], requiresReload=true },
+                            { type="checkbox", key="hidePrestigeBadge",            label=L["Hide_Prestige_Honor_Badge_PvP_Icon"],  tooltip=L["Tooltip_Hide_Prestige_PvP_Icon_Desc"], onChange=BBF.HideFrames, requiresReload=true },
+                            { type="checkbox", key="hideCombatGlow",              label=L["Hide_Combat_Glow"],                   tooltip=L["Tooltip_Hide_Combat_Glow"] .. " |A:UI-HUD-UnitFrame-Player-PortraitOn-InCombat:30:80|a", onChange=BBF.HideFrames, requiresReload=true },
+                            { type="checkbox", key="classPortraitsUseSpecIcons",  label=L["Use_Spec_Icons"],                     tooltip=L["Tooltip_Use_Spec_Icons"],              onChange=BBF.SpecPortraits, requiresReload=true },
                         },
                     },
                 },
@@ -349,15 +347,16 @@ function guiGeneralTab()
                     {
                         title = L["Target_Frame"],
                         options = {
-                            { type="checkbox", key="targetFrameClickthrough",          label=L["Clickthrough"],            tooltip=L["Tooltip_Target_Clickthrough"],                                                                                onChange=BBF.ClickthroughFrames },
+                            { type="checkbox", key="targetFrameClickthrough",          label=L["Clickthrough"],            tooltip=L["Tooltip_Target_Clickthrough"],                                                                                onChange=BBF.ClickthroughFrames, requiresReload=true },
                             { type="checkbox", key="hideTargetName",                  label=L["Hide_Names"],              tooltip=L["Tooltip_Hide_Target_Name"],                                                                                  onChange=BBF.UpdateNameSettings },
-                            { type="checkbox", key="hideTargetLeaderIcon",            label=L["Hide_Leader_Icon"],        tooltip=L["Tooltip_Hide_Target_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:16:16|a",              onChange=BBF.HideFrames },
-                            { type="checkbox", key="classColorTargetReputationTexture",label=L["Reputation_Class_Color"],  tooltip=L["Tooltip_Target_Reputation_Class_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:14:76|a" },
-                            { type="checkbox", key="hideTargetReputationColor",       label=L["Hide_Reputation_Color"],   tooltip=L["Tooltip_Hide_Target_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:14:76|a",          onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideTargetLeaderIcon",            label=L["Hide_Leader_Icon"],        tooltip=L["Tooltip_Hide_Target_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:22:22|a",              onChange=BBF.HideFrames },
+                            { type="checkbox", key="classColorTargetReputationTexture",label=L["Reputation_Class_Color"],  tooltip=L["Tooltip_Target_Reputation_Class_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:18:98|a", onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideTargetReputationColor",       label=L["Hide_Reputation_Color"],   tooltip=L["Tooltip_Hide_Target_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:18:98|a",          onChange=BBF.HideFrames },
                         },
                     },
                 },
             },
+
 
             --------------------------------------------------------
             -- TAB 6: Target of Target
@@ -377,8 +376,9 @@ function guiGeneralTab()
                         title = L["Target_of_Target"],
                         options = {
                             { type="checkbox", key="hideTargetToT",      label=L["Hide_Frame"],      tooltip=L["Tooltip_Hide_ToT_Frame"],   onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideTargetToTName",  label=L["Hide_Names"],      tooltip=L["Tooltip_Hide_ToT_Name"] },
+                            { type="checkbox", key="hideTargetToTName",  label=L["Hide_Names"],      tooltip=L["Tooltip_Hide_ToT_Name"],    onChange=BBF.HideFrames },
                             { type="checkbox", key="hideTargetToTDebuffs",label=L["Hide_ToT_Debuffs"],tooltip=L["Tooltip_Hide_ToT_Debuffs"],onChange=BBF.HideFrames },
+
                             { type="slider",   key="targetToTScale",     label=L["Size"],            tooltip=L["Tooltip_ToT_Size"],         min=0.6, max=2.5, step=0.01 },
                             { type="slider",   key="targetToTXPos",      label=L["X_Offset"],        tooltip=L["Tooltip_ToT_X_Offset"],     min=-100, max=100, step=1 },
                             { type="slider",   key="targetToTYPos",      label=L["Y_Offset"],        tooltip=L["Tooltip_ToT_Y_Offset"],     min=-100, max=100, step=1 },
@@ -482,11 +482,11 @@ function guiGeneralTab()
                     {
                         title = L["Focus_Frame"],
                         options = {
-                            { type="checkbox", key="focusFrameClickthrough",            label=L["Clickthrough"],          tooltip=L["Tooltip_Focus_Clickthrough"],                                                                                         onChange=BBF.ClickthroughFrames },
+                            { type="checkbox", key="focusFrameClickthrough",            label=L["Clickthrough"],          tooltip=L["Tooltip_Focus_Clickthrough"],                                                                                         onChange=BBF.ClickthroughFrames, requiresReload=true },
                             { type="checkbox", key="hideFocusName",                    label=L["Hide_Names"],            tooltip=L["Tooltip_Hide_Focus_Name"],                                                                                            onChange=BBF.UpdateNameSettings },
-                            { type="checkbox", key="hideFocusLeaderIcon",              label=L["Hide_Leader_Icon"],      tooltip=L["Tooltip_Hide_Focus_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:16:16|a",                           onChange=BBF.HideFrames },
-                            { type="checkbox", key="classColorFocusReputationTexture", label=L["Reputation_Class_Color"],tooltip=L["Tooltip_Focus_Reputation_Class_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:14:76|a" },
-                            { type="checkbox", key="hideFocusReputationColor",         label=L["Hide_Reputation_Color"],tooltip=L["Tooltip_Hide_Focus_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:14:76|a",                    onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideFocusLeaderIcon",              label=L["Hide_Leader_Icon"],      tooltip=L["Tooltip_Hide_Focus_Leader_Icon"] .. " |A:UI-HUD-UnitFrame-Player-Group-LeaderIcon:22:22|a",                           onChange=BBF.HideFrames },
+                            { type="checkbox", key="classColorFocusReputationTexture", label=L["Reputation_Class_Color"],tooltip=L["Tooltip_Focus_Reputation_Class_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:18:98|a", onChange=BBF.HideFrames },
+                            { type="checkbox", key="hideFocusReputationColor",         label=L["Hide_Reputation_Color"],tooltip=L["Tooltip_Hide_Focus_Reputation_Color"] .. " |A:UI-HUD-UnitFrame-Target-PortraitOn-Type:18:98|a",                    onChange=BBF.HideFrames },
                         },
                     },
                 },
@@ -509,8 +509,8 @@ function guiGeneralTab()
                     {
                         title = L["Focus_ToT"],
                         options = {
-                            { type="checkbox", key="hideFocusToT",       label=L["Hide_Frame"],           tooltip=L["Tooltip_Hide_FocusToT_Frame"],  onChange=BBF.HideFrames },
-                            { type="checkbox", key="hideFocusToTName",   label=L["Hide_Names"],           tooltip=L["Tooltip_Hide_FocusToT_Name"] },
+                            { type="checkbox", key="hideFocusToT",       label=L["Hide_Frame"],           tooltip=L["Tooltip_Hide_FocusToT_Frame"],  onChange=BBF.HideFrames, requiresReload=true },
+                            { type="checkbox", key="hideFocusToTName",   label=L["Hide_Names"],           tooltip=L["Tooltip_Hide_FocusToT_Name"],   onChange=BBF.HideFrames },
                             { type="checkbox", key="hideFocusToTDebuffs",label=L["Hide_FocusToT_Debuffs"],tooltip=L["Tooltip_Hide_ToT_Debuffs"],    onChange=BBF.HideFrames },
                             { type="slider",   key="focusToTScale",      label=L["Size"],                 tooltip=L["Tooltip_FocusToT_Size"],       min=0.6, max=2.5, step=0.01 },
                             { type="slider",   key="focusToTXPos",       label=L["X_Offset"],             tooltip=L["Tooltip_FocusToT_X_Offset"],   min=-100, max=100, step=1 },
@@ -519,6 +519,7 @@ function guiGeneralTab()
                     },
                 },
             },
+
 
             --------------------------------------------------------
             -- TAB 12: Pet Frame

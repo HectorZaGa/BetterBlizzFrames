@@ -1498,28 +1498,61 @@ function BBF.HideFrames()
             end
         end
 
-        if BetterBlizzFramesDB.hidePetText then
-            if not BBF.PetTextHook then
-                local petTextFrames = {
-                    PetFrameHealthBarText,
-                    PetFrameHealthBarTextLeft,
-                    PetFrameHealthBarTextRight,
-                    PetFrameManaBarText,
-                    PetFrameManaBarTextLeft,
-                    PetFrameManaBarTextRight,
-                }
-                for _, frame in ipairs(petTextFrames) do
+        local petTextFrames = {
+            PetFrameHealthBarText,
+            PetFrameHealthBarTextLeft,
+            PetFrameHealthBarTextRight,
+            PetFrameManaBarText,
+            PetFrameManaBarTextLeft,
+            PetFrameManaBarTextRight,
+            PetFrame and PetFrame.healthbar and PetFrame.healthbar.TextString,
+            PetFrame and PetFrame.healthbar and PetFrame.healthbar.LeftText,
+            PetFrame and PetFrame.healthbar and PetFrame.healthbar.RightText,
+            PetFrame and PetFrame.manabar and PetFrame.manabar.TextString,
+            PetFrame and PetFrame.manabar and PetFrame.manabar.LeftText,
+            PetFrame and PetFrame.manabar and PetFrame.manabar.RightText,
+        }
+
+        if not BBF.PetTextHook then
+            for _, frame in ipairs(petTextFrames) do
+                if frame then
                     hooksecurefunc(frame, "SetAlpha", function(self)
                         if self.changingAlpha then return end
-                        self.changingAlpha = true
-                        self:SetAlpha(0)
-                        self.changingAlpha = nil
+                        if BetterBlizzFramesDB.hidePetText then
+                            self.changingAlpha = true
+                            self:SetAlpha(0)
+                            self.changingAlpha = nil
+                        end
                     end)
-                    frame:SetAlpha(0)
                 end
-                BBF.PetTextHook = true
+            end
+            BBF.PetTextHook = true
+        end
+
+        local targetAlpha = BetterBlizzFramesDB.hidePetText and 0 or 1
+        for _, frame in ipairs(petTextFrames) do
+            if frame then
+                frame.changingAlpha = true
+                frame:SetAlpha(targetAlpha)
+                frame.changingAlpha = nil
             end
         end
+
+        if not BetterBlizzFramesDB.hidePetText then
+            if PetFrame and PetFrame.healthbar and TextStatusBar_UpdateTextString then
+                TextStatusBar_UpdateTextString(PetFrame.healthbar)
+            end
+            if PetFrame and PetFrame.manabar and TextStatusBar_UpdateTextString then
+                TextStatusBar_UpdateTextString(PetFrame.manabar)
+            end
+            if PetFrameHealthBar and TextStatusBar_UpdateTextString then
+                TextStatusBar_UpdateTextString(PetFrameHealthBar)
+            end
+            if PetFrameManaBar and TextStatusBar_UpdateTextString then
+                TextStatusBar_UpdateTextString(PetFrameManaBar)
+            end
+        end
+
 
         BBF.HideAllManabarText()
     end

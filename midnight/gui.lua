@@ -3502,6 +3502,38 @@ function BBF.LoadGUI()
         return
     end
 
+    if BBF.GUI and BBF.GUI.RegisterProvider then
+        BBF.GUI.RegisterProvider("font", function()
+            local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+            if not LSM then return {} end
+            local fonts = LSM:HashTable(LSM.MediaType.FONT)
+            local sorted = {}
+            for name in pairs(fonts) do table.insert(sorted, name) end
+            table.sort(sorted)
+            local choices = {}
+            for _, name in ipairs(sorted) do
+                table.insert(choices, { value = name, label = name })
+            end
+            return choices
+        end)
+
+        BBF.GUI.RegisterProvider("texture", function()
+            local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+            if not LSM then return {} end
+            local textures = LSM:HashTable(LSM.MediaType.STATUSBAR)
+            local sorted = {}
+            for name in pairs(textures) do table.insert(sorted, name) end
+            table.sort(sorted)
+            local choices = {}
+            for _, name in ipairs(sorted) do
+                table.insert(choices, { value = name, label = name })
+            end
+            return choices
+        end)
+
+        BBF.GUI.RegisterProvider("statusbar", BBF.GUI.Providers["texture"])
+    end
+
     if guiGeneralTab then guiGeneralTab() end
     if guiPositionAndScale then guiPositionAndScale() end
     if guiFrameAuras then guiFrameAuras() end

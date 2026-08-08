@@ -22,9 +22,9 @@ local schema = {
                 {
                     title   = L["Player_Aura_Settings"],
                     options = {
-                        { type="checkbox", key="enablePlayerBuffFiltering",  label=L["Enable_Player_Aura_Adjustments"], tooltip="" },
-                        { type="checkbox", key="clickthroughPlayerAuras",    label=L["Clickthrough_Player_Auras"],       tooltip=L["Tooltip_Clickthrough_Player_Auras"], parent="enablePlayerBuffFiltering" },
-                        { type="checkbox", key="hidePlayerAuraTooltips",     label=L["Hide_Player_Aura_Tooltips"],      tooltip="", parent="enablePlayerBuffFiltering" },
+                        { type="checkbox", key="enablePlayerBuffFiltering",  label=L["Enable_Player_Aura_Adjustments"], tooltip="", requiresReload=true },
+                        { type="checkbox", key="clickthroughPlayerAuras",    label=L["Clickthrough_Player_Auras"],       tooltip=L["Tooltip_Clickthrough_Player_Auras"], parent="enablePlayerBuffFiltering", requiresReload=true },
+                        { type="checkbox", key="hidePlayerAuraTooltips",     label=L["Hide_Player_Aura_Tooltips"],      tooltip="", parent="enablePlayerBuffFiltering", requiresReload=true },
                         { type="slider",   key="playerAuraSpacingX",         label=L["Horizontal_Padding"],              tooltip=L["Tooltip_Horizontal_Padding"], parent="enablePlayerBuffFiltering", min=-10, max=10, step=1 },
                         { type="slider",   key="playerAuraSpacingY",         label=L["Vertical_Padding"],                tooltip="", parent="enablePlayerBuffFiltering", min=-10, max=10, step=1 },
                     }
@@ -84,33 +84,35 @@ local schema = {
                 {
                     title   = L["Aura_Styling"],
                     options = {
-                        { type="checkbox", key="changePurgeTextureColor", label=L["Change_Purge_Texture_Color"], tooltip=L["Change_Purge_Texture_Color_Desc"], colorPicker={r=0, g=1, b=0}, colorPickerKey="purgeTextureColorRGB" },
-                        { type="checkbox", key="increaseAuraStrata",          label=L["Increase_Aura_Frame_Strata"],   tooltip=L["Tooltip_Increase_Aura_Frame_Strata"] },
-                        { type="checkbox", key="hideUnitframeAuraTooltips",   label=L["Hide_UnitFrame_Aura_Tooltips"],  tooltip=L["Tooltip_Hide_UnitFrame_Aura_Tooltips"] },
-                        { type="checkbox", key="pixelBorderAuras",            label=L["Pixel_Border_Auras"],           tooltip=L["Tooltip_Pixel_Border_Auras_Desc"] },
-                        { type="checkbox", key="removeDebuffColorBorder",     label=L["Remove_Debuff_Color_Border"],    tooltip=L["Tooltip_Remove_Debuff_Color_Border"] },
+
+                        { type="checkbox", key="changePurgeTextureColor", label=L["Change_Purge_Texture_Color"], tooltip="", colorPicker={r=0, g=1, b=0}, colorPickerKey="purgeTextureColorRGB", requiresReload=true },
+                        { type="checkbox", key="increaseAuraStrata",          label=L["Increase_Aura_Frame_Strata"],   tooltip=L["Tooltip_Increase_Aura_Frame_Strata"], requiresReload=true },
+                        { type="checkbox", key="hideUnitframeAuraTooltips",   label=L["Hide_UnitFrame_Aura_Tooltips"],  tooltip=L["Tooltip_Hide_UnitFrame_Aura_Tooltips"], requiresReload=true },
+                        { type="checkbox", key="pixelBorderAuras",            label=L["Pixel_Border_Auras"],           tooltip=L["Tooltip_Pixel_Border_Auras_Desc"], requiresReload=true },
+                        { type="checkbox", key="removeDebuffColorBorder",     label=L["Remove_Debuff_Color_Border"],    tooltip=L["Tooltip_Remove_Debuff_Color_Border"], requiresReload=true },
                     }
                 },
                 {
                     title   = L["Hide_Auras"],
                     options = {
-                        { type="checkbox", key="hideTargetBuffs",   label=L["Hide_Target_Buffs"],   tooltip=L["Tooltip_Hide_Target_Buffs_Desc"] },
-                        { type="checkbox", key="hideTargetDebuffs",  label=L["Hide_Target_Debuffs"],  tooltip=L["Tooltip_Hide_Target_Debuffs_Desc"] },
-                        { type="checkbox", key="hideFocusBuffs",    label=L["Hide_Focus_Buffs"],    tooltip=L["Tooltip_Hide_Focus_Buffs_Desc"] },
-                        { type="checkbox", key="hideFocusDebuffs",   label=L["Hide_Focus_Debuffs"],   tooltip=L["Tooltip_Hide_Focus_Debuffs_Desc"] },
+                        { type="checkbox", key="hideTargetBuffs",   label=L["Hide_Target_Buffs"],   tooltip=L["Tooltip_Hide_Target_Buffs_Desc"], requiresReload=true },
+                        { type="checkbox", key="hideTargetDebuffs",  label=L["Hide_Target_Debuffs"],  tooltip=L["Tooltip_Hide_Target_Debuffs_Desc"], requiresReload=true },
+                        { type="checkbox", key="hideFocusBuffs",    label=L["Hide_Focus_Buffs"],    tooltip=L["Tooltip_Hide_Focus_Buffs_Desc"], requiresReload=true },
+                        { type="checkbox", key="hideFocusDebuffs",   label=L["Hide_Focus_Debuffs"],   tooltip=L["Tooltip_Hide_Focus_Debuffs_Desc"], onChange=BBF.RefreshAllAuraFrames, requiresReload=true },
                     }
                 },
                 {
                     title   = L["Aura_Limits"],
                     options = {
-                        { type="checkbox", key="enableMaxTargetFocusBuffs",   label=L["Max_Buffs"],   tooltip=L["Max_Buffs"] },
+                        { type="checkbox", key="enableMaxTargetFocusBuffs",   label=L["Max_Buffs"],   tooltip=L["Max_Buffs"], onChange=BBF.RefreshAllAuraFrames },
                         { type="slider",   key="maxTargetFocusBuffs",         label=L["Max_Buffs"],   tooltip="", parent="enableMaxTargetFocusBuffs", min=1, max=100, step=1 },
-                        { type="checkbox", key="enableMaxTargetFocusDebuffs",  label=L["Max_Debuffs"], tooltip=L["Max_Debuffs"] },
+                        { type="checkbox", key="enableMaxTargetFocusDebuffs",  label=L["Max_Debuffs"], tooltip=L["Max_Debuffs"], onChange=BBF.RefreshAllAuraFrames },
                         { type="slider",   key="maxTargetFocusDebuffs",        label=L["Max_Debuffs"], tooltip="", parent="enableMaxTargetFocusDebuffs", min=1, max=100, step=1 },
                     }
                 }
             }
         }
+
     }
 }
 

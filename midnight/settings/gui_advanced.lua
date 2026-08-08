@@ -100,10 +100,11 @@ local schema = {
                 {
                     title   = L["Display_Text"],
                     options = {
-                        { type="checkbox", key="healerIndicatorIcon",     label=L["Icon"],     tooltip=L["Tooltip_Healer_Icon_Show"] },
-                        { type="checkbox", key="healerIndicatorPortrait", label=L["Portrait"], tooltip=L["Tooltip_Healer_Portrait_Change"] },
+                        { type="checkbox", key="healerIndicatorIcon",     label=L["Icon"],     tooltip=L["Tooltip_Healer_Icon_Show"], onChange=BBF.HealerIndicatorCaller, requiresReload=true },
+                        { type="checkbox", key="healerIndicatorPortrait", label=L["Portrait"], tooltip=L["Tooltip_Healer_Portrait_Change"], onChange=BBF.HealerIndicatorCaller, requiresReload=true },
                     }
                 }
+
             }
         },
         
