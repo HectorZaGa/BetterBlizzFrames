@@ -80,7 +80,6 @@ GUI.Theme = {
             betweenCards   = -22,
         },
     },
-    -- Rows
     -- Tooltips
     Tooltip = {
         anchor          = "ANCHOR_RIGHT",
@@ -196,6 +195,10 @@ end
 
 local T = GUI.Theme
 
+--------------------------------------------------------
+-- UTILIDADES DE LAYOUT (margenes, altura, ancho disponible)
+--------------------------------------------------------
+
 local function ParseMargin(opt)
     local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
     if not opt then return mTop, mRight, mBottom, mLeft end
@@ -244,6 +247,10 @@ local function GetAvailableContentWidth(panelFrame, hasTabs)
         return math.max(300, pWidth - 12 - rightMargin)
     end
 end
+
+--------------------------------------------------------
+-- RESALTADO Y ESTADO DE WIDGETS (hover, enable/disable, padre-hijo)
+--------------------------------------------------------
 
 local function AddRowHighlight(row)
     local hl = row:CreateTexture(nil, "BACKGROUND")
@@ -306,7 +313,6 @@ local function SetWidgetState(widget, enabled)
     end
 
     -- 3. MinimalSliderWithSteppersTemplate stepper buttons enablement
-    local sliderFrame = widget.sliderFrame or widget
     if sliderFrame and sliderFrame ~= widget then
         if sliderFrame.Back and sliderFrame.Back.SetEnabled then
             sliderFrame.Back:SetEnabled(enabled)
@@ -345,6 +351,9 @@ end
 -- ROW BUILDERS
 -- ============================================================
 
+--------------------------------------------------------
+-- HELPERS DE CHECKBOX Y CLICK DERECHO
+--------------------------------------------------------
 
 --- Apply modern Blizzard settings checkbox visual styling (SettingsCheckBoxControlTemplate style).
 local function StyleCheckbox(cb)
@@ -393,6 +402,10 @@ end
 -- Forward declare so BuildCheckboxRow (and BuildDropdownRow) can call it
 -- before the full definition further below.
 local BuildColorSwatchBtn
+
+--------------------------------------------------------
+-- FILA: CHECKBOX (simple e hija)
+--------------------------------------------------------
 
 local function BuildCheckboxRow(card, info, parentCb)
     local isChild      = (parentCb ~= nil) or (info.inverseParent ~= nil) or (info.disableTarget ~= nil)
@@ -481,6 +494,10 @@ local function BuildCheckboxRow(card, info, parentCb)
     return cb
 end
 
+--------------------------------------------------------
+-- FILA: SLIDER
+--------------------------------------------------------
+
 local function BuildSliderRow(card, info, parentCb)
     local isChild      = parentCb ~= nil
     local rs           = T.Row.slider
@@ -549,6 +566,10 @@ local function BuildSliderRow(card, info, parentCb)
     UpdateCardHeight(card)
     return slider
 end
+
+--------------------------------------------------------
+-- FILA: DROPDOWN (con soporte de fuentes/texturas via LSM)
+--------------------------------------------------------
 
 -- Anchor point presets (mirrors CreateAnchorDropdown in gui.lua)
 local ANCHOR_PRESET_CHOICES = {
@@ -784,6 +805,10 @@ local function BuildDropdownRow(card, info, parentCb)
     return dropdown
 end
 
+--------------------------------------------------------
+-- FILA: DOBLE CHECKBOX HIJO (dos opciones en una sola fila)
+--------------------------------------------------------
+
 local function BuildDualChildCheckboxRow(card, info, parentCb)
     local rd = T.Row.dualChild
 
@@ -862,6 +887,10 @@ local function BuildDualChildCheckboxRow(card, info, parentCb)
     return cb1, cb2
 end
 
+--------------------------------------------------------
+-- FILA: CHECKBOX CON MULTIPLES PADRES
+--------------------------------------------------------
+
 local function BuildMultiParentChildRow(card, info, parentCbs)
     local rc = T.Row.checkbox
 
@@ -910,6 +939,10 @@ local function BuildMultiParentChildRow(card, info, parentCbs)
     return cb
 end
 
+--------------------------------------------------------
+-- FILA: ENCABEZADO DE SECCION (subtitulo dentro de una card)
+--------------------------------------------------------
+
 local function BuildSectionHeaderRow(card, info)
     local rh = T.Row.header
     local row = CreateFrame("Frame", nil, card)
@@ -922,6 +955,10 @@ local function BuildSectionHeaderRow(card, info)
     card:SetHeight(-card.currentY + 6)
     return title
 end
+
+--------------------------------------------------------
+-- FILA: VISTA PREVIA (icono/textura suelta dentro de una card)
+--------------------------------------------------------
 
 local function ResolveTextureFromInfo(info)
     if not info then return nil, nil end
@@ -1162,21 +1199,6 @@ end
 -- ICON HELPER
 -- ============================================================
 
-local function ResolveTextureFromInfo(info)
-    if info.atlas then
-        return "atlas", info.atlas
-    elseif info.icon or info.texture then
-        return "texture", info.icon or info.texture
-    elseif info.spell then
-        local spellID = tonumber(info.spell) or info.spell
-        local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(spellID)) or (GetSpellTexture and GetSpellTexture(spellID))
-        if tex then
-            return "texture", tex
-        end
-    end
-    return nil, nil
-end
-
 local function ApplyIconToFrame(iconFrame, cat)
     local iconTex = iconFrame:CreateTexture(nil, "ARTWORK")
     local w, h = unpack(cat.atlasSize or cat.size or {20, 20})
@@ -1213,16 +1235,12 @@ local function ApplyIconToFrame(iconFrame, cat)
 end
 
 -- ============================================================
--- MAIN ENTRY POINT
--- ============================================================
-
-
--- ============================================================
 -- POPUP WINDOW SCHEMA ENGINE
 -- ============================================================
 
-
-
+--------------------------------------------------------
+-- GRILLA DE COLORES (calculo de filas/columnas)
+--------------------------------------------------------
 local function CalculateGridCoords(cIdx, cData, numItems, opt)
     local specifiedRows = tonumber(opt.rows or opt.row)
     local specifiedCols = tonumber(opt.cols or opt.columns)
@@ -1256,6 +1274,9 @@ end
 
 local popupFrames = {}
 
+--------------------------------------------------------
+-- BOTON DE SELECCION DE COLOR (color swatch)
+--------------------------------------------------------
 
 BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
     local btn = CreateFrame("Button", nil, parent)
@@ -1330,6 +1351,10 @@ BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor
     return btn, RefreshSwatch
 end
 
+--------------------------------------------------------
+-- VENTANA EMERGENTE (popup): construccion y render de opciones
+--------------------------------------------------------
+
 function GUI.OpenPopup(popupId, schema)
     schema = schema or (GUI.Popups and GUI.Popups[popupId])
     if not schema then return end
@@ -1384,6 +1409,7 @@ function GUI.OpenPopup(popupId, schema)
             local isChild = parentCb ~= nil
             local indentX = (isChild and ((parentCb.indentX or 0) + 16) or 0) + mLeft
 
+            -- Tipo: encabezado de texto simple
             if t == "header" then
                 local header = contentParent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 header:SetPoint("TOPLEFT", contentParent, "TOPLEFT", 10 + indentX, currentY)
@@ -1485,6 +1511,7 @@ function GUI.OpenPopup(popupId, schema)
                     end
                 end
 
+            -- Tipo: grilla de swatches de color (columnas/filas configurables)
             elseif t == "colorGrid" then
                 local isInline = opt.inline ~= nil and opt.inline ~= false
                 local refWidget = (type(opt.inline) == "string" and createdWidgets[opt.inline]) or parentCb
@@ -1537,6 +1564,7 @@ function GUI.OpenPopup(popupId, schema)
                     currentY = startY - (maxRow + 1) * rowHeight
                 end
 
+            -- Tipo: grilla automatica de swatches por clase
             elseif t == "allClassSwatches" then
                 local classes = opt.classes or opt.options
                 if not classes then
@@ -1579,6 +1607,7 @@ function GUI.OpenPopup(popupId, schema)
                 end
                 currentY = gridStartY - (maxRow + 1) * rowHeight - 12
 
+            -- Tipo: grilla automatica de swatches por tipo de poder (mana, ira, etc.)
             elseif t == "allPowerSwatches" then
                 local powerTypes = opt.powers or opt.options
                 if not powerTypes then
@@ -1634,6 +1663,7 @@ function GUI.OpenPopup(popupId, schema)
                 end
                 currentY = pGridStartY - (maxRow + 1) * rowHeight - 14
 
+            -- Tipo: dos swatches de color lado a lado
             elseif t == "colorSwatchDual" then
                 local b1 = BuildColorSwatchBtn(contentParent, 26 + indentX, currentY, opt.key1, opt.label1, opt.default1, 100)
                 local b2 = BuildColorSwatchBtn(contentParent, 146 + indentX, currentY, opt.key2, opt.label2, opt.default2, 100)
@@ -1643,6 +1673,7 @@ function GUI.OpenPopup(popupId, schema)
                 end
                 currentY = currentY - 28
 
+            -- Tipo: dropdown (texturas, anchors, o lista de opciones custom)
             elseif t == "textureDropdown" or t == "dropdown" then
                 local dropdownWidth = opt.width or 180
                 local posX = opt.posX or (26 + indentX)
@@ -1796,7 +1827,7 @@ function GUI.OpenPopup(popupId, schema)
             RenderPopupOptionWrapper(opt, nil)
         end
 
-if schema.scrollable and contentParent.SetHeight then
+        if schema.scrollable and contentParent.SetHeight then
             contentParent:SetHeight(math.abs(currentY) + 30)
         end
 
@@ -1811,6 +1842,10 @@ if schema.scrollable and contentParent.SetHeight then
     end
 end
 
+
+-- ============================================================
+-- PANEL PRINCIPAL (sidebar de tabs + contenido con scroll)
+-- ============================================================
 
 function GUI.BuildPanel(panelFrame, schema)
     if schema.popups then
@@ -1844,7 +1879,9 @@ function GUI.BuildPanel(panelFrame, schema)
         contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
     end
 
-    -- Helper to populate cards/sections into a ScrollChild
+    --------------------------------------------------------
+    -- POBLAR CARDS/SECCIONES DENTRO DE UN SCROLL CHILD
+    --------------------------------------------------------
     local function PopulateContainers(cf, containerList, parentSchema)
         local lastCard = nil
         local resolvedRefs = {}
@@ -1908,6 +1945,9 @@ function GUI.BuildPanel(panelFrame, schema)
         end
     end
 
+    --------------------------------------------------------
+    -- MODO CON TABS: sidebar + un ScrollFrame por pestaña
+    --------------------------------------------------------
     if hasTabs then
         local tabs = schema.tabs
         local function SelectCategory(catId)
@@ -2006,7 +2046,9 @@ function GUI.BuildPanel(panelFrame, schema)
 
         return sidebar, contentParent, categoryFrames, categoryButtons
     else
-        -- Single scrollable panel (No tabs)
+        --------------------------------------------------------
+        -- MODO SIN TABS: un unico panel con scroll
+        --------------------------------------------------------
         local sf = CreateFrame("ScrollFrame", "BBF_MidnightGUI_" .. (schema.id or "single"), contentParent, "ScrollFrameTemplate")
         sf:SetAllPoints(contentParent)
         AdjustScrollBar(sf, -5)
@@ -2043,4 +2085,3 @@ function GUI.BuildPanel(panelFrame, schema)
         return nil, contentParent, categoryFrames, categoryButtons
     end
 end
-
