@@ -18,12 +18,11 @@ local schema = {
             overlayMode  = true,
             options = {
                 {
-                    type         = "checkbox",
-                    key          = "playerAuraFiltering",
-                    label        = L["Enable_Aura_Settings"],
-                    tooltip      = L["Tooltip_Enable_Aura_Settings_Desc"],
-                    parentMaster = true,
-                    onChange     = BBF.RefreshAllAuraFrames
+                    type     = "checkbox",
+                    key      = "playerAuraFiltering",
+                    label    = L["Enable_Aura_Settings"],
+                    tooltip  = L["Tooltip_Enable_Aura_Settings_Desc"],
+                    onChange = BBF.RefreshAllAuraFrames
                 },
                 {
                     type     = "checkbox",
@@ -45,6 +44,7 @@ local schema = {
             label       = L["Player_Auras"],
             atlas       = "groupfinder-icon-friend",
             size        = {22, 22},
+            parent      = "playerAuraFiltering",
             cards       = {
                 {
                     title   = L["Player_Aura_Settings"],
@@ -72,6 +72,7 @@ local schema = {
             overlays    = {
                 { atlas="TargetCrosshairs", size={22,22}, offset={8,-8} },
             },
+            parent      = "playerAuraFiltering",
             cards       = {
                 {
                     title   = L["Dimensions_And_Layout"],
@@ -107,6 +108,7 @@ local schema = {
             label       = L["Display_And_Visibility"],
             atlas       = "optionsicon-brown",
             size        = {20, 20},
+            parent      = "playerAuraFiltering",
             cards       = {
                 {
                     title   = L["Aura_Styling"],

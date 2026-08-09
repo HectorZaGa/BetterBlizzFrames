@@ -1509,10 +1509,8 @@ local function BuildPreviewRow(card, info)
 end
 
 -- ============================================================
--- CARD BUILDER
--- ============================================================
-
-local function BuildCard(parentFrame, titleText, anchorFrame, yOffset, isSection, containerDef)
+-- Internal: builds a container frame. isSection=true → plain frame, isSection=false → with backdrop.
+local function CreateContainer(parentFrame, titleText, anchorFrame, yOffset, containerDef, isSection)
     local tc = T.Card
 
     local cardWidth
@@ -1521,28 +1519,24 @@ local function BuildCard(parentFrame, titleText, anchorFrame, yOffset, isSection
     elseif containerDef and type(containerDef.size) == "number" then
         cardWidth = containerDef.size
     else
-        -- Universal Fill by default for all cards/sections
-        local parentW = (parentFrame and parentFrame:GetWidth() > 0) and parentFrame:GetWidth() or nil
+        local parentW       = (parentFrame and parentFrame:GetWidth() > 0) and parentFrame:GetWidth() or nil
         local parentParentW = (parentFrame and parentFrame:GetParent() and parentFrame:GetParent():GetWidth() > 0) and parentFrame:GetParent():GetWidth() or nil
-        local availW = parentW or parentParentW or 620
-        cardWidth = math.max(100, availW - 1)
+        cardWidth = math.max(100, parentW or parentParentW or 620)
     end
-    local hasTitle = titleText and titleText ~= ""
 
     local mTop, mRight, mBottom, mLeft = 0, 0, 0, 0
-    if containerDef then
-        mTop, mRight, mBottom, mLeft = ParseMargin(containerDef)
-    end
+    if containerDef then mTop, mRight, mBottom, mLeft = ParseMargin(containerDef) end
 
-    local defaultBetween = isSection and -12 or tc.header.betweenCards
-    local baseSpacing = yOffset or defaultBetween
-    local effectiveYOffset = baseSpacing - mTop
+    local defaultSpacing = isSection and -12 or tc.header.betweenCards
+    local effectiveYOff  = (yOffset or defaultSpacing) - mTop
+    local finalWidth     = cardWidth - mLeft - mRight
+    local hasTitle       = titleText and titleText ~= ""
 
     local header
     if hasTitle then
         header = parentFrame:CreateFontString(nil, "OVERLAY", tc.header.font)
         if anchorFrame then
-            header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
+            header:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOff)
         else
             header:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
         end
@@ -1550,46 +1544,39 @@ local function BuildCard(parentFrame, titleText, anchorFrame, yOffset, isSection
         header:SetTextColor(unpack(tc.header.color))
     end
 
-    local card
-    local finalWidth = cardWidth - mLeft - mRight
-    if isSection then
-        card = CreateFrame("Frame", nil, parentFrame)
-        if hasTitle then
-            card:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
-        else
-            if anchorFrame then
-                card:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
-            else
-                card:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
-            end
-        end
-        card:SetWidth(finalWidth)
-        card.currentY = 0
+    local template = isSection and nil or "BackdropTemplate"
+    local frame    = CreateFrame("Frame", nil, parentFrame, template)
+
+    if hasTitle then
+        frame:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
+    elseif anchorFrame then
+        frame:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOff)
     else
-        card = CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
-        if hasTitle then
-            card:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, tc.header.gapBelowHeader)
-        else
-            if anchorFrame then
-                card:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", mLeft, effectiveYOffset)
-            else
-                card:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
-            end
-        end
-        card:SetWidth(finalWidth)
-        card:SetBackdrop(tc.backdrop)
-        card:SetBackdropColor(unpack(tc.bgColor))
-        card:SetBackdropBorderColor(unpack(tc.borderColor))
-        card.currentY = tc.cursorStart
+        frame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 2 + mLeft, tc.header.firstCardY - mTop)
+    end
+    frame:SetWidth(finalWidth)
+
+    if not isSection then
+        frame:SetBackdrop(tc.backdrop)
+        frame:SetBackdropColor(unpack(tc.bgColor))
+        frame:SetBackdropBorderColor(unpack(tc.borderColor))
     end
 
-    card.header       = header
-    card.cardWidth    = finalWidth
-    card.isSection    = isSection
-    card.marginBottom = mBottom
-    return card
+    frame.titleLabel   = header
+    frame.cardWidth    = finalWidth
+    frame.isSection    = isSection
+    frame.marginBottom = mBottom
+    frame.currentY     = isSection and 0 or tc.cursorStart
+    return frame
 end
 
+local function BuildSection(parentFrame, titleText, anchorFrame, yOffset, containerDef)
+    return CreateContainer(parentFrame, titleText, anchorFrame, yOffset, containerDef, true)
+end
+
+local function BuildCard(parentFrame, titleText, anchorFrame, yOffset, containerDef)
+    return CreateContainer(parentFrame, titleText, anchorFrame, yOffset, containerDef, false)
+end
 
 
 local function FinalizeCardLayout(cf, lastCard)
@@ -2373,52 +2360,8 @@ function GUI.BuildPanel(panelFrame, schema)
     panelFrame.allWidgets = {}
 
     local sidebar, contentParent
-    local UpdateMasterState
     local optionGridHeight = 0
-    local masterCbs = {}
-
-    UpdateMasterState = function()
-        if #masterCbs == 0 then return end
-
-        local isAllMasterChecked = true
-        for _, mCb in ipairs(masterCbs) do
-            if not mCb:GetChecked() then
-                isAllMasterChecked = false
-                break
-            end
-        end
-
-        if sidebar then
-            sidebar:SetAlpha(isAllMasterChecked and 1 or 0.4)
-            for _, btn in pairs(categoryButtons) do
-                if isAllMasterChecked then btn:Enable() else btn:Disable() end
-            end
-        end
-
-        for _, sf in pairs(categoryFrames) do
-            sf:SetAlpha(isAllMasterChecked and 1 or 0.4)
-        end
-
-        if panelFrame.allWidgets then
-            -- Pass 1: Set base state for all widgets
-            for _, w in ipairs(panelFrame.allWidgets) do
-                SetWidgetState(w, isAllMasterChecked)
-            end
-
-            -- Pass 2: Re-evaluate local parent-child dependencies when master is enabled
-            if isAllMasterChecked then
-                for _, w in ipairs(panelFrame.allWidgets) do
-                    if w.UpdateParentDependency then
-                        w.UpdateParentDependency()
-                    end
-                end
-            end
-        end
-    end
-
-    panelFrame:HookScript("OnShow", function()
-        UpdateMasterState()
-    end)
+    local panelRefs = {}   -- panel-level widget registry for cross-level parent wiring
 
     if schema.optionGrid and #schema.optionGrid > 0 then
         local gridParent = CreateFrame("Frame", nil, panelFrame)
@@ -2440,15 +2383,12 @@ function GUI.BuildPanel(panelFrame, schema)
             local colWidth = math.floor((availWidth - ((cols - 1) * gap)) / cols)
 
             for oIdx, opt in ipairs(opts) do
-                local col = (oIdx - 1) % cols
+                local col    = (oIdx - 1) % cols
                 local rowIdx = math.floor((oIdx - 1) / cols)
-                local posX = mLeft + (col * (colWidth + gap))
-                local posY = currentGridY - (rowIdx * 34)
+                local posX   = mLeft + (col * (colWidth + gap))
+                local posY   = currentGridY - (rowIdx * 34)
 
                 local cb = CreateNativeCheckbox(gridParent, opt.key, schema, opt.onChange, function(self, btn, val)
-                    if opt.parentMaster and UpdateMasterState then
-                        UpdateMasterState()
-                    end
                     if opt.requiresReload or opt.reload then
                         ShowReloadPrompt()
                     end
@@ -2471,13 +2411,19 @@ function GUI.BuildPanel(panelFrame, schema)
                     AttachTooltip(txt, ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT", opt.requiresReload or opt.reload)
                 end
 
-                if opt.parentMaster then
-                    table.insert(masterCbs, cb)
+                -- Register in panelRefs for cross-level parent wiring
+                cb.associatedTitle = txt
+                panelRefs[opt.key] = cb
+
+                -- Single-pass parent wiring (parent must appear before child in list)
+                if opt.parent and panelRefs[opt.parent] then
+                    WireChildToParent(panelRefs[opt.parent], cb, txt, nil, opt)
                 end
             end
 
             local numRows = math.ceil(#opts / cols)
             currentGridY = currentGridY - (numRows * 34) - mBottom
+
         end
 
         gridParent:SetHeight(math.abs(currentGridY))
@@ -2509,6 +2455,53 @@ function GUI.BuildPanel(panelFrame, schema)
     --------------------------------------------------------
     -- POBLAR CARDS/SECCIONES DENTRO DE UN SCROLL CHILD
     --------------------------------------------------------
+    -- Wires a tab button to a parent checkbox:
+    -- desaturates icon + grays out label text when parent is OFF.
+    -- SelectCategory respects btn.isParentDisabled to keep label gray even when active.
+    local function WireTabToParent(parentCb, btn, iconFrame, tabWidgets)
+        if not parentCb then return end
+        local function UpdateTabState()
+            local enabled = parentCb:GetChecked() and (not parentCb.IsEnabled or parentCb:IsEnabled())
+            btn.isParentDisabled = not enabled
+            -- Desaturate the icon frame textures
+            if iconFrame then SetSliderDesaturated(iconFrame, not enabled) end
+            -- Gray out / restore label text color
+            if btn.Text then
+                if enabled then
+                    btn.Text:SetTextColor(unpack(tt.textColor))
+                else
+                    btn.Text:SetTextColor(0.45, 0.45, 0.45, 1)
+                end
+            end
+            -- Disable widgets inside the tab
+            if tabWidgets then
+                for _, w in ipairs(tabWidgets) do
+                    SetWidgetState(w, enabled)
+                end
+            end
+        end
+        parentCb:HookScript("OnClick", UpdateTabState)
+        UpdateTabState()
+    end
+
+    -- Wires a card/section titleLabel to a parent checkbox: desaturates when parent is OFF
+    local function WireContainerToParent(parentCb, card, containerWidgets)
+        if not parentCb then return end
+        local function UpdateContainerState()
+            local enabled = parentCb:GetChecked() and (not parentCb.IsEnabled or parentCb:IsEnabled())
+            if card.titleLabel and card.titleLabel.SetDesaturated then
+                card.titleLabel:SetDesaturated(not enabled)
+            end
+            if containerWidgets then
+                for _, w in ipairs(containerWidgets) do
+                    SetWidgetState(w, enabled)
+                end
+            end
+        end
+        parentCb:HookScript("OnClick", UpdateContainerState)
+        UpdateContainerState()
+    end
+
     local function PopulateContainers(cf, containerList, parentSchema)
         local lastCard = nil
         local resolvedRefs = {}
@@ -2560,15 +2553,29 @@ function GUI.BuildPanel(panelFrame, schema)
 
         for _, containerDef in ipairs(containerList) do
             local isSection = containerDef.isSection or (containerDef.type == "section") or (containerDef.section == true)
-            local card = BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, isSection, containerDef)
+            local card = isSection
+                and BuildSection(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
+                or  BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
+
+            local cardWidgets = {}
             for _, optInfo in ipairs(containerDef.options or {}) do
                 local w1, w2 = BuildOption(card, optInfo, resolvedRefs, parentSchema or schema)
-                if w1 then table.insert(panelFrame.allWidgets, w1) end
-                if w2 then table.insert(panelFrame.allWidgets, w2) end
-                if optInfo.parentMaster and w1 then
-                    table.insert(masterCbs, w1)
+                if w1 then
+                    table.insert(panelFrame.allWidgets, w1)
+                    table.insert(cardWidgets, w1)
+                end
+                if w2 then
+                    table.insert(panelFrame.allWidgets, w2)
+                    table.insert(cardWidgets, w2)
                 end
             end
+
+            -- Wire card/section to parent checkbox if defined
+            if containerDef.parent then
+                local parentCb = panelRefs[containerDef.parent] or resolvedRefs[containerDef.parent]
+                WireContainerToParent(parentCb, card, cardWidgets)
+            end
+
             lastCard = card
         end
 
@@ -2587,16 +2594,27 @@ function GUI.BuildPanel(panelFrame, schema)
             for id, btn in pairs(categoryButtons) do
                 btn:SetBackdropBorderColor(unpack(tt.borderColor))
                 btn:SetBackdropColor(unpack(tt.bgColor))
-                btn.Text:SetTextColor(unpack(tt.textColor))
+                -- Keep label gray if this tab's parent is disabled
+                if btn.Text then
+                    if btn.isParentDisabled then
+                        btn.Text:SetTextColor(0.45, 0.45, 0.45, 1)
+                    else
+                        btn.Text:SetTextColor(unpack(tt.textColor))
+                    end
+                end
             end
             if categoryFrames[catId] then categoryFrames[catId]:Show() end
             if categoryButtons[catId] then
-                categoryButtons[catId]:SetBackdropBorderColor(unpack(tt.borderColorActive))
-                categoryButtons[catId]:SetBackdropColor(unpack(tt.bgColorActive))
-                categoryButtons[catId].Text:SetTextColor(unpack(tt.textColorActive))
-            end
-            if UpdateMasterState then
-                UpdateMasterState()
+                local activeBtn = categoryButtons[catId]
+                activeBtn:SetBackdropBorderColor(unpack(tt.borderColorActive))
+                activeBtn:SetBackdropColor(unpack(tt.bgColorActive))
+                if activeBtn.Text then
+                    if activeBtn.isParentDisabled then
+                        activeBtn.Text:SetTextColor(0.45, 0.45, 0.45, 1)
+                    else
+                        activeBtn.Text:SetTextColor(unpack(tt.textColorActive))
+                    end
+                end
             end
         end
 
@@ -2650,6 +2668,7 @@ function GUI.BuildPanel(panelFrame, schema)
             btn:SetScript("OnClick", function() SelectCategory(tab.id) end)
 
             categoryButtons[tab.id] = btn
+            btn.iconFrame = iconFrame   -- store for desaturation
 
             local containers = {}
             if tab.items then
@@ -2668,7 +2687,16 @@ function GUI.BuildPanel(panelFrame, schema)
                 end
             end
 
+            -- Collect widgets for this tab to disable when parent is OFF
+            local widgetCountBefore = #panelFrame.allWidgets
             PopulateContainers(cf, containers, tab)
+            if tab.parent and panelRefs[tab.parent] then
+                local tabWidgets = {}
+                for i = widgetCountBefore + 1, #panelFrame.allWidgets do
+                    table.insert(tabWidgets, panelFrame.allWidgets[i])
+                end
+                WireTabToParent(panelRefs[tab.parent], btn, iconFrame, tabWidgets)
+            end
         end
 
         if tabs[1] then
@@ -2718,14 +2746,7 @@ function GUI.BuildPanel(panelFrame, schema)
         PopulateContainers(cf, containers, schema)
     end
 
-    if #masterCbs > 0 then
-        for _, mCb in ipairs(masterCbs) do
-            mCb:HookScript("OnClick", function()
-                UpdateMasterState()
-            end)
-        end
-        UpdateMasterState()
-    end
+
 
     return sidebar, contentParent, categoryFrames, categoryButtons
 end
