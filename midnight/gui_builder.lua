@@ -314,7 +314,14 @@ local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, 
 
     -- Determine indicator text position (TOP, LEFT, RIGHT, BOTTOM)
     local rawPos = info and (info.indicatorPosition or info.labelPosition or info.textPosition or info.position or info.indicatorPoint)
-    local indicatorPos = rawPos and tostring(rawPos):upper() or "TOP"
+    local indicatorPos = "TOP"
+    if rawPos then
+        if type(rawPos) == "string" then
+            indicatorPos = rawPos:upper()
+        else
+            indicatorPos = tostring(rawPos):upper()
+        end
+    end
 
     local labelEnum
     if _G.MinimalSliderWithSteppersMixin and _G.MinimalSliderWithSteppersMixin.Label then
@@ -340,54 +347,7 @@ local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, 
     if sliderFrame.Init then
         sliderFrame:Init(initialVal, minVal, maxVal, numSteps, formatters)
     end
-
-    -- Shift indicator label according to configured position
-    local function AdjustLabelOffset(lbl)
-        if not lbl or not lbl.GetPoint then return end
-        for i = 1, lbl:GetNumPoints() do
-            local point, relativeTo, relativePoint, xOfs, yOfs = lbl:GetPoint(i)
-            if point then
-                xOfs = xOfs or 0
-                yOfs = yOfs or 0
-                if indicatorPos == "BOTTOM" then
-                    yOfs = yOfs - 5
-                elseif indicatorPos == "RIGHT" then
-                    xOfs = xOfs + 5
-                elseif indicatorPos == "LEFT" then
-                    xOfs = xOfs - 5
-                else -- TOP
-                    yOfs = yOfs + 5
-                end
-                lbl:SetPoint(point, relativeTo, relativePoint, xOfs, yOfs)
-            end
-        end
-    end
-
-    local topLabel = sliderFrame.TopText or sliderFrame.Text or sliderFrame.Label or sliderFrame.RightText or sliderFrame.LeftText or sliderFrame.BottomText or (sliderFrame.Slider and sliderFrame.Slider.TopText)
-    AdjustLabelOffset(topLabel)
-
-    for _, region in ipairs({ sliderFrame:GetRegions() }) do
-        if region:IsObjectType("FontString") then
-            AdjustLabelOffset(region)
-        end
-    end
-
-    local innerSlider = sliderFrame.Slider or sliderFrame
-
-    if sliderFrame.RegisterCallback then
-        sliderFrame:RegisterCallback("OnValueChanged", function(_, val)
-            val = math.max(minVal, math.min(maxVal, val))
-            SetOptionValue(schema, key, val)
-            if onChange then onChange(val) end
-        end, sliderFrame)
-    elseif innerSlider.SetScript then
-        innerSlider:SetScript("OnValueChanged", function(self, val)
-            SetOptionValue(schema, key, val)
-            if onChange then onChange(val) end
-        end)
-    end
-
-    -- Direct numeric input EditBox on right-click
+-- Direct numeric input EditBox on right-click
     local editBox = CreateFrame("EditBox", nil, sliderFrame, "InputBoxTemplate")
     editBox:SetAutoFocus(false)
     editBox:SetSize(48, 18)
@@ -395,6 +355,77 @@ local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, 
     editBox:SetPoint("CENTER", sliderFrame, "CENTER", 0, 0)
     editBox:SetFrameStrata("DIALOG")
     editBox:Hide()
+
+    -- Position indicator text on TOP, RIGHT, LEFT, or BOTTOM
+    -- Recursively finds all FontStrings inside sliderFrame and subframes (e.g. sliderFrame.Slider)
+    local function ApplyCustomPositionToLabel(lbl)
+        if not lbl or lbl.inCustomSetPoint then return end
+        if editBox and (lbl == editBox.Text or (lbl.GetParent and lbl:GetParent() == editBox)) then return end
+
+        lbl.inCustomSetPoint = true
+        lbl:ClearAllPoints()
+
+        if indicatorPos == "RIGHT" then
+            lbl:SetPoint("LEFT", sliderFrame, "RIGHT", 6, 0)
+            lbl:SetJustifyH("LEFT")
+        elseif indicatorPos == "LEFT" then
+            lbl:SetPoint("RIGHT", sliderFrame, "LEFT", -6, 0)
+            lbl:SetJustifyH("RIGHT")
+        elseif indicatorPos == "BOTTOM" then
+            lbl:SetPoint("TOP", sliderFrame, "BOTTOM", 0, -5)
+            lbl:SetJustifyH("CENTER")
+        else -- TOP (default)
+            -- Positioned 5px above the sliderFrame (clean separation, no overlap)
+            lbl:SetPoint("BOTTOM", sliderFrame, "TOP", 0, 5)
+            lbl:SetJustifyH("CENTER")
+        end
+        lbl.inCustomSetPoint = nil
+    end
+
+    local function HookAndPositionAllLabels()
+        local function Traverse(f)
+            if not f then return end
+            if f.GetRegions then
+                for _, reg in ipairs({ f:GetRegions() }) do
+                    if reg and reg:IsObjectType("FontString") then
+                        ApplyCustomPositionToLabel(reg)
+                        if not reg.isPositionHooked then
+                            reg.isPositionHooked = true
+                            hooksecurefunc(reg, "SetPoint", function(self)
+                                ApplyCustomPositionToLabel(self)
+                            end)
+                        end
+                    end
+                end
+            end
+            if f.GetChildren then
+                for _, child in ipairs({ f:GetChildren() }) do
+                    Traverse(child)
+                end
+            end
+        end
+        Traverse(sliderFrame)
+    end
+
+    HookAndPositionAllLabels()
+    sliderFrame:HookScript("OnShow", HookAndPositionAllLabels)
+
+    local innerSlider = sliderFrame.Slider or sliderFrame
+
+    if sliderFrame.RegisterCallback then
+        sliderFrame:RegisterCallback("OnValueChanged", function(_, val)
+            val = math.max(minVal, math.min(maxVal, val))
+            SetOptionValue(schema, key, val)
+            HookAndPositionAllLabels()
+            if onChange then onChange(val) end
+        end, sliderFrame)
+    elseif innerSlider.SetScript then
+        innerSlider:SetScript("OnValueChanged", function(self, val)
+            SetOptionValue(schema, key, val)
+            HookAndPositionAllLabels()
+            if onChange then onChange(val) end
+        end)
+    end
 
     editBox:SetScript("OnEnterPressed", function(self)
         local num = tonumber(self:GetText())
@@ -406,6 +437,7 @@ local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, 
                 innerSlider:SetValue(num)
             end
             SetOptionValue(schema, key, num)
+            HookAndPositionAllLabels()
             if onChange then onChange(num) end
         end
         self:Hide()
@@ -424,10 +456,7 @@ local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, 
         end
     end)
 
-    sliderFrame.sliderFrame = sliderFrame
-    sliderFrame.innerSlider = innerSlider
-
-    return sliderFrame
+return sliderFrame
 end
 
 -- ============================================================
@@ -692,59 +721,115 @@ local function HookHighlight(frame, updateFn)
     end
 end
 
+local function SetSliderDesaturated(sliderFrame, isDesaturated)
+    if not sliderFrame then return end
+    local function DesaturateTree(f)
+        if not f then return end
+        if f.GetRegions then
+            for _, reg in ipairs({ f:GetRegions() }) do
+                if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
+                    reg:SetDesaturated(isDesaturated)
+                end
+            end
+        end
+        if f.GetChildren then
+            for _, child in ipairs({ f:GetChildren() }) do
+                DesaturateTree(child)
+            end
+        end
+    end
+    DesaturateTree(sliderFrame)
+end
+
 local function SetWidgetState(widget, enabled)
     if not widget then return end
-    local alpha = enabled and 1.0 or (T.Row and T.Row.disabledAlpha or 0.4)
+    local disabledAlpha = (T.Row and T.Row.disabledAlpha) or 0.6
+    local alpha = enabled and 1.0 or disabledAlpha
     local isDesaturated = not enabled
 
-    -- 1. Outer Row Frame
-    local row = widget.associatedRow
-    if row and row ~= UIParent and row.SetAlpha then
-        row:SetAlpha(alpha)
-    end
+    local isSlider = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (widget.GetObjectType and widget:GetObjectType() == "Slider")
 
-    -- Widget itself (always update alpha directly)
-    if widget.SetAlpha then
-        widget:SetAlpha(alpha)
-    end
-
-    local sliderFrame = widget.sliderFrame or widget
-    if sliderFrame and sliderFrame ~= row and sliderFrame ~= widget and sliderFrame.SetAlpha then
-        sliderFrame:SetAlpha(alpha)
-    end
-
-    -- 2. Interactivity (Enable/Disable mouse & buttons & sliders & dropdowns)
-    if enabled then
-        if widget.Enable then widget:Enable() end
-        if widget.SetEnabled then widget:SetEnabled(true) end
-        if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-        if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-            widget.associatedTitleFrame:EnableMouse(true)
+    if isSlider then
+        -- For Sliders: ONLY the title/label receives the 0.6 alpha
+        local row = widget.associatedRow
+        if row and row ~= UIParent and row.SetAlpha then
+            row:SetAlpha(1.0)
         end
+        if widget.associatedTitle and widget.associatedTitle.SetAlpha then
+            widget.associatedTitle:SetAlpha(alpha)
+        end
+        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then
+            widget.associatedTitleFrame:SetAlpha(alpha)
+        end
+        if widget.SetAlpha then
+            widget:SetAlpha(1.0)
+        end
+
+        local sliderFrame = widget.sliderFrame or widget
+        if sliderFrame and sliderFrame.SetAlpha then
+            sliderFrame:SetAlpha(1.0)
+        end
+
+        -- Interactivity (SetEnabled & EnableMouse)
+        if enabled then
+            if widget.Enable then widget:Enable() end
+            if widget.SetEnabled then widget:SetEnabled(true) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+                widget.associatedTitleFrame:EnableMouse(true)
+            end
+            if sliderFrame and sliderFrame ~= widget then
+                if sliderFrame.SetEnabled then sliderFrame:SetEnabled(true) end
+                if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(true) end
+                if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then sliderFrame.Forward:SetEnabled(true) end
+            end
+        else
+            if widget.Disable then widget:Disable() end
+            if widget.SetEnabled then widget:SetEnabled(false) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+                widget.associatedTitleFrame:EnableMouse(false)
+            end
+            if sliderFrame and sliderFrame ~= widget then
+                if sliderFrame.SetEnabled then sliderFrame:SetEnabled(false) end
+                if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(false) end
+                if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then sliderFrame.Forward:SetEnabled(false) end
+            end
+        end
+
+        -- Apply desaturation to slider textures
+        SetSliderDesaturated(sliderFrame, isDesaturated)
     else
-        if widget.Disable then widget:Disable() end
-        if widget.SetEnabled then widget:SetEnabled(false) end
-        if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-        if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-            widget.associatedTitleFrame:EnableMouse(false)
+        -- Standard widgets (checkboxes, dropdowns, buttons, etc.)
+        local row = widget.associatedRow
+        if row and row ~= UIParent and row.SetAlpha then
+            row:SetAlpha(alpha)
         end
-    end
 
-    -- 3. MinimalSliderWithSteppersTemplate stepper buttons enablement
-    if sliderFrame and sliderFrame ~= widget then
-        if sliderFrame.SetEnabled then sliderFrame:SetEnabled(enabled) end
-        if sliderFrame.Back and sliderFrame.Back.SetEnabled then
-            sliderFrame.Back:SetEnabled(enabled)
+        if widget.SetAlpha then
+            widget:SetAlpha(alpha)
         end
-        if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then
-            sliderFrame.Forward:SetEnabled(enabled)
-        end
-    end
 
-    -- 4. Desaturate texture elements if available
-    if widget.GetNormalTexture and widget:GetNormalTexture() then
-        local tex = widget:GetNormalTexture()
-        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
+        if enabled then
+            if widget.Enable then widget:Enable() end
+            if widget.SetEnabled then widget:SetEnabled(true) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+                widget.associatedTitleFrame:EnableMouse(true)
+            end
+        else
+            if widget.Disable then widget:Disable() end
+            if widget.SetEnabled then widget:SetEnabled(false) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
+                widget.associatedTitleFrame:EnableMouse(false)
+            end
+        end
+
+        if widget.GetNormalTexture and widget:GetNormalTexture() then
+            local tex = widget:GetNormalTexture()
+            if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
+        end
     end
 end
 
@@ -949,7 +1034,15 @@ local function BuildSliderRow(card, info, parentCb, schema)
         if info.onChange then info.onChange(val) end
         if info.requiresReload or info.reload then ShowReloadPrompt() end
     end, info)
-    slider:SetPoint("RIGHT", row, "RIGHT", rs.sliderOffsetRight, 0)
+
+    local rawPos = info and (info.indicatorPosition or info.labelPosition or info.textPosition or info.position or info.indicatorPoint)
+    local indicatorPos = rawPos and tostring(rawPos):upper() or "TOP"
+
+    local sliderRightOffset = rs.sliderOffsetRight
+    if indicatorPos == "RIGHT" then
+        sliderRightOffset = sliderRightOffset - 38
+    end
+    slider:SetPoint("RIGHT", row, "RIGHT", sliderRightOffset, 0)
     slider:EnableMouse(true)
 
     slider.associatedTitle      = title

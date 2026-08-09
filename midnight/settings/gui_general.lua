@@ -154,7 +154,7 @@ function guiGeneralTab()
                         options = {
                             { type="checkbox", key="darkModeUi", label=L["Dark_Mode"], tooltip=L["Tooltip_Dark_Mode"], onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end, id="cbDark",
                                 children = {
-                                    { type="slider",   key="darkModeColor",               label=L["Darkness"],           tooltip=L["Tooltip_Dark_Mode_Value"],           min=0, max=1, step=0.01 },
+                                    { type="slider",   key="darkModeColor",               label=L["Darkness"],           tooltip=L["Tooltip_Dark_Mode_Value"], position = "RIGHT",           min=0, max=1, step=0.01 },
                                     { type="checkbox", key="darkModeCastbars",             label=L["Castbars"],           tooltip=L["Dark_Borders_Castbars"],            onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
                                     { type="checkbox", key="darkModeActionBars",           label=L["ActionBars"],         tooltip=L["Dark_Borders_ActionBars"],          onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
                                     { type="checkbox", key="darkModeUiAura",               label=L["Auras"],              tooltip=L["Dark_Borders_Aura_Icons"],          onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
