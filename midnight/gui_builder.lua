@@ -721,134 +721,100 @@ local function HookHighlight(frame, updateFn)
     end
 end
 
+-- Recursively desaturates all textures within a slider frame tree
 local function SetSliderDesaturated(sliderFrame, isDesaturated)
     if not sliderFrame then return end
     local function DesaturateTree(f)
         if not f then return end
-        if f.GetRegions then
-            for _, reg in ipairs({ f:GetRegions() }) do
-                if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
-                    reg:SetDesaturated(isDesaturated)
-                end
+        for _, reg in ipairs(f.GetRegions and { f:GetRegions() } or {}) do
+            if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
+                reg:SetDesaturated(isDesaturated)
             end
         end
-        if f.GetChildren then
-            for _, child in ipairs({ f:GetChildren() }) do
-                DesaturateTree(child)
-            end
+        for _, child in ipairs(f.GetChildren and { f:GetChildren() } or {}) do
+            DesaturateTree(child)
         end
     end
     DesaturateTree(sliderFrame)
 end
 
+-- Desaturates the checkbox box and check-mark textures
 local function SetCheckboxDesaturated(cb, isDesaturated)
     if not cb then return end
-    if cb.GetNormalTexture and cb:GetNormalTexture() then
-        local tex = cb:GetNormalTexture()
+    local function DesatTex(getter)
+        local tex = cb[getter] and cb[getter](cb)
         if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
     end
-    if cb.GetCheckedTexture and cb:GetCheckedTexture() then
-        local tex = cb:GetCheckedTexture()
-        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
-    end
-    if cb.GetRegions then
-        for _, reg in ipairs({ cb:GetRegions() }) do
-            if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
-                reg:SetDesaturated(isDesaturated)
-            end
+    DesatTex("GetNormalTexture")
+    DesatTex("GetCheckedTexture")
+    for _, reg in ipairs(cb.GetRegions and { cb:GetRegions() } or {}) do
+        if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
+            reg:SetDesaturated(isDesaturated)
         end
     end
 end
 
+-- Shared: apply enable/disable interaction to a widget
+local function ApplyWidgetEnabled(widget, enabled, titleFrame)
+    if enabled then
+        if widget.Enable        then widget:Enable()               end
+        if widget.SetEnabled    then widget:SetEnabled(true)       end
+    else
+        if widget.Disable       then widget:Disable()              end
+        if widget.SetEnabled    then widget:SetEnabled(false)      end
+    end
+    if widget.UpdateEnabledState              then widget:UpdateEnabledState()           end
+    if titleFrame and titleFrame.EnableMouse  then titleFrame:EnableMouse(enabled)       end
+end
+
 local function SetWidgetState(widget, enabled)
     if not widget then return end
-    local disabledAlpha = (T.Row and T.Row.disabledAlpha) or 0.6
-    local alpha = enabled and 1.0 or disabledAlpha
+    local alpha        = enabled and 1.0 or ((T.Row and T.Row.disabledAlpha) or 0.6)
     local isDesaturated = not enabled
-
-    local objType = widget.GetObjectType and widget:GetObjectType() or ""
-    local isSlider   = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (objType == "Slider")
-    local isCheckbox = (objType == "CheckButton") or (widget.GetChecked ~= nil)
+    local objType      = widget.GetObjectType and widget:GetObjectType() or ""
+    local isSlider     = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (objType == "Slider")
+    local isCheckbox   = (objType == "CheckButton") or (widget.GetChecked ~= nil)
+    local tf           = widget.associatedTitleFrame
 
     if isSlider then
-        -- For Sliders: ONLY the title/label receives the 0.6 alpha
+        -- Row and slider controls stay at full alpha; only label dims
         local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
         if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
-        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then widget.associatedTitleFrame:SetAlpha(alpha) end
+        if tf and tf.SetAlpha then tf:SetAlpha(alpha) end
         if widget.SetAlpha then widget:SetAlpha(1.0) end
 
-        local sliderFrame = widget.sliderFrame or widget
-        if sliderFrame and sliderFrame.SetAlpha then sliderFrame:SetAlpha(1.0) end
+        local sf = widget.sliderFrame or widget
+        if sf and sf.SetAlpha then sf:SetAlpha(1.0) end
 
-        if enabled then
-            if widget.Enable then widget:Enable() end
-            if widget.SetEnabled then widget:SetEnabled(true) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
-            if sliderFrame and sliderFrame ~= widget then
-                if sliderFrame.SetEnabled then sliderFrame:SetEnabled(true) end
-                if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(true) end
-                if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then sliderFrame.Forward:SetEnabled(true) end
-            end
-        else
-            if widget.Disable then widget:Disable() end
-            if widget.SetEnabled then widget:SetEnabled(false) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
-            if sliderFrame and sliderFrame ~= widget then
-                if sliderFrame.SetEnabled then sliderFrame:SetEnabled(false) end
-                if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(false) end
-                if sliderFrame.Forward and sliderFrame.Forward.SetEnabled then sliderFrame.Forward:SetEnabled(false) end
-            end
+        ApplyWidgetEnabled(widget, enabled, tf)
+        if sf and sf ~= widget then
+            if sf.SetEnabled                               then sf:SetEnabled(enabled)              end
+            if sf.Back    and sf.Back.SetEnabled           then sf.Back:SetEnabled(enabled)         end
+            if sf.Forward and sf.Forward.SetEnabled        then sf.Forward:SetEnabled(enabled)      end
         end
-
-        SetSliderDesaturated(sliderFrame, isDesaturated)
+        SetSliderDesaturated(sf, isDesaturated)
 
     elseif isCheckbox then
-        -- For Checkboxes: ONLY the title/label receives the 0.6 alpha; box texture stays at alpha 1.0 + desaturated + locked
+        -- Checkbox box stays full alpha; only label dims
         local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
         if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
-        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then widget.associatedTitleFrame:SetAlpha(alpha) end
+        if tf and tf.SetAlpha then tf:SetAlpha(alpha) end
         if widget.SetAlpha then widget:SetAlpha(1.0) end
 
-        if enabled then
-            if widget.Enable then widget:Enable() end
-            if widget.SetEnabled then widget:SetEnabled(true) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
-        else
-            if widget.Disable then widget:Disable() end
-            if widget.SetEnabled then widget:SetEnabled(false) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
-        end
-
+        ApplyWidgetEnabled(widget, enabled, tf)
         SetCheckboxDesaturated(widget, isDesaturated)
 
     else
-        -- Standard widgets (dropdowns, buttons, etc.)
+        -- Standard widgets (dropdowns, buttons, etc.): entire row dims
         local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(alpha) end
         if widget.SetAlpha then widget:SetAlpha(alpha) end
 
-        if enabled then
-            if widget.Enable then widget:Enable() end
-            if widget.SetEnabled then widget:SetEnabled(true) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
-        else
-            if widget.Disable then widget:Disable() end
-            if widget.SetEnabled then widget:SetEnabled(false) end
-            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
-        end
-
-        if widget.GetNormalTexture and widget:GetNormalTexture() then
-            local tex = widget:GetNormalTexture()
-            if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
-        end
+        ApplyWidgetEnabled(widget, enabled, tf)
+        local tex = widget.GetNormalTexture and widget:GetNormalTexture()
+        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
     end
 end
 

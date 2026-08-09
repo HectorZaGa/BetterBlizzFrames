@@ -30,6 +30,7 @@ local schema = {
                     key      = "masqueSupport",
                     label    = L["Add_Masque_Support"],
                     tooltip  = L["Tooltip_Add_Masque_Support_Desc"],
+                    parent   = "playerAuraFiltering",
                     onChange = BBF.UpdateFrames
                 },
             }
