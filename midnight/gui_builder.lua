@@ -741,43 +741,51 @@ local function SetSliderDesaturated(sliderFrame, isDesaturated)
     DesaturateTree(sliderFrame)
 end
 
+local function SetCheckboxDesaturated(cb, isDesaturated)
+    if not cb then return end
+    if cb.GetNormalTexture and cb:GetNormalTexture() then
+        local tex = cb:GetNormalTexture()
+        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
+    end
+    if cb.GetCheckedTexture and cb:GetCheckedTexture() then
+        local tex = cb:GetCheckedTexture()
+        if tex and tex.SetDesaturated then tex:SetDesaturated(isDesaturated) end
+    end
+    if cb.GetRegions then
+        for _, reg in ipairs({ cb:GetRegions() }) do
+            if reg and reg:IsObjectType("Texture") and reg.SetDesaturated then
+                reg:SetDesaturated(isDesaturated)
+            end
+        end
+    end
+end
+
 local function SetWidgetState(widget, enabled)
     if not widget then return end
     local disabledAlpha = (T.Row and T.Row.disabledAlpha) or 0.6
     local alpha = enabled and 1.0 or disabledAlpha
     local isDesaturated = not enabled
 
-    local isSlider = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (widget.GetObjectType and widget:GetObjectType() == "Slider")
+    local objType = widget.GetObjectType and widget:GetObjectType() or ""
+    local isSlider   = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (objType == "Slider")
+    local isCheckbox = (objType == "CheckButton") or (widget.GetChecked ~= nil)
 
     if isSlider then
         -- For Sliders: ONLY the title/label receives the 0.6 alpha
         local row = widget.associatedRow
-        if row and row ~= UIParent and row.SetAlpha then
-            row:SetAlpha(1.0)
-        end
-        if widget.associatedTitle and widget.associatedTitle.SetAlpha then
-            widget.associatedTitle:SetAlpha(alpha)
-        end
-        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then
-            widget.associatedTitleFrame:SetAlpha(alpha)
-        end
-        if widget.SetAlpha then
-            widget:SetAlpha(1.0)
-        end
+        if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
+        if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
+        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then widget.associatedTitleFrame:SetAlpha(alpha) end
+        if widget.SetAlpha then widget:SetAlpha(1.0) end
 
         local sliderFrame = widget.sliderFrame or widget
-        if sliderFrame and sliderFrame.SetAlpha then
-            sliderFrame:SetAlpha(1.0)
-        end
+        if sliderFrame and sliderFrame.SetAlpha then sliderFrame:SetAlpha(1.0) end
 
-        -- Interactivity (SetEnabled & EnableMouse)
         if enabled then
             if widget.Enable then widget:Enable() end
             if widget.SetEnabled then widget:SetEnabled(true) end
             if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-                widget.associatedTitleFrame:EnableMouse(true)
-            end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
             if sliderFrame and sliderFrame ~= widget then
                 if sliderFrame.SetEnabled then sliderFrame:SetEnabled(true) end
                 if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(true) end
@@ -787,9 +795,7 @@ local function SetWidgetState(widget, enabled)
             if widget.Disable then widget:Disable() end
             if widget.SetEnabled then widget:SetEnabled(false) end
             if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-                widget.associatedTitleFrame:EnableMouse(false)
-            end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
             if sliderFrame and sliderFrame ~= widget then
                 if sliderFrame.SetEnabled then sliderFrame:SetEnabled(false) end
                 if sliderFrame.Back and sliderFrame.Back.SetEnabled then sliderFrame.Back:SetEnabled(false) end
@@ -797,33 +803,46 @@ local function SetWidgetState(widget, enabled)
             end
         end
 
-        -- Apply desaturation to slider textures
         SetSliderDesaturated(sliderFrame, isDesaturated)
-    else
-        -- Standard widgets (checkboxes, dropdowns, buttons, etc.)
-        local row = widget.associatedRow
-        if row and row ~= UIParent and row.SetAlpha then
-            row:SetAlpha(alpha)
-        end
 
-        if widget.SetAlpha then
-            widget:SetAlpha(alpha)
-        end
+    elseif isCheckbox then
+        -- For Checkboxes: ONLY the title/label receives the 0.6 alpha; box texture stays at alpha 1.0 + desaturated + locked
+        local row = widget.associatedRow
+        if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
+        if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
+        if widget.associatedTitleFrame and widget.associatedTitleFrame.SetAlpha then widget.associatedTitleFrame:SetAlpha(alpha) end
+        if widget.SetAlpha then widget:SetAlpha(1.0) end
 
         if enabled then
             if widget.Enable then widget:Enable() end
             if widget.SetEnabled then widget:SetEnabled(true) end
             if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-                widget.associatedTitleFrame:EnableMouse(true)
-            end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
         else
             if widget.Disable then widget:Disable() end
             if widget.SetEnabled then widget:SetEnabled(false) end
             if widget.UpdateEnabledState then widget:UpdateEnabledState() end
-            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
-                widget.associatedTitleFrame:EnableMouse(false)
-            end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
+        end
+
+        SetCheckboxDesaturated(widget, isDesaturated)
+
+    else
+        -- Standard widgets (dropdowns, buttons, etc.)
+        local row = widget.associatedRow
+        if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(alpha) end
+        if widget.SetAlpha then widget:SetAlpha(alpha) end
+
+        if enabled then
+            if widget.Enable then widget:Enable() end
+            if widget.SetEnabled then widget:SetEnabled(true) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(true) end
+        else
+            if widget.Disable then widget:Disable() end
+            if widget.SetEnabled then widget:SetEnabled(false) end
+            if widget.UpdateEnabledState then widget:UpdateEnabledState() end
+            if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then widget.associatedTitleFrame:EnableMouse(false) end
         end
 
         if widget.GetNormalTexture and widget:GetNormalTexture() then
@@ -921,6 +940,7 @@ local function BuildCheckboxRow(card, info, parentCb, schema)
     local widthShrink  = isChild and rc.widthShrinkChild  or rc.widthShrink
     local titleFont    = isChild and rc.titleFontChild    or rc.titleFont
     local titleWidth   = isChild and rc.titleWidthChild   or rc.titleWidth
+    card.optionCount   = (card.optionCount or 0) + 1
 
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
@@ -1014,6 +1034,15 @@ local function BuildSliderRow(card, info, parentCb, schema)
     local maxVal       = info.max or (isPercent and 100 or 100)
     local stepVal      = info.step or (isPercent and 1 or 1)
 
+    local isFirstOption = (card.optionCount == nil or card.optionCount == 0)
+    card.optionCount    = (card.optionCount or 0) + 1
+
+    local rawPos        = info and (info.indicatorPosition or info.labelPosition or info.textPosition or info.position or info.indicatorPoint)
+    local indicatorPos  = rawPos and tostring(rawPos):upper() or "TOP"
+
+    local topPadding    = (isFirstOption and indicatorPos == "TOP") and 14 or 0
+    card.currentY       = card.currentY - topPadding
+
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
     row:SetSize(card.cardWidth - widthShrink, rs.height)
@@ -1034,9 +1063,6 @@ local function BuildSliderRow(card, info, parentCb, schema)
         if info.onChange then info.onChange(val) end
         if info.requiresReload or info.reload then ShowReloadPrompt() end
     end, info)
-
-    local rawPos = info and (info.indicatorPosition or info.labelPosition or info.textPosition or info.position or info.indicatorPoint)
-    local indicatorPos = rawPos and tostring(rawPos):upper() or "TOP"
 
     local sliderRightOffset = rs.sliderOffsetRight
     if indicatorPos == "RIGHT" then

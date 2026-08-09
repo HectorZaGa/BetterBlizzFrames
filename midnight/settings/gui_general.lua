@@ -146,7 +146,7 @@ function guiGeneralTab()
                         options = {
                             { type="checkbox", key="hideLossOfControlFrameBg",    label=L["Hide_CC_Background"], tooltip=L["Tooltip_Hide_CC_Background"], onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
                             { type="checkbox", key="hideLossOfControlFrameLines", label=L["Hide_CC_Red_Lines"],  tooltip=L["Tooltip_Hide_CC_Red_Lines"], onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
-                            { type="slider",   key="lossOfControlScale",          label=L["Loss_of_Control_Scale"], tooltip=L["Tooltip_CC_Scale_Desc"], min=0.4, max=1.4, step=0.01 },
+                            { type="slider",   key="lossOfControlScale",          label=L["Loss_of_Control_Scale"], tooltip=L["Tooltip_CC_Scale_Desc"], position = "LEFT", min=0.4, max=1.4, step=0.01 },
                         },
                     },
                     {
@@ -154,7 +154,7 @@ function guiGeneralTab()
                         options = {
                             { type="checkbox", key="darkModeUi", label=L["Dark_Mode"], tooltip=L["Tooltip_Dark_Mode"], onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end, id="cbDark",
                                 children = {
-                                    { type="slider",   key="darkModeColor",               label=L["Darkness"],           tooltip=L["Tooltip_Dark_Mode_Value"], position = "RIGHT",           min=0, max=1, step=0.01 },
+                                    { type="slider",   key="darkModeColor",               label=L["Darkness"],           tooltip=L["Tooltip_Dark_Mode_Value"], position = "LEFT",           min=0, max=1, step=0.01 },
                                     { type="checkbox", key="darkModeCastbars",             label=L["Castbars"],           tooltip=L["Dark_Borders_Castbars"],            onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
                                     { type="checkbox", key="darkModeActionBars",           label=L["ActionBars"],         tooltip=L["Dark_Borders_ActionBars"],          onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
                                     { type="checkbox", key="darkModeUiAura",               label=L["Auras"],              tooltip=L["Dark_Borders_Aura_Icons"],          onChange=function() if BBF and BBF.DarkmodeFrames then BBF.DarkmodeFrames(true) end end },
@@ -246,8 +246,8 @@ function guiGeneralTab()
                     {
                         title = L["Frame_Layout"],
                         options = {
-                            { type="slider",   key="partyFrameScale",                label=L["Party_Frame_Scale"],       tooltip="",                                       min=0.7, max=1.7, step=0.01 },
-                            { type="slider",   key="partyFrameRangeAlpha",           label=L["Change_Party_Frame_Alpha"],tooltip=L["Tooltip_Party_Frame_Range_Alpha"],     min=0,   max=1,   step=0.01 },
+                            { type="slider",   key="partyFrameScale",                label=L["Party_Frame_Scale"],       tooltip="", position = "LEFT",                                       min=0.7, max=1.7, step=0.01 },
+                            { type="slider",   key="partyFrameRangeAlpha",           label=L["Change_Party_Frame_Alpha"],tooltip=L["Tooltip_Party_Frame_Range_Alpha"], position = "LEFT",     min=0,   max=1,   step=0.01 },
                             { type="checkbox", key="hidePartyFramesInArena",         label=L["Hide_Party_in_Arena"],     tooltip=L["Tooltip_Hide_Party_in_Arena_GEX"],    onChange=function(...) if BBF and BBF.HidePartyInArena then BBF.HidePartyInArena(...) end end },
                             { type="checkbox", key="hideRaidFrameManager",           label=L["Hide_RaidFrameManager"],   tooltip=L["Tooltip_Hide_RaidFrameManager"],       onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
                             { type="checkbox", key="raidFramePixelBorder",           label=L["Pixel_Border"],            tooltip=L["Tooltip_Pixel_Border_RaidFrames_Desc"] },
@@ -379,9 +379,9 @@ function guiGeneralTab()
                             { type="checkbox", key="hideTargetToTName",  label=L["Hide_Names"],      tooltip=L["Tooltip_Hide_ToT_Name"],    onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
                             { type="checkbox", key="hideTargetToTDebuffs",label=L["Hide_ToT_Debuffs"],tooltip=L["Tooltip_Hide_ToT_Debuffs"],onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
 
-                            { type="slider",   key="targetToTScale",     label=L["Size"],            tooltip=L["Tooltip_ToT_Size"],         min=0.6, max=2.5, step=0.01 },
-                            { type="slider",   key="targetToTXPos",      label=L["X_Offset"],        tooltip=L["Tooltip_ToT_X_Offset"],     min=-100, max=100, step=1 },
-                            { type="slider",   key="targetToTYPos",      label=L["Y_Offset"],        tooltip=L["Tooltip_ToT_Y_Offset"],     min=-100, max=100, step=1 },
+                            { type="slider",   key="targetToTScale",     label=L["Size"],            tooltip=L["Tooltip_ToT_Size"], position = "LEFT",         min=0.6, max=2.5, step=0.01 },
+                            { type="slider",   key="targetToTXPos",      label=L["X_Offset"],        tooltip=L["Tooltip_ToT_X_Offset"], position = "LEFT",     min=-100, max=100, step=1 },
+                            { type="slider",   key="targetToTYPos",      label=L["Y_Offset"],        tooltip=L["Tooltip_ToT_Y_Offset"], position = "LEFT",     min=-100, max=100, step=1 },
                         },
                     },
                 },
@@ -512,9 +512,9 @@ function guiGeneralTab()
                             { type="checkbox", key="hideFocusToT",       label=L["Hide_Frame"],           tooltip=L["Tooltip_Hide_FocusToT_Frame"],  onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end, requiresReload=true },
                             { type="checkbox", key="hideFocusToTName",   label=L["Hide_Names"],           tooltip=L["Tooltip_Hide_FocusToT_Name"],   onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
                             { type="checkbox", key="hideFocusToTDebuffs",label=L["Hide_FocusToT_Debuffs"],tooltip=L["Tooltip_Hide_ToT_Debuffs"],    onChange=function(...) if BBF and BBF.HideFrames then BBF.HideFrames(...) end end },
-                            { type="slider",   key="focusToTScale",      label=L["Size"],                 tooltip=L["Tooltip_FocusToT_Size"],       min=0.6, max=2.5, step=0.01 },
-                            { type="slider",   key="focusToTXPos",       label=L["X_Offset"],             tooltip=L["Tooltip_FocusToT_X_Offset"],   min=-100, max=100, step=1 },
-                            { type="slider",   key="focusToTYPos",       label=L["Y_Offset"],             tooltip=L["Tooltip_FocusToT_Y_Offset"],   min=-100, max=100, step=1 },
+                            { type="slider",   key="focusToTScale",      label=L["Size"],                 tooltip=L["Tooltip_FocusToT_Size"], position = "LEFT",       min=0.6, max=2.5, step=0.01 },
+                            { type="slider",   key="focusToTXPos",       label=L["X_Offset"],             tooltip=L["Tooltip_FocusToT_X_Offset"], position = "LEFT",   min=-100, max=100, step=1 },
+                            { type="slider",   key="focusToTYPos",       label=L["Y_Offset"],             tooltip=L["Tooltip_FocusToT_Y_Offset"], position = "LEFT",   min=-100, max=100, step=1 },
                         },
                     },
                 },
