@@ -1,18 +1,433 @@
 -- ============================================================
--- BetterBlizzFrames: midnight/gui_builder.lua
--- Schema-driven settings UI engine.
--- Inspired by WaypointUI's Settings_Constructor pattern.
--- All imperative WoW API code lives here.
--- Schema files (gui_general.lua etc.) are pure data tables.
+-- LibMidnightGUI-1.0: Pure Standalone Declarative WoW UI Engine
+-- Designed for Modern WoW (Midnight / Retail) UI panels.
+-- Clean, declarative, standalone UI constructor library.
 -- ============================================================
-if not BBF.isMidnight then return end
+local MAJOR = "LibMidnightGUI-1.0"
+local MINOR = 1
 
-BBF.GUI = BBF.GUI or {}
-local GUI = BBF.GUI
+local LibStub = _G.LibStub
+local GUI
+if LibStub then
+    GUI = LibStub:NewLibrary(MAJOR, MINOR)
+    if not GUI then return end
+else
+    GUI = _G.LibMidnightGUI or {}
+end
+
+_G.LibMidnightGUI = GUI
+if _G.BBF then
+    _G.BBF.GUI = GUI
+end
+
 GUI.Providers = GUI.Providers or {}
 
 function GUI.RegisterProvider(name, providerFunc)
     GUI.Providers[name] = providerFunc
+end
+
+-- ============================================================
+-- UNIVERSAL DATABASE & LOCALIZATION ACCESSORS
+-- ============================================================
+
+local function GetOptionValue(schema, key, defaultVal)
+    if not key then return defaultVal end
+    if schema and schema.get then
+        local v = schema.get(key)
+        if v ~= nil then return v end
+    end
+    if schema and schema.db and type(schema.db) == "table" then
+        local v = schema.db[key]
+        if v ~= nil then return v end
+    end
+    if _G.BetterBlizzFramesDB and type(_G.BetterBlizzFramesDB) == "table" then
+        local v = _G.BetterBlizzFramesDB[key]
+        if v ~= nil then return v end
+    end
+    return defaultVal
+end
+
+local function SetOptionValue(schema, key, val)
+    if not key then return end
+    if schema and schema.set then
+        schema.set(key, val)
+        return
+    end
+    if schema and schema.db and type(schema.db) == "table" then
+        schema.db[key] = val
+        return
+    end
+    if _G.BetterBlizzFramesDB and type(_G.BetterBlizzFramesDB) == "table" then
+        _G.BetterBlizzFramesDB[key] = val
+    end
+end
+
+local function ResolveText(schema, textOrKey)
+    if not textOrKey then return "" end
+    if type(textOrKey) ~= "string" then return tostring(textOrKey) end
+    if schema and schema.L and schema.L[textOrKey] then
+        return schema.L[textOrKey]
+    end
+    if schema and schema.locale and schema.locale[textOrKey] then
+        return schema.locale[textOrKey]
+    end
+    if _G.BBF and _G.BBF.L and _G.BBF.L[textOrKey] then
+        return _G.BBF.L[textOrKey]
+    end
+    return textOrKey
+end
+
+-- ============================================================
+-- UNIVERSAL RELOAD POPUP & TOOLTIP ENGINE
+-- ============================================================
+
+if not _G.StaticPopupDialogs["MIDNIGHT_GUI_CONFIRM_RELOAD"] then
+    _G.StaticPopupDialogs["MIDNIGHT_GUI_CONFIRM_RELOAD"] = {
+        text = "Changing this setting requires a UI reload to take effect.",
+        button1 = "Reload UI",
+        button2 = "Later",
+        OnAccept = function() _G.ReloadUI() end,
+        timeout = 0,
+        whileDead = 1,
+        hideOnEscape = 1,
+        preferredIndex = 3,
+    }
+end
+
+local function ShowReloadPrompt()
+    if _G.StaticPopup_Show then
+        _G.StaticPopup_Show("MIDNIGHT_GUI_CONFIRM_RELOAD")
+    end
+end
+
+local function GetDynamicTooltipExtra(key, label, info, tooltipExtra)
+    if type(tooltipExtra) == "function" then
+        local customText = tooltipExtra()
+        if customText and customText ~= "" then
+            return customText
+        end
+    end
+
+    local L = _G.BBF and _G.BBF.L
+    if not L then return nil end
+
+    local DB = _G.BetterBlizzFramesDB
+    if not DB then return nil end
+
+    local green    = "|cff32f795"
+    local babyBlue = "|cff7fc6ff"
+    local yellow   = "|cffffff00"
+    local orange   = "|cffffaa00"
+    local reset    = "|r"
+    local check    = " |A:ParagonReputation_Checkmark:15:15|a"
+
+    -- 1. Format Numbers
+    if key == "formatStatusBarText" or label == L["Format_Numbers"] then
+        local text = "\n\n18800 K |A:glueannouncementpopup-arrow:20:20|a 18.8 M\n" .. green .. (L["Right_Click_Show_Extra_Decimal"] or "Right-click to show one extra decimal.") .. reset
+        if DB.formatStatusBarTextExtraDecimals then
+            text = text .. check
+        end
+        return text
+    end
+
+    -- 2. Class Color Health
+    if key == "classColorFrames" or label == L["Class_Color_Health"] or label == L["Tooltip_Class_Color_Healthbars_Title"] then
+        local text = "\n" .. green .. (L["Tooltip_Class_Color_Keep_Player"] or "Ctrl+Right-Click to keep PlayerFrame green.") .. reset
+        if DB.classColorFramesSkipPlayer then
+            text = text .. check
+        end
+        text = text .. "\n\n" .. babyBlue .. (L["Tooltip_Class_Color_Keep_Friendly"] or "Shift+Right-Click to keep Friendly units green.") .. reset
+        if DB.classColorFramesSkipFriendly then
+            text = text .. check
+        end
+        return text
+    end
+
+    -- 3. Custom Color Health & Mana
+    if key == "customHealthbarColors" or label == L["Custom_Color_Health_Mana"] or label == L["Custom_Colors"] then
+        local text = "\n" .. yellow .. (L["Right_Click_To_Open_Options"] or "Right-click to open options.") .. reset
+        text = text .. "\n\n" .. green .. (L["Tooltip_Class_Color_Keep_Player"] or "Ctrl+Right-Click to keep PlayerFrame green.") .. reset
+        if DB.classColorFramesSkipPlayer then
+            text = text .. check
+        end
+        text = text .. "\n\n" .. babyBlue .. (L["Tooltip_Class_Color_Keep_Friendly"] or "Shift+Right-Click to keep Friendly units green.") .. reset
+        if DB.classColorFramesSkipFriendly then
+            text = text .. check
+        end
+        return text
+    end
+
+    -- 4. Hide Dispel Overlay
+    if key == "hidePartyDispelOverlay" or label == L["Hide_Dispel_Overlay"] then
+        local text = "\n" .. green .. (L["Right_Click_Keep_Dispel_Border"] or "Right-Click to Keep Dispel Border.") .. " |A:RaidFrame-DispelHighlight:15:30|a" .. reset
+        if DB.hidePartyDispelOverlayKeepBorder then
+            text = text .. check
+        end
+        text = text .. "\n\n" .. babyBlue .. (L["Shift_Right_Click_Keep_Dispel_Gradient"] or "Shift+Right-Click to Keep Dispel Gradient.") .. " |A:_RaidFrame-Dispel-Highlight-Horizontal:15:30|a" .. reset
+        if DB.hidePartyDispelOverlayKeepGradient then
+            text = text .. check
+        end
+        text = text .. "\n\n" .. orange .. (L["Ctrl_Right_Click_Hide_Dispel_Icons"] or "Ctrl+Right-Click to also Hide Dispel Icons.") .. " |A:RaidFrame-Icon-DebuffCurse:15:15|a" .. reset
+        if DB.hidePartyDispelOverlayHideIcons then
+            text = text .. check
+        end
+        return text
+    end
+
+    -- 5. Show Elite Texture (Player Frame)
+    if key == "playerEliteFrame" or label == L["Show_Elite_Texture"] then
+        if DB.playerEliteFrameDarkmode then
+            return "\n" .. (L["Tooltip_Elite_Texture_Dark_Mode_Check"] or "Shift + Right-click to allow Dark Mode to color Elite texture") .. check
+        else
+            return "\n" .. (L["Tooltip_Elite_Texture_Dark_Mode"] or "Shift + Right-click to allow Dark Mode to color Elite texture")
+        end
+    end
+
+    -- 6. Pixel Border (Raid / Party Frames)
+    if key == "raidFramePixelBorder" or label == L["Pixel_Border"] or label == L["Tooltip_Pixel_Border_RaidFrames_Title"] then
+        local activeSize = DB.raidFramePixelBorderSize and "1.5px" or "1px"
+        return "\n" .. green .. "Right-click to toggle between 1px and 1.5px. Active: " .. activeSize .. reset
+    end
+
+    -- 7. Change Party Frame Alpha
+    if key == "partyFrameRangeAlpha" or label == L["Change_Party_Frame_Alpha"] or label == L["Party_Frame_Alpha"] then
+        local checkMark = DB.partyFrameRangeAlphaSolidBackground and check or ""
+        return "\n" .. green .. (L["Tooltip_Party_Frame_Range_Alpha_Solid_Bg"] or "Right-click to toggle solid background") .. reset .. checkMark
+    end
+
+    -- 8. Dark Mode Auras
+    if key == "darkModeUiAura" or (label == L["Auras"] and info and info.popup == nil) then
+        local checkMark = DB.removeDebuffColorBorder and check or ""
+        return "\n" .. green .. (L["Tooltip_Remove_Debuff_Color_Border_Toggle"] or "Right-click to remove debuff color border") .. reset .. checkMark
+    end
+
+    -- 9. Hide Player Power (onRightClick opens class specific window)
+    if key == "hidePlayerPower" or label == L["Hide_Resource_Power"] then
+        return "\n" .. yellow .. (L["Right_Click_To_Open_Options"] or "Right-click to open options.") .. reset
+    end
+
+    return nil
+end
+
+local function AttachTooltip(targetFrame, label, tooltip, subText, anchor, requiresReload, tooltipExtra, cpuUsage, cvarName, key, info)
+    if not targetFrame then return end
+    if not label and not tooltip then return end
+
+    targetFrame:HookScript("OnEnter", function(self)
+        _G.GameTooltip:SetOwner(self, anchor or "ANCHOR_RIGHT")
+        _G.GameTooltip:ClearLines()
+        if label and label ~= "" then
+            _G.GameTooltip:AddLine(label, 1, 0.82, 0, true)
+        end
+        if tooltip and tooltip ~= "" then
+            _G.GameTooltip:AddLine(tooltip, 1, 1, 1, true)
+        end
+
+        -- Dynamic extra tooltip lines (Right-click, Shift+Right-click, Ctrl+Right-click hints, etc.)
+        local extraText = GetDynamicTooltipExtra(key, label, info, tooltipExtra)
+        if extraText and extraText ~= "" then
+            _G.GameTooltip:AddLine(extraText, 1, 1, 1, true)
+        end
+
+        if subText and subText ~= "" then
+            _G.GameTooltip:AddLine("____________________________", 0.8, 0.8, 0.8, true)
+            _G.GameTooltip:AddLine(subText, 0.8, 0.8, 0.8, true)
+        end
+
+        -- CVar name info line
+        if cvarName and cvarName ~= "" then
+            local L = _G.BBF and _G.BBF.L
+            local cvarLabel = (L and L["Tooltip_Changes_CVar"]) or "Changes CVar: "
+            _G.GameTooltip:AddDoubleLine(cvarLabel, cvarName, 0.2, 1, 0.6, 0.2, 1, 0.6)
+        end
+
+        -- CPU usage star rating
+        if cpuUsage and cpuUsage > 0 then
+            local star   = "|A:UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star:16:16|a"
+            local noStar = "|A:UI-HUD-UnitFrame-Target-PortraitOn-Boss-IconRing:16:16|a"
+            local starString = ""
+            for i = 1, 5 do
+                starString = starString .. (i <= cpuUsage and star or noStar)
+            end
+            local L = _G.BBF and _G.BBF.L
+            local cpuLabel = (L and L["CPU_Usage"]) or "CPU Usage:"
+            _G.GameTooltip:AddDoubleLine(" ", " ")
+            _G.GameTooltip:AddDoubleLine(cpuLabel, starString, 0.2, 1, 0.6, 0.2, 1, 0.6)
+        end
+
+        if requiresReload then
+            _G.GameTooltip:AddLine("Requires UI Reload", 1, 0.2, 0.2, true)
+        end
+        _G.GameTooltip:Show()
+    end)
+    targetFrame:HookScript("OnLeave", function()
+        _G.GameTooltip:Hide()
+    end)
+end
+
+
+-- ============================================================
+-- AUTONOMOUS WIDGET CONSTRUCTORS
+-- ============================================================
+
+local function CreateNativeCheckbox(parent, key, schema, onChange, extraOnClick)
+    local cb = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
+    if StyleCheckbox then StyleCheckbox(cb) end
+    cb:SetSize(28, 28)
+
+    local initialVal = GetOptionValue(schema, key)
+    cb:SetChecked(initialVal == true or initialVal == 1)
+
+    cb:SetScript("OnClick", function(self, btn)
+        local val = self:GetChecked()
+        SetOptionValue(schema, key, val)
+        if onChange then onChange(val) end
+        if extraOnClick then extraOnClick(self, btn, val) end
+    end)
+    return cb
+end
+
+local function CreateNativeSlider(parent, minVal, maxVal, stepVal, key, schema, sliderWidth, isPercent, onChange, info)
+    minVal  = minVal or (isPercent and 0 or 0)
+    maxVal  = maxVal or (isPercent and 100 or 100)
+    stepVal = stepVal or (isPercent and 1 or 1)
+
+    local width  = (info and (info.width or info.size)) or sliderWidth or 145
+    local height = (info and info.height) or 20
+
+    local numSteps = math.max(1, math.floor(((maxVal - minVal) / stepVal) + 0.5))
+    local initialVal = tonumber(GetOptionValue(schema, key, minVal)) or minVal
+
+    local function FormatValue(val)
+        val = tonumber(val) or 0
+        if isPercent then
+            return string.format("%d%%", math.floor(val + 0.5))
+        elseif stepVal < 1 then
+            return string.format("%.2f", val)
+        else
+            return tostring(math.floor(val + 0.5))
+        end
+    end
+
+    local sliderFrame = CreateFrame("Frame", nil, parent, "MinimalSliderWithSteppersTemplate")
+    sliderFrame:SetSize(width, height)
+
+    -- Determine indicator text position (TOP, LEFT, RIGHT, BOTTOM)
+    local rawPos = info and (info.indicatorPosition or info.labelPosition or info.textPosition or info.position or info.indicatorPoint)
+    local indicatorPos = rawPos and tostring(rawPos):upper() or "TOP"
+
+    local labelEnum
+    if _G.MinimalSliderWithSteppersMixin and _G.MinimalSliderWithSteppersMixin.Label then
+        if indicatorPos == "BOTTOM" then
+            labelEnum = _G.MinimalSliderWithSteppersMixin.Label.Bottom or _G.MinimalSliderWithSteppersMixin.Label.Top
+        elseif indicatorPos == "RIGHT" then
+            labelEnum = _G.MinimalSliderWithSteppersMixin.Label.Right or _G.MinimalSliderWithSteppersMixin.Label.Top
+        elseif indicatorPos == "LEFT" then
+            labelEnum = _G.MinimalSliderWithSteppersMixin.Label.Left or _G.MinimalSliderWithSteppersMixin.Label.Top
+        else
+            labelEnum = _G.MinimalSliderWithSteppersMixin.Label.Top
+        end
+    end
+
+    -- Formatters table for Blizzard's MinimalSliderWithSteppersMixin
+    local formatters = {}
+    if labelEnum then
+        formatters[labelEnum] = function(val)
+            return FormatValue(val)
+        end
+    end
+
+    if sliderFrame.Init then
+        sliderFrame:Init(initialVal, minVal, maxVal, numSteps, formatters)
+    end
+
+    -- Shift indicator label according to configured position
+    local function AdjustLabelOffset(lbl)
+        if not lbl or not lbl.GetPoint then return end
+        for i = 1, lbl:GetNumPoints() do
+            local point, relativeTo, relativePoint, xOfs, yOfs = lbl:GetPoint(i)
+            if point then
+                xOfs = xOfs or 0
+                yOfs = yOfs or 0
+                if indicatorPos == "BOTTOM" then
+                    yOfs = yOfs - 5
+                elseif indicatorPos == "RIGHT" then
+                    xOfs = xOfs + 5
+                elseif indicatorPos == "LEFT" then
+                    xOfs = xOfs - 5
+                else -- TOP
+                    yOfs = yOfs + 5
+                end
+                lbl:SetPoint(point, relativeTo, relativePoint, xOfs, yOfs)
+            end
+        end
+    end
+
+    local topLabel = sliderFrame.TopText or sliderFrame.Text or sliderFrame.Label or sliderFrame.RightText or sliderFrame.LeftText or sliderFrame.BottomText or (sliderFrame.Slider and sliderFrame.Slider.TopText)
+    AdjustLabelOffset(topLabel)
+
+    for _, region in ipairs({ sliderFrame:GetRegions() }) do
+        if region:IsObjectType("FontString") then
+            AdjustLabelOffset(region)
+        end
+    end
+
+    local innerSlider = sliderFrame.Slider or sliderFrame
+
+    if sliderFrame.RegisterCallback then
+        sliderFrame:RegisterCallback("OnValueChanged", function(_, val)
+            val = math.max(minVal, math.min(maxVal, val))
+            SetOptionValue(schema, key, val)
+            if onChange then onChange(val) end
+        end, sliderFrame)
+    elseif innerSlider.SetScript then
+        innerSlider:SetScript("OnValueChanged", function(self, val)
+            SetOptionValue(schema, key, val)
+            if onChange then onChange(val) end
+        end)
+    end
+
+    -- Direct numeric input EditBox on right-click
+    local editBox = CreateFrame("EditBox", nil, sliderFrame, "InputBoxTemplate")
+    editBox:SetAutoFocus(false)
+    editBox:SetSize(48, 18)
+    editBox:SetMultiLine(false)
+    editBox:SetPoint("CENTER", sliderFrame, "CENTER", 0, 0)
+    editBox:SetFrameStrata("DIALOG")
+    editBox:Hide()
+
+    editBox:SetScript("OnEnterPressed", function(self)
+        local num = tonumber(self:GetText())
+        if num then
+            num = math.max(minVal, math.min(maxVal, num))
+            if sliderFrame.SetValue then
+                sliderFrame:SetValue(num)
+            elseif innerSlider.SetValue then
+                innerSlider:SetValue(num)
+            end
+            SetOptionValue(schema, key, num)
+            if onChange then onChange(num) end
+        end
+        self:Hide()
+    end)
+    editBox:SetScript("OnEscapePressed", function(self) self:Hide() end)
+    editBox:SetScript("OnEditFocusLost", function(self) self:Hide() end)
+
+    sliderFrame:EnableMouse(true)
+    sliderFrame:HookScript("OnMouseDown", function(self, btn)
+        if btn == "RightButton" then
+            local current = GetOptionValue(schema, key, initialVal)
+            editBox:SetText(tostring(current))
+            editBox:Show()
+            editBox:SetFocus()
+            editBox:HighlightText()
+        end
+    end)
+
+    sliderFrame.sliderFrame = sliderFrame
+    sliderFrame.innerSlider = innerSlider
+
+    return sliderFrame
 end
 
 -- ============================================================
@@ -124,8 +539,8 @@ GUI.Theme = {
             titleWidth        = 240,
             titleWidthChild   = 224,
             titleOffsetLeft   = 16,
-            sliderWidth       = 120,
-            sliderOffsetRight = -20,
+            sliderWidth       = 145,
+            sliderOffsetRight = -8,
         },
         dualChild = {
             height      = 30,
@@ -282,15 +697,14 @@ local function SetWidgetState(widget, enabled)
     local alpha = enabled and 1.0 or (T.Row and T.Row.disabledAlpha or 0.4)
     local isDesaturated = not enabled
 
-    -- 1. Outer Row Frame (only use explicit associatedRow — never fall back to GetParent()
-    --    to avoid accidentally dimming the entire popup panel for color swatches)
+    -- 1. Outer Row Frame
     local row = widget.associatedRow
     if row and row ~= UIParent and row.SetAlpha then
         row:SetAlpha(alpha)
     end
 
-    -- Widget itself (for standalone widgets with no associatedRow, e.g. color swatches)
-    if not row and widget.SetAlpha then
+    -- Widget itself (always update alpha directly)
+    if widget.SetAlpha then
         widget:SetAlpha(alpha)
     end
 
@@ -299,14 +713,18 @@ local function SetWidgetState(widget, enabled)
         sliderFrame:SetAlpha(alpha)
     end
 
-    -- 2. Interactivity (Enable/Disable mouse & buttons)
+    -- 2. Interactivity (Enable/Disable mouse & buttons & sliders & dropdowns)
     if enabled then
         if widget.Enable then widget:Enable() end
+        if widget.SetEnabled then widget:SetEnabled(true) end
+        if widget.UpdateEnabledState then widget:UpdateEnabledState() end
         if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
             widget.associatedTitleFrame:EnableMouse(true)
         end
     else
         if widget.Disable then widget:Disable() end
+        if widget.SetEnabled then widget:SetEnabled(false) end
+        if widget.UpdateEnabledState then widget:UpdateEnabledState() end
         if widget.associatedTitleFrame and widget.associatedTitleFrame.EnableMouse then
             widget.associatedTitleFrame:EnableMouse(false)
         end
@@ -314,6 +732,7 @@ local function SetWidgetState(widget, enabled)
 
     -- 3. MinimalSliderWithSteppersTemplate stepper buttons enablement
     if sliderFrame and sliderFrame ~= widget then
+        if sliderFrame.SetEnabled then sliderFrame:SetEnabled(enabled) end
         if sliderFrame.Back and sliderFrame.Back.SetEnabled then
             sliderFrame.Back:SetEnabled(enabled)
         end
@@ -344,6 +763,7 @@ local function WireChildToParent(parentCb, widget, title, row, info)
     end
 
     parentCb:HookScript("OnClick", UpdateState)
+    widget.UpdateParentDependency = UpdateState
     UpdateState()
 end
 
@@ -376,7 +796,7 @@ local function StyleCheckbox(cb)
 end
 
 
---- Trigger right-click action from schema onRightClick or BBF.HandleRightClick fallback.
+--- Trigger right-click action from schema onRightClick or popup or host addon fallback.
 local function TriggerRightClick(info, widget, keyOverride, labelOverride)
     local key   = keyOverride   or info.key
     local label = labelOverride or info.label
@@ -386,8 +806,10 @@ local function TriggerRightClick(info, widget, keyOverride, labelOverride)
 
     if info.onRightClick then
         info.onRightClick(isShift, isCtrl, isAlt, widget, key, label)
-    elseif BBF.HandleRightClick then
-        BBF.HandleRightClick(key, label, widget)
+    elseif info.popup and GUI.OpenPopup then
+        GUI.OpenPopup(info.popup)
+    elseif _G.BBF and _G.BBF.HandleRightClick then
+        _G.BBF.HandleRightClick(key, label, widget)
     end
 
     -- Refresh GameTooltip immediately if hovering over the widget
@@ -407,7 +829,7 @@ local BuildColorSwatchBtn
 -- FILA: CHECKBOX (simple e hija)
 --------------------------------------------------------
 
-local function BuildCheckboxRow(card, info, parentCb)
+local function BuildCheckboxRow(card, info, parentCb, schema)
     local isChild      = (parentCb ~= nil) or (info.inverseParent ~= nil) or (info.disableTarget ~= nil)
     local rc           = T.Row.checkbox
     local leftInset    = isChild and rc.leftInsetChild   or rc.leftInset
@@ -422,7 +844,7 @@ local function BuildCheckboxRow(card, info, parentCb)
 
     local title = row:CreateFontString(nil, "OVERLAY", titleFont)
     title:SetPoint("LEFT", row, "LEFT", rc.titleOffsetLeft, 0)
-    title:SetText(info.label)
+    title:SetText(ResolveText(schema, info.label))
     title:SetWidth(titleWidth)
     title:SetJustifyH("LEFT")
 
@@ -430,27 +852,24 @@ local function BuildCheckboxRow(card, info, parentCb)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rc.height)
 
-    local cb = BBF.CreateCheckbox(info.key, "", row, nil, info.onChange)
-    cb:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    cb:HookScript("OnClick", function(self, btn)
+    local cb = CreateNativeCheckbox(row, info.key, schema, info.onChange, function(self, btn, val)
         if btn == "RightButton" then
-            self:SetChecked(not self:GetChecked()) -- Revert automatic check toggle on right-click
+            self:SetChecked(not self:GetChecked())
             TriggerRightClick(info, titleFrame or self)
         else
-            if (info.requiresReload or info.reload) and StaticPopup_Show then
-                StaticPopup_Show("BBF_CONFIRM_RELOAD")
+            if info.requiresReload or info.reload then
+                ShowReloadPrompt()
             end
         end
     end)
-
-    StyleCheckbox(cb)
+    cb:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     cb:SetPoint("RIGHT", row, "RIGHT", rc.cbOffsetRight, 0)
 
     -- colorPicker = {r, g, b} — inline color swatch anchored left of the checkbox toggle
     if info.colorPicker then
         local cpDefault = info.colorPicker
         local cpKey     = info.colorPickerKey or (info.key .. "Color")
-        local swatchBtn = BuildColorSwatchBtn(row, 0, 0, cpKey, nil, {r = cpDefault.r or cpDefault[1] or 1, g = cpDefault.g or cpDefault[2] or 1, b = cpDefault.b or cpDefault[3] or 1}, nil, info.onChange)
+        local swatchBtn = BuildColorSwatchBtn(row, 0, 0, cpKey, nil, {r = cpDefault.r or cpDefault[1] or 1, g = cpDefault.g or cpDefault[2] or 1, b = cpDefault.b or cpDefault[3] or 1}, nil, info.onChange, nil, nil, schema)
         swatchBtn:ClearAllPoints()
         swatchBtn:SetPoint("RIGHT", cb, "LEFT", -6, 0)
         swatchBtn:SetSize(16, 16)
@@ -481,13 +900,12 @@ local function BuildCheckboxRow(card, info, parentCb)
     end)
 
     if info.tooltip and info.tooltip ~= "" then
-        BBF.CreateTooltipTwo(titleFrame, info.label, info.tooltip, info.subText, nil, nil, info.cpuUsage)
-        BBF.CreateTooltipTwo(cb,         info.label, info.tooltip, info.subText, nil, nil, info.cpuUsage)
+        AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
+        AttachTooltip(cb,         ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
     HookHighlight(titleFrame, updateHL)
     HookHighlight(cb, updateHL)
-
 
     card.currentY = card.currentY - rc.height - rc.gap
     UpdateCardHeight(card)
@@ -498,7 +916,7 @@ end
 -- FILA: SLIDER
 --------------------------------------------------------
 
-local function BuildSliderRow(card, info, parentCb)
+local function BuildSliderRow(card, info, parentCb, schema)
     local isChild      = parentCb ~= nil
     local rs           = T.Row.slider
     local leftInset    = isChild and rs.leftInsetChild   or rs.leftInset
@@ -518,7 +936,7 @@ local function BuildSliderRow(card, info, parentCb)
 
     local title = row:CreateFontString(nil, "OVERLAY", titleFont)
     title:SetPoint("LEFT", row, "LEFT", rs.titleOffsetLeft, 0)
-    title:SetText(info.label)
+    title:SetText(ResolveText(schema, info.label))
     title:SetWidth(titleWidth)
     title:SetJustifyH("LEFT")
 
@@ -526,14 +944,13 @@ local function BuildSliderRow(card, info, parentCb)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, titleWidth), rs.height)
 
-    local slider = BBF.CreateSlider(row, "", minVal, maxVal, stepVal, info.key, nil, rs.sliderWidth, isPercent)
+    local customWidth = info.width or info.size or rs.sliderWidth
+    local slider = CreateNativeSlider(row, minVal, maxVal, stepVal, info.key, schema, customWidth, isPercent, function(val)
+        if info.onChange then info.onChange(val) end
+        if info.requiresReload or info.reload then ShowReloadPrompt() end
+    end, info)
     slider:SetPoint("RIGHT", row, "RIGHT", rs.sliderOffsetRight, 0)
     slider:EnableMouse(true)
-    slider:HookScript("OnMouseDown", function(self, btn)
-        if btn == "RightButton" then
-            TriggerRightClick(info, slider)
-        end
-    end)
 
     slider.associatedTitle      = title
     slider.associatedRow        = row
@@ -555,8 +972,8 @@ local function BuildSliderRow(card, info, parentCb)
     end)
 
     if info.tooltip and info.tooltip ~= "" then
-        BBF.CreateTooltipTwo(titleFrame, info.label, info.tooltip)
-        BBF.CreateTooltipTwo(slider,     info.label, info.tooltip)
+        AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
+        AttachTooltip(slider,     ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
     HookHighlight(titleFrame, updateHL)
@@ -586,14 +1003,14 @@ local ANCHOR_INNER_OUTER_CHOICES = {
     { value = "BOTTOM", label = "Anchor_BOTTOM"},
 }
 
-local function BuildDropdownRow(card, info, parentCb)
+local function BuildDropdownRow(card, info, parentCb, schema)
     local isChild     = parentCb ~= nil
     local rs          = T.Row.slider   -- reuse slider row metrics
     local leftInset   = isChild and rs.leftInsetChild  or rs.leftInset
     local widthShrink = isChild and rs.widthShrinkChild or rs.widthShrink
     local titleFont   = isChild and rs.titleFontChild  or rs.titleFont
     local titleWidth  = isChild and rs.titleWidthChild or rs.titleWidth
-    local L           = BBF.L
+    local L = (schema and schema.L) or (_G.BBF and _G.BBF.L)
 
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
@@ -683,7 +1100,7 @@ local function BuildDropdownRow(card, info, parentCb)
     end
 
     local function RefreshText()
-        local current = BetterBlizzFramesDB[info.key]
+        local current = GetOptionValue(schema, info.key)
         dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select"] or "Select"))
     end
 
@@ -708,12 +1125,12 @@ local function BuildDropdownRow(card, info, parentCb)
         for index, c in ipairs(choices) do
             local displayText = (L and L[c.label]) or c.label
             local button = rootDescription:CreateButton(displayText, function()
-                BetterBlizzFramesDB[info.key] = c.value
+                SetOptionValue(schema, info.key, c.value)
                 dropdown:SetDefaultText(displayText)
                 if info.onChange then info.onChange(c.value) end
-                if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
-                if BBF.SetCustomFonts then BBF.SetCustomFonts() end
-                if BBF.UpdateFrames then BBF.UpdateFrames() end
+                if _G.BBF and _G.BBF.UpdateCustomTextures then _G.BBF.UpdateCustomTextures() end
+                if _G.BBF and _G.BBF.SetCustomFonts then _G.BBF.SetCustomFonts() end
+                if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
             end)
 
             if isTextureDropdown and lsmTextures and lsmTextures[c.value] then
@@ -794,8 +1211,8 @@ local function BuildDropdownRow(card, info, parentCb)
     end
 
     if info.tooltip and info.tooltip ~= "" then
-        BBF.CreateTooltipTwo(titleFrame, info.label, info.tooltip)
-        BBF.CreateTooltipTwo(dropdown,   info.label, info.tooltip)
+        AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
+        AttachTooltip(dropdown,   ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
     HookHighlight(titleFrame, updateHL)
@@ -809,7 +1226,7 @@ end
 -- FILA: DOBLE CHECKBOX HIJO (dos opciones en una sola fila)
 --------------------------------------------------------
 
-local function BuildDualChildCheckboxRow(card, info, parentCb)
+local function BuildDualChildCheckboxRow(card, info, parentCb, schema)
     local rd = T.Row.dualChild
 
     local row = CreateFrame("Frame", nil, card)
@@ -825,7 +1242,7 @@ local function BuildDualChildCheckboxRow(card, info, parentCb)
     tf1:SetPoint("LEFT", row, "LEFT", 0, 0)
     tf1:SetSize(title1:GetStringWidth() + 6, rd.height)
 
-    local cb1 = BBF.CreateCheckbox(info.key1, "", parentCb or row, nil)
+    local cb1 = CreateNativeCheckbox(row, info.key1, schema, info.onChange1)
     cb1:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     cb1:HookScript("OnClick", function(self, btn)
         if btn == "RightButton" then
@@ -834,29 +1251,28 @@ local function BuildDualChildCheckboxRow(card, info, parentCb)
         end
     end)
     cb1.associatedTitle = title1
-    StyleCheckbox(cb1)
     cb1:SetPoint("LEFT", title1, "RIGHT", 6, 0)
     if cb1.UpdateEnabledState then cb1:UpdateEnabledState() end
 
     tf1:EnableMouse(true)
     tf1:SetScript("OnMouseDown", function(self, btn)
         if btn == "LeftButton" and cb1:IsEnabled() then cb1:Click("LeftButton")
-        elseif btn == "RightButton" and BBF.HandleRightClick then BBF.HandleRightClick(info.key1, info.label1, tf1) end
+        elseif btn == "RightButton" then TriggerRightClick(info, tf1, info.key1, info.label1) end
     end)
     if info.tooltip1 and info.tooltip1 ~= "" then
-        BBF.CreateTooltipTwo(tf1, info.label1, info.tooltip1)
-        BBF.CreateTooltipTwo(cb1, info.label1, info.tooltip1)
+        AttachTooltip(tf1, ResolveText(schema, info.label1), ResolveText(schema, info.tooltip1), nil, "ANCHOR_RIGHT")
+        AttachTooltip(cb1, ResolveText(schema, info.label1), ResolveText(schema, info.tooltip1), nil, "ANCHOR_RIGHT")
     end
 
     local title2 = row:CreateFontString(nil, "OVERLAY", rd.titleFont)
     title2:SetPoint("LEFT", cb1, "RIGHT", rd.spacing, 0)
-    title2:SetText(info.label2)
+    title2:SetText(ResolveText(schema, info.label2))
 
     local tf2 = CreateFrame("Frame", nil, row)
     tf2:SetPoint("LEFT", cb1, "RIGHT", rd.spacing, 0)
     tf2:SetSize(title2:GetStringWidth() + 6, rd.height)
 
-    local cb2 = BBF.CreateCheckbox(info.key2, "", parentCb or row, nil)
+    local cb2 = CreateNativeCheckbox(row, info.key2, schema, info.onChange2)
     cb2:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     cb2:HookScript("OnClick", function(self, btn)
         if btn == "RightButton" then
@@ -865,18 +1281,17 @@ local function BuildDualChildCheckboxRow(card, info, parentCb)
         end
     end)
     cb2.associatedTitle = title2
-    StyleCheckbox(cb2)
     cb2:SetPoint("LEFT", title2, "RIGHT", 6, 0)
     if cb2.UpdateEnabledState then cb2:UpdateEnabledState() end
 
     tf2:EnableMouse(true)
     tf2:SetScript("OnMouseDown", function(self, btn)
         if btn == "LeftButton" and cb2:IsEnabled() then cb2:Click("LeftButton")
-        elseif btn == "RightButton" and BBF.HandleRightClick then BBF.HandleRightClick(info.key2, info.label2, tf2) end
+        elseif btn == "RightButton" then TriggerRightClick(info, tf2, info.key2, info.label2) end
     end)
     if info.tooltip2 and info.tooltip2 ~= "" then
-        BBF.CreateTooltipTwo(tf2, info.label2, info.tooltip2)
-        BBF.CreateTooltipTwo(cb2, info.label2, info.tooltip2)
+        AttachTooltip(tf2, ResolveText(schema, info.label2), ResolveText(schema, info.tooltip2), nil, "ANCHOR_RIGHT")
+        AttachTooltip(cb2, ResolveText(schema, info.label2), ResolveText(schema, info.tooltip2), nil, "ANCHOR_RIGHT")
     end
 
     HookHighlight(tf1, updateHL) HookHighlight(cb1, updateHL)
@@ -891,7 +1306,7 @@ end
 -- FILA: CHECKBOX CON MULTIPLES PADRES
 --------------------------------------------------------
 
-local function BuildMultiParentChildRow(card, info, parentCbs)
+local function BuildMultiParentChildRow(card, info, parentCbs, schema)
     local rc = T.Row.checkbox
 
     local row = CreateFrame("Frame", nil, card)
@@ -909,7 +1324,7 @@ local function BuildMultiParentChildRow(card, info, parentCbs)
     titleFrame:SetPoint("LEFT", row, "LEFT", 0, 0)
     titleFrame:SetSize(math.min(title:GetStringWidth() + 10, rc.titleWidthChild), rc.height)
 
-    local cb = BBF.CreateCheckbox(info.key, "", row, nil, info.onChange)
+    local cb = CreateNativeCheckbox(row, info.key, schema, info.onChange)
     cb.associatedTitle    = title
     cb.associatedRow      = row
     cb.parentCheckButtons = parentCbs
@@ -917,18 +1332,17 @@ local function BuildMultiParentChildRow(card, info, parentCbs)
         parentCB.childrenCheckButtons = parentCB.childrenCheckButtons or {}
         table.insert(parentCB.childrenCheckButtons, cb)
     end
-    StyleCheckbox(cb)
     cb:SetPoint("RIGHT", row, "RIGHT", rc.cbOffsetRight, 0)
     if cb.UpdateEnabledState then cb:UpdateEnabledState() end
 
     titleFrame:EnableMouse(true)
     titleFrame:SetScript("OnMouseDown", function(self, btn)
         if btn == "LeftButton" and cb:IsEnabled() then cb:Click("LeftButton")
-        elseif btn == "RightButton" and BBF.HandleRightClick then BBF.HandleRightClick(info.key, info.label, titleFrame) end
+        elseif btn == "RightButton" then TriggerRightClick(info, titleFrame) end
     end)
     if info.tooltip and info.tooltip ~= "" then
-        BBF.CreateTooltipTwo(titleFrame, info.label, info.tooltip)
-        BBF.CreateTooltipTwo(cb,         info.label, info.tooltip)
+        AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
+        AttachTooltip(cb,         ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName)
     end
 
     HookHighlight(titleFrame, updateHL)
@@ -1111,7 +1525,7 @@ end
 -- OPTION DISPATCHER
 -- ============================================================
 
-local function BuildOption(card, info, resolvedRefs)
+local function BuildOption(card, info, resolvedRefs, schema)
     local t = info.type
 
     if t == "checkbox" or t == "childcheckbox" or t == "multiparentchild" then
@@ -1136,9 +1550,9 @@ local function BuildOption(card, info, resolvedRefs)
 
         local cb
         if #parents > 0 then
-            cb = BuildMultiParentChildRow(card, info, parents)
+            cb = BuildMultiParentChildRow(card, info, parents, schema)
         else
-            cb = BuildCheckboxRow(card, info, parentCb)
+            cb = BuildCheckboxRow(card, info, parentCb, schema)
         end
 
         if info.id then resolvedRefs[info.id] = cb end
@@ -1160,28 +1574,33 @@ local function BuildOption(card, info, resolvedRefs)
                 local merged = {}
                 for k, v in pairs(childInfo) do merged[k] = v end
                 merged._parentCb = cb
-                BuildOption(card, merged, resolvedRefs)
+                local cw1, cw2 = BuildOption(card, merged, resolvedRefs, schema)
+                local pf = card.panelFrame or (card:GetParent() and card:GetParent().panelFrame)
+                if pf and pf.allWidgets then
+                    if cw1 then table.insert(pf.allWidgets, cw1) end
+                    if cw2 then table.insert(pf.allWidgets, cw2) end
+                end
             end
         end
         return cb
 
     elseif t == "slider" then
         local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
-        local sl = BuildSliderRow(card, info, parentCb)
+        local sl = BuildSliderRow(card, info, parentCb, schema)
         if info.id then resolvedRefs[info.id] = sl end
         if info.key then resolvedRefs[info.key] = sl end
         return sl
 
     elseif t == "dropdown" then
         local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent])
-        local dd = BuildDropdownRow(card, info, parentCb)
+        local dd = BuildDropdownRow(card, info, parentCb, schema)
         if info.id  then resolvedRefs[info.id]  = dd end
         if info.key then resolvedRefs[info.key] = dd end
         return dd
 
     elseif t == "dualchild" then
         local parentCb = info._parentCb or (info.parent and resolvedRefs[info.parent]) 
-        local cb1, cb2 = BuildDualChildCheckboxRow(card, info, parentCb)
+        local cb1, cb2 = BuildDualChildCheckboxRow(card, info, parentCb, schema)
         if info.id1 then resolvedRefs[info.id1] = cb1 end
         if info.id2 then resolvedRefs[info.id2] = cb2 end
         return cb1, cb2
@@ -1278,7 +1697,7 @@ local popupFrames = {}
 -- BOTON DE SELECCION DE COLOR (color swatch)
 --------------------------------------------------------
 
-BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor, maxTextWidth, callback, ttTitle, ttDesc)
+BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor, maxTextWidth, callback, ttTitle, ttDesc, schema)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(18, 18)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", posX, posY)
@@ -1295,57 +1714,61 @@ BuildColorSwatchBtn = function(parent, posX, posY, dbKey, labelStr, defaultColor
         txt:SetWordWrap(true)
         txt:SetJustifyH("LEFT")
     end
-    txt:SetText(labelStr)
+    txt:SetText(labelStr or "")
     btn:SetHitRectInsets(0, -(maxTextWidth or 70), 0, 0)
 
     local titleText = ttTitle or labelStr
-    local descText  = ttDesc  or BBF.L["Tooltip_Color_Picker_Desc"]
-    if BBF.CreateTooltipTwo then
-        BBF.CreateTooltipTwo(btn, titleText, descText, nil, "ANCHOR_RIGHT")
-    end
+    local descText  = ttDesc  or ResolveText(schema, "Tooltip_Color_Picker_Desc")
+    AttachTooltip(btn, titleText, descText, nil, "ANCHOR_RIGHT")
 
     local function RefreshSwatch()
-        local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
-        local r = col.r or col[1] or 1
-        local g = col.g or col[2] or 1
-        local b = col.b or col[3] or 1
+        local col = GetOptionValue(schema, dbKey, defaultColor or {r = 1, g = 1, b = 1})
+        local r = (type(col) == "table" and (col.r or col[1])) or 1
+        local g = (type(col) == "table" and (col.g or col[2])) or 1
+        local b = (type(col) == "table" and (col.b or col[3])) or 1
         swatch:SetVertexColor(r, g, b)
     end
     RefreshSwatch()
 
     btn:SetScript("OnClick", function(self, mouseButton)
         if mouseButton == "RightButton" and IsShiftKeyDown() then
-            BetterBlizzFramesDB[dbKey] = nil
+            SetOptionValue(schema, dbKey, nil)
             RefreshSwatch()
             if callback then callback() end
-            if BBF.UpdateFrames then BBF.UpdateFrames() end
+            if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
             return
         end
 
-        local col = BetterBlizzFramesDB[dbKey] or defaultColor or {r = 1, g = 1, b = 1}
-        local r = col.r or col[1] or 1
-        local g = col.g or col[2] or 1
-        local b = col.b or col[3] or 1
+        local col = GetOptionValue(schema, dbKey, defaultColor or {r = 1, g = 1, b = 1})
+        local r = (type(col) == "table" and (col.r or col[1])) or 1
+        local g = (type(col) == "table" and (col.g or col[2])) or 1
+        local b = (type(col) == "table" and (col.b or col[3])) or 1
 
         local info = {
             r = r, g = g, b = b,
             hasOpacity = false,
             swatchFunc = function()
                 local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-                BetterBlizzFramesDB[dbKey] = { nr, ng, nb, r = nr, g = ng, b = nb }
+                SetOptionValue(schema, dbKey, { nr, ng, nb, r = nr, g = ng, b = nb })
                 swatch:SetVertexColor(nr, ng, nb)
                 if callback then callback() end
-                if BBF.UpdateFrames then BBF.UpdateFrames() end
+                if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
             end,
             cancelFunc = function(prev)
-                local pr, pg, pb = prev.r or prev[1], prev.g or prev[2], prev.b or prev[3]
-                BetterBlizzFramesDB[dbKey] = { pr, pg, pb, r = pr, g = pg, b = pb }
+                local pr = (type(prev) == "table" and (prev.r or prev[1])) or 1
+                local pg = (type(prev) == "table" and (prev.g or prev[2])) or 1
+                local pb = (type(prev) == "table" and (prev.b or prev[3])) or 1
+                SetOptionValue(schema, dbKey, { pr, pg, pb, r = pr, g = pg, b = pb })
                 swatch:SetVertexColor(pr, pg, pb)
                 if callback then callback() end
-                if BBF.UpdateFrames then BBF.UpdateFrames() end
+                if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
             end
         }
-        ColorPickerFrame:SetupColorPickerAndShow(info)
+        if ColorPickerFrame.SetupColorPickerAndShow then
+            ColorPickerFrame:SetupColorPickerAndShow(info)
+        elseif OpenColorPicker then
+            OpenColorPicker(info)
+        end
     end)
 
     return btn, RefreshSwatch
@@ -1359,7 +1782,7 @@ function GUI.OpenPopup(popupId, schema)
     schema = schema or (GUI.Popups and GUI.Popups[popupId])
     if not schema then return end
     local tp = T.Popup
-    local L  = BBF.L
+    local L = schema.L or (BBF and BBF.L)
 
     if not popupFrames[popupId] then
         local frameTemplate = schema.template or tp.template
@@ -1459,22 +1882,24 @@ function GUI.OpenPopup(popupId, schema)
 
                 if not cb.Text then
                     cb.Text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-                    cb.Text:SetPoint("LEFT", cb, "RIGHT", 6, 0)
+                else
+                    cb.Text:SetFontObject("GameFontHighlight")
                 end
+                cb.Text:SetPoint("LEFT", cb, "RIGHT", 6, 0)
                 cb.Text:SetText(labelText or "")
                 if textColor then
                     cb.Text:SetTextColor(textColor.r or 1, textColor.g or 1, textColor.b or 1)
                 end
 
-                cb:SetChecked(BetterBlizzFramesDB[opt.key])
+                cb:SetChecked(GetOptionValue(schema, opt.key))
                 cb:SetScript("OnClick", function(self)
-                    BetterBlizzFramesDB[opt.key] = self:GetChecked() or nil
+                    SetOptionValue(schema, opt.key, self:GetChecked() or nil)
                     if opt.onChange then opt.onChange() end
                     if (opt.requiresReload or opt.reload) and StaticPopup_Show then
-                        StaticPopup_Show("BBF_CONFIRM_RELOAD")
+                        ShowReloadPrompt()
                     end
-                    if BBF.UpdateFrames then BBF.UpdateFrames() end
-                    if BBF.HideFrames then BBF.HideFrames() end
+                    if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
+                    if _G.BBF and _G.BBF.HideFrames then _G.BBF.HideFrames() end
                 end)
 
 
@@ -1490,10 +1915,8 @@ function GUI.OpenPopup(popupId, schema)
                 end
 
                 if opt.tooltip then
-                    if BBF.CreateTooltipTwo then
-                        BBF.CreateTooltipTwo(cb, opt.label, opt.tooltip, nil, "ANCHOR_RIGHT")
-                        BBF.CreateTooltipTwo(rowFrame, opt.label, opt.tooltip, nil, "ANCHOR_RIGHT")
-                    end
+                    AttachTooltip(cb, ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT")
+                    AttachTooltip(rowFrame, ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT")
                 end
 
                 rowFrame:EnableMouse(true)
@@ -1653,8 +2076,8 @@ function GUI.OpenPopup(popupId, schema)
                     local rawColor = pData.default or pData.color or {r = 1, g = 1, b = 1}
                     local pDefColor = { r = rawColor.r or rawColor[1] or 1, g = rawColor.g or rawColor[2] or 1, b = rawColor.b or rawColor[3] or 1 }
                     local powerOnChange = pData.onChange or function()
-                        if BBF.UpdatePowerColorCache then BBF.UpdatePowerColorCache() end
-                        if BBF.UpdateFrames then BBF.UpdateFrames() end
+                        if _G.BBF and _G.BBF.UpdatePowerColorCache then _G.BBF.UpdatePowerColorCache() end
+                        if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
                     end
                     local btn = BuildColorSwatchBtn(contentParent, posX, posY, "powerColor" .. pData.key, labelName, pDefColor, colWidth - 26, powerOnChange)
                     if isChild and parentCb then
@@ -1709,7 +2132,7 @@ function GUI.OpenPopup(popupId, schema)
                 end
 
                 local function RefreshText()
-                    local current = BetterBlizzFramesDB[opt.key]
+                    local current = GetOptionValue(schema, opt.key)
                     dropdown:SetDefaultText(GetChoiceLabel(current) or (L and L["Select_Texture"] or "Select Texture"))
                 end
 
@@ -1732,12 +2155,12 @@ function GUI.OpenPopup(popupId, schema)
                     for index, c in ipairs(choices) do
                         local displayText = (L and L[c.label]) or c.label
                         local button = rootDescription:CreateButton(displayText, function()
-                            BetterBlizzFramesDB[opt.key] = c.value
+                            SetOptionValue(schema, opt.key, c.value)
                             dropdown:SetDefaultText(displayText)
                             if opt.onChange then opt.onChange(c.value) end
-                            if BBF.UpdateCustomTextures then BBF.UpdateCustomTextures() end
-                            if BBF.SetCustomFonts then BBF.SetCustomFonts() end
-                            if BBF.UpdateFrames then BBF.UpdateFrames() end
+                            if _G.BBF and _G.BBF.UpdateCustomTextures then _G.BBF.UpdateCustomTextures() end
+                            if _G.BBF and _G.BBF.SetCustomFonts then _G.BBF.SetCustomFonts() end
+                            if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
                         end)
 
                         if isTextureDropdown and lsmTextures and lsmTextures[c.value] then
@@ -1862,20 +2285,139 @@ function GUI.BuildPanel(panelFrame, schema)
     local categoryFrames  = {}
     local categoryButtons = {}
     local hasTabs = schema.tabs and #schema.tabs > 0
+    panelFrame.allWidgets = {}
 
     local sidebar, contentParent
+    local UpdateMasterState
+    local optionGridHeight = 0
+    local masterCbs = {}
+
+    UpdateMasterState = function()
+        if #masterCbs == 0 then return end
+
+        local isAllMasterChecked = true
+        for _, mCb in ipairs(masterCbs) do
+            if not mCb:GetChecked() then
+                isAllMasterChecked = false
+                break
+            end
+        end
+
+        if sidebar then
+            sidebar:SetAlpha(isAllMasterChecked and 1 or 0.4)
+            for _, btn in pairs(categoryButtons) do
+                if isAllMasterChecked then btn:Enable() else btn:Disable() end
+            end
+        end
+
+        for _, sf in pairs(categoryFrames) do
+            sf:SetAlpha(isAllMasterChecked and 1 or 0.4)
+        end
+
+        if panelFrame.allWidgets then
+            -- Pass 1: Set base state for all widgets
+            for _, w in ipairs(panelFrame.allWidgets) do
+                SetWidgetState(w, isAllMasterChecked)
+            end
+
+            -- Pass 2: Re-evaluate local parent-child dependencies when master is enabled
+            if isAllMasterChecked then
+                for _, w in ipairs(panelFrame.allWidgets) do
+                    if w.UpdateParentDependency then
+                        w.UpdateParentDependency()
+                    end
+                end
+            end
+        end
+    end
+
+    panelFrame:HookScript("OnShow", function()
+        UpdateMasterState()
+    end)
+
+    if schema.optionGrid and #schema.optionGrid > 0 then
+        local gridParent = CreateFrame("Frame", nil, panelFrame)
+        gridParent:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", 12, -10)
+        gridParent:SetPoint("TOPRIGHT", panelFrame, "TOPRIGHT", -12, -10)
+
+        local currentGridY = 0
+
+        for _, gridDef in ipairs(schema.optionGrid) do
+            local cols = tonumber(gridDef.cols or gridDef.columns or 2)
+            local gap = tonumber(gridDef.gap or 12)
+            local mTop, mRight, mBottom, mLeft = ParseMargin(gridDef)
+            local opts = gridDef.options or {}
+
+            currentGridY = currentGridY - mTop
+
+            local panelWidth = (panelFrame:GetWidth() > 0 and panelFrame:GetWidth() or 650)
+            local availWidth = panelWidth - 24 - mLeft - mRight
+            local colWidth = math.floor((availWidth - ((cols - 1) * gap)) / cols)
+
+            for oIdx, opt in ipairs(opts) do
+                local col = (oIdx - 1) % cols
+                local rowIdx = math.floor((oIdx - 1) / cols)
+                local posX = mLeft + (col * (colWidth + gap))
+                local posY = currentGridY - (rowIdx * 34)
+
+                local cb = CreateNativeCheckbox(gridParent, opt.key, schema, opt.onChange, function(self, btn, val)
+                    if opt.parentMaster and UpdateMasterState then
+                        UpdateMasterState()
+                    end
+                    if opt.requiresReload or opt.reload then
+                        ShowReloadPrompt()
+                    end
+                end)
+                cb:SetPoint("TOPLEFT", gridParent, "TOPLEFT", posX, posY)
+                cb.dbKey = opt.key
+
+                local txt = cb.Text
+                if not txt then
+                    txt = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                    cb.Text = txt
+                else
+                    txt:SetFontObject("GameFontHighlight")
+                end
+                txt:SetPoint("LEFT", cb, "RIGHT", 6, 0)
+                txt:SetText(ResolveText(schema, opt.label))
+
+                if opt.tooltip and opt.tooltip ~= "" then
+                    AttachTooltip(cb,  ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT", opt.requiresReload or opt.reload)
+                    AttachTooltip(txt, ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT", opt.requiresReload or opt.reload)
+                end
+
+                if opt.parentMaster then
+                    table.insert(masterCbs, cb)
+                end
+            end
+
+            local numRows = math.ceil(#opts / cols)
+            currentGridY = currentGridY - (numRows * 34) - mBottom
+        end
+
+        gridParent:SetHeight(math.abs(currentGridY))
+
+        local firstGrid = schema.optionGrid[1]
+        local isOverlay = firstGrid and (firstGrid.overlayMode == true or firstGrid.overlayMode == "true")
+        if not isOverlay then
+            optionGridHeight = math.abs(currentGridY) + 6
+        end
+    end
+
+    local sidebarOffsetY = ts.offsetY - optionGridHeight
+    local contentOffsetY = -45 - optionGridHeight
 
     if hasTabs then
         sidebar = CreateFrame("Frame", nil, panelFrame)
-        sidebar:SetSize(ts.width, ts.height)
-        sidebar:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", ts.offsetX, ts.offsetY)
+        sidebar:SetSize(ts.width, ts.height - optionGridHeight)
+        sidebar:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", ts.offsetX, sidebarOffsetY)
 
         contentParent = CreateFrame("Frame", nil, panelFrame)
         contentParent:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", tc.gapLeft, 0)
         contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
     else
         contentParent = CreateFrame("Frame", nil, panelFrame)
-        contentParent:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", 12, -45)
+        contentParent:SetPoint("TOPLEFT", panelFrame, "TOPLEFT", 12, contentOffsetY)
         contentParent:SetPoint("BOTTOMRIGHT", panelFrame, "BOTTOMRIGHT", tc.marginRight, tc.marginBottom)
     end
 
@@ -1935,7 +2477,12 @@ function GUI.BuildPanel(panelFrame, schema)
             local isSection = containerDef.isSection or (containerDef.type == "section") or (containerDef.section == true)
             local card = BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, isSection, containerDef)
             for _, optInfo in ipairs(containerDef.options or {}) do
-                BuildOption(card, optInfo, resolvedRefs)
+                local w1, w2 = BuildOption(card, optInfo, resolvedRefs, parentSchema or schema)
+                if w1 then table.insert(panelFrame.allWidgets, w1) end
+                if w2 then table.insert(panelFrame.allWidgets, w2) end
+                if optInfo.parentMaster and w1 then
+                    table.insert(masterCbs, w1)
+                end
             end
             lastCard = card
         end
@@ -1962,6 +2509,9 @@ function GUI.BuildPanel(panelFrame, schema)
                 categoryButtons[catId]:SetBackdropBorderColor(unpack(tt.borderColorActive))
                 categoryButtons[catId]:SetBackdropColor(unpack(tt.bgColorActive))
                 categoryButtons[catId].Text:SetTextColor(unpack(tt.textColorActive))
+            end
+            if UpdateMasterState then
+                UpdateMasterState()
             end
         end
 
@@ -2081,7 +2631,16 @@ function GUI.BuildPanel(panelFrame, schema)
         end
 
         PopulateContainers(cf, containers, schema)
-
-        return nil, contentParent, categoryFrames, categoryButtons
     end
+
+    if #masterCbs > 0 then
+        for _, mCb in ipairs(masterCbs) do
+            mCb:HookScript("OnClick", function()
+                UpdateMasterState()
+            end)
+        end
+        UpdateMasterState()
+    end
+
+    return sidebar, contentParent, categoryFrames, categoryButtons
 end

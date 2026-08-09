@@ -9,6 +9,32 @@ BBF.GUI = BBF.GUI or {}
 BBF.GUI.Schemas = BBF.GUI.Schemas or {}
 
 local schema = {
+    optionGrid = {
+        {
+            id           = "aurasMasterGrid",
+            margin       = {0, 0, 8, 0},
+            gap          = 15,
+            cols         = 2,
+            overlayMode  = true,
+            options = {
+                {
+                    type         = "checkbox",
+                    key          = "playerAuraFiltering",
+                    label        = L["Enable_Aura_Settings"],
+                    tooltip      = L["Tooltip_Enable_Aura_Settings_Desc"],
+                    parentMaster = true,
+                    onChange     = BBF.RefreshAllAuraFrames
+                },
+                {
+                    type     = "checkbox",
+                    key      = "masqueSupport",
+                    label    = L["Add_Masque_Support"],
+                    tooltip  = L["Tooltip_Add_Masque_Support_Desc"],
+                    onChange = BBF.UpdateFrames
+                },
+            }
+        }
+    },
     tabs = {
         --------------------------------------------------------
         -- TAB 1: Player Aura
@@ -98,15 +124,15 @@ local schema = {
                         { type="checkbox", key="hideTargetBuffs",   label=L["Hide_Target_Buffs"],   tooltip=L["Tooltip_Hide_Target_Buffs_Desc"], requiresReload=true },
                         { type="checkbox", key="hideTargetDebuffs",  label=L["Hide_Target_Debuffs"],  tooltip=L["Tooltip_Hide_Target_Debuffs_Desc"], requiresReload=true },
                         { type="checkbox", key="hideFocusBuffs",    label=L["Hide_Focus_Buffs"],    tooltip=L["Tooltip_Hide_Focus_Buffs_Desc"], requiresReload=true },
-                        { type="checkbox", key="hideFocusDebuffs",   label=L["Hide_Focus_Debuffs"],   tooltip=L["Tooltip_Hide_Focus_Debuffs_Desc"], onChange=BBF.RefreshAllAuraFrames, requiresReload=true },
+                        { type="checkbox", key="hideFocusDebuffs",   label=L["Hide_Focus_Debuffs"],   tooltip=L["Tooltip_Hide_Focus_Debuffs_Desc"], onChange=function(...) if BBF and BBF.RefreshAllAuraFrames then BBF.RefreshAllAuraFrames(...) end end, requiresReload=true },
                     }
                 },
                 {
                     title   = L["Aura_Limits"],
                     options = {
-                        { type="checkbox", key="enableMaxTargetFocusBuffs",   label=L["Max_Buffs"],   tooltip=L["Max_Buffs"], onChange=BBF.RefreshAllAuraFrames },
+                        { type="checkbox", key="enableMaxTargetFocusBuffs",   label=L["Max_Buffs"],   tooltip=L["Max_Buffs"], onChange=function(...) if BBF and BBF.RefreshAllAuraFrames then BBF.RefreshAllAuraFrames(...) end end },
                         { type="slider",   key="maxTargetFocusBuffs",         label=L["Max_Buffs"],   tooltip="", parent="enableMaxTargetFocusBuffs", min=1, max=100, step=1 },
-                        { type="checkbox", key="enableMaxTargetFocusDebuffs",  label=L["Max_Debuffs"], tooltip=L["Max_Debuffs"], onChange=BBF.RefreshAllAuraFrames },
+                        { type="checkbox", key="enableMaxTargetFocusDebuffs",  label=L["Max_Debuffs"], tooltip=L["Max_Debuffs"], onChange=function(...) if BBF and BBF.RefreshAllAuraFrames then BBF.RefreshAllAuraFrames(...) end end },
                         { type="slider",   key="maxTargetFocusDebuffs",        label=L["Max_Debuffs"], tooltip="", parent="enableMaxTargetFocusDebuffs", min=1, max=100, step=1 },
                     }
                 }
