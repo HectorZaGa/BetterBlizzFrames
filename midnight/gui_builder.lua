@@ -767,10 +767,19 @@ local function SetWidgetState(widget, enabled)
     local isSlider     = (widget.sliderFrame ~= nil) or (widget.Slider ~= nil) or (objType == "Slider")
     local isCheckbox   = (objType == "CheckButton") or (widget.GetChecked ~= nil)
     local tf           = widget.associatedTitleFrame
+    local row          = widget.associatedRow
+
+    if row then
+        row._midnightAllowHighlight = enabled
+        if row._midnightUpdateHighlight then
+            row._midnightUpdateHighlight()
+        elseif row._midnightRowHighlight and not enabled then
+            row._midnightRowHighlight:Hide()
+        end
+    end
 
     if isSlider then
         -- Row and slider controls stay at full alpha; only label dims
-        local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
         if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
         if tf and tf.SetAlpha then tf:SetAlpha(alpha) end
@@ -789,7 +798,6 @@ local function SetWidgetState(widget, enabled)
 
     elseif isCheckbox then
         -- Checkbox box stays full alpha; only label dims
-        local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(1.0) end
         if widget.associatedTitle and widget.associatedTitle.SetAlpha then widget.associatedTitle:SetAlpha(alpha) end
         if tf and tf.SetAlpha then tf:SetAlpha(alpha) end
@@ -800,7 +808,6 @@ local function SetWidgetState(widget, enabled)
 
     else
         -- Standard widgets (dropdowns, buttons, etc.): entire row dims
-        local row = widget.associatedRow
         if row and row ~= UIParent and row.SetAlpha then row:SetAlpha(alpha) end
         if widget.SetAlpha then widget:SetAlpha(alpha) end
 
@@ -863,6 +870,10 @@ local function AttachRowHighlight(rowFrame, highlighted, includeTargets, exclude
     end
     rowHighlight:SetBlendMode(cfg.blendMode or "ADD")
     rowHighlight:Hide()
+    rowFrame._midnightRowHighlight = rowHighlight
+    if rowFrame._midnightAllowHighlight == nil then
+        rowFrame._midnightAllowHighlight = true
+    end
 
     includeTargets = includeTargets or {}
     excludeTargets = excludeTargets or {}
@@ -870,6 +881,11 @@ local function AttachRowHighlight(rowFrame, highlighted, includeTargets, exclude
         return frame and frame.IsMouseOver and frame:IsMouseOver()
     end
     local function UpdateHighlight()
+        if rowFrame._midnightAllowHighlight == false then
+            rowHighlight:Hide()
+            return
+        end
+
         for _, frame in ipairs(excludeTargets) do
             if IsHovered(frame) then
                 rowHighlight:Hide()
@@ -888,6 +904,7 @@ local function AttachRowHighlight(rowFrame, highlighted, includeTargets, exclude
         end
         if show then rowHighlight:Show() else rowHighlight:Hide() end
     end
+    rowFrame._midnightUpdateHighlight = UpdateHighlight
 
     rowFrame:EnableMouse(true)
     rowFrame:HookScript("OnEnter", UpdateHighlight)
