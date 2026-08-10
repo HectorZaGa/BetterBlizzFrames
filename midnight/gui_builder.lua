@@ -696,30 +696,6 @@ end
 -- RESALTADO Y ESTADO DE WIDGETS (hover, enable/disable, padre-hijo)
 --------------------------------------------------------
 
-local function AddRowHighlight(row)
-    local hl = row:CreateTexture(nil, "BACKGROUND")
-    hl:SetAllPoints()
-    hl:SetAtlas(T.Row.highlight.atlas)
-    if not hl:GetTexture() then
-        hl:SetColorTexture(1, 1, 1, 0.12)
-    end
-    hl:SetBlendMode(T.Row.highlight.blendMode)
-    hl:Hide()
-    local function Update()
-        if MouseIsOver(row) then hl:Show() else hl:Hide() end
-    end
-    row:EnableMouse(true)
-    row:SetScript("OnEnter", Update)
-    row:SetScript("OnLeave", Update)
-    return hl, Update
-end
-
-local function HookHighlight(frame, updateFn)
-    if frame then
-        frame:HookScript("OnEnter", updateFn)
-        frame:HookScript("OnLeave", updateFn)
-    end
-end
 
 -- Recursively desaturates all textures within a slider frame tree
 local function SetSliderDesaturated(sliderFrame, isDesaturated)
@@ -845,24 +821,10 @@ end
 -- HELPERS DE CHECKBOX Y CLICK DERECHO
 --------------------------------------------------------
 
---- Apply modern Blizzard settings checkbox visual styling (SettingsCheckBoxControlTemplate style).
+--- Set checkbox size to match theme.
 local function StyleCheckbox(cb)
     if not cb then return end
-    local rc = T.Row.checkbox
-    local sz = rc.cbSize or 24
-    cb:SetSize(sz, sz)
-
-    if cb:GetHighlightTexture() then
-        cb:GetHighlightTexture():SetTexture("")
-        cb:GetHighlightTexture():SetAlpha(0)
-        cb:GetHighlightTexture():Hide()
-        cb:GetHighlightTexture().Show = function() end
-    end
-    if cb.HoverBackground then
-        cb.HoverBackground:SetAlpha(0)
-        cb.HoverBackground:Hide()
-        cb.HoverBackground.Show = function() end
-    end
+    cb:SetSize(T.Row.checkbox.cbSize or 24, T.Row.checkbox.cbSize or 24)
 end
 
 
@@ -911,7 +873,6 @@ local function BuildCheckboxRow(card, info, parentCb, schema)
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
     row:SetSize(card.cardWidth - widthShrink, rc.height)
-    local _, updateHL = AddRowHighlight(row)
 
     local title = row:CreateFontString(nil, "OVERLAY", titleFont)
     title:SetPoint("LEFT", row, "LEFT", rc.titleOffsetLeft, 0)
@@ -975,8 +936,7 @@ local function BuildCheckboxRow(card, info, parentCb, schema)
         AttachTooltip(cb,         ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
-    HookHighlight(titleFrame, updateHL)
-    HookHighlight(cb, updateHL)
+
 
     card.currentY = card.currentY - rc.height - rc.gap
     UpdateCardHeight(card)
@@ -1012,7 +972,6 @@ local function BuildSliderRow(card, info, parentCb, schema)
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
     row:SetSize(card.cardWidth - widthShrink, rs.height)
-    local _, updateHL = AddRowHighlight(row)
 
     local title = row:CreateFontString(nil, "OVERLAY", titleFont)
     title:SetPoint("LEFT", row, "LEFT", rs.titleOffsetLeft, 0)
@@ -1061,8 +1020,7 @@ local function BuildSliderRow(card, info, parentCb, schema)
         AttachTooltip(slider,     ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
-    HookHighlight(titleFrame, updateHL)
-    HookHighlight(slider, updateHL)
+
 
     card.currentY = card.currentY - rs.height - rs.gap
     UpdateCardHeight(card)
@@ -1100,7 +1058,6 @@ local function BuildDropdownRow(card, info, parentCb, schema)
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", leftInset, card.currentY)
     row:SetSize(card.cardWidth - widthShrink, rs.height)
-    local _, updateHL = AddRowHighlight(row)
 
     local title = row:CreateFontString(nil, "OVERLAY", titleFont)
     title:SetPoint("LEFT", row, "LEFT", rs.titleOffsetLeft, 0)
@@ -1300,7 +1257,6 @@ local function BuildDropdownRow(card, info, parentCb, schema)
         AttachTooltip(dropdown,   ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
     end
 
-    HookHighlight(titleFrame, updateHL)
 
     card.currentY = card.currentY - rs.height - rs.gap
     UpdateCardHeight(card)
@@ -1317,7 +1273,6 @@ local function BuildDualChildCheckboxRow(card, info, parentCb, schema)
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", rd.leftInset, card.currentY)
     row:SetSize(card.cardWidth - rd.widthShrink, rd.height)
-    local _, updateHL = AddRowHighlight(row)
 
     local title1 = row:CreateFontString(nil, "OVERLAY", rd.titleFont)
     title1:SetPoint("LEFT", row, "LEFT", 6, 0)
@@ -1379,8 +1334,7 @@ local function BuildDualChildCheckboxRow(card, info, parentCb, schema)
         AttachTooltip(cb2, ResolveText(schema, info.label2), ResolveText(schema, info.tooltip2), nil, "ANCHOR_RIGHT")
     end
 
-    HookHighlight(tf1, updateHL) HookHighlight(cb1, updateHL)
-    HookHighlight(tf2, updateHL) HookHighlight(cb2, updateHL)
+
 
     card.currentY = card.currentY - rd.height - rd.gap
     UpdateCardHeight(card)
@@ -1397,7 +1351,6 @@ local function BuildMultiParentChildRow(card, info, parentCbs, schema)
     local row = CreateFrame("Frame", nil, card)
     row:SetPoint("TOPLEFT", card, "TOPLEFT", rc.leftInsetChild, card.currentY)
     row:SetSize(card.cardWidth - rc.widthShrinkChild, rc.height)
-    local _, updateHL = AddRowHighlight(row)
 
     local title = row:CreateFontString(nil, "OVERLAY", rc.titleFontChild)
     title:SetPoint("LEFT", row, "LEFT", rc.titleOffsetLeft, 0)
@@ -1430,8 +1383,7 @@ local function BuildMultiParentChildRow(card, info, parentCbs, schema)
         AttachTooltip(cb,         ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName)
     end
 
-    HookHighlight(titleFrame, updateHL)
-    HookHighlight(cb, updateHL)
+
 
     card.currentY = card.currentY - rc.height - rc.gap
     UpdateCardHeight(card)
@@ -1690,40 +1642,45 @@ end
 -- ICON HELPER
 -- ============================================================
 
-local function ApplyIconToFrame(iconFrame, cat)
-    local iconTex = iconFrame:CreateTexture(nil, "ARTWORK")
-    local w, h = unpack(cat.atlasSize or cat.size or {20, 20})
-    iconTex:SetSize(w, h)
-    iconTex:SetPoint("CENTER", iconFrame, "CENTER", 0, 0)
-
-    local tType, tVal = ResolveTextureFromInfo(cat)
-    if tType == "atlas" then
-        iconTex:SetAtlas(tVal)
-    elseif tType == "texture" then
-        iconTex:SetTexture(tVal)
+local function ApplyIconToFrame(iconFrame, info)
+    local function SetupTex(tex, cfg)
+        local tType, tVal = ResolveTextureFromInfo(cfg)
+        if tType == "atlas" then tex:SetAtlas(tVal) elseif tType == "texture" then tex:SetTexture(tVal) end
+        tex._origColor = cfg.atlasColor or cfg.color
+        tex._origDesat = cfg.atlasDesaturated or cfg.desaturated
+        if tex._origDesat then tex:SetDesaturated(true) end
+        if tex._origColor then tex:SetVertexColor(unpack(tex._origColor)) end
     end
 
-    if cat.atlasDesaturated or cat.desaturated then iconTex:SetDesaturated(true) end
-    if cat.atlasColor or cat.color then iconTex:SetVertexColor(unpack(cat.atlasColor or cat.color)) end
+    local iconTex = iconFrame:CreateTexture(nil, "ARTWORK")
+    iconTex:SetSize(unpack(info.atlasSize or info.size or {20, 20}))
+    iconTex:SetPoint("CENTER", iconFrame, "CENTER", 0, 0)
+    SetupTex(iconTex, info)
 
-    if cat.overlays then
-        for _, ov in ipairs(cat.overlays) do
+    if info.overlays then
+        for _, ov in ipairs(info.overlays) do
             local ovTex = iconFrame:CreateTexture(nil, ov.layer or "OVERLAY")
-            local ow, oh = unpack(ov.size or {20, 20})
-            ovTex:SetSize(ow, oh)
-            local ox, oy = unpack(ov.offset or {0, 0})
-            ovTex:SetPoint("CENTER", iconTex, "CENTER", ox, oy)
-            local ovType, ovVal = ResolveTextureFromInfo(ov)
-            if ovType == "atlas" then
-                ovTex:SetAtlas(ovVal)
-            elseif ovType == "texture" then
-                ovTex:SetTexture(ovVal)
-            end
-            if ov.desaturated then ovTex:SetDesaturated(true) end
-            if ov.color then ovTex:SetVertexColor(unpack(ov.color)) end
+            ovTex:SetSize(unpack(ov.size or {20, 20}))
+            ovTex:SetPoint("CENTER", iconTex, "CENTER", unpack(ov.offset or {0, 0}))
+            SetupTex(ovTex, ov)
         end
     end
 end
+
+-- Desaturates all textures on an iconFrame (base + overlays), stripping color tints when disabled
+local function SetIconFrameDesaturated(iconFrame, isDesaturated)
+    if not iconFrame then return end
+    for _, reg in ipairs({ iconFrame:GetRegions() }) do
+        if reg:IsObjectType("Texture") then
+            reg:SetDesaturated(isDesaturated or reg._origDesat or false)
+            if reg._origColor then
+                reg:SetVertexColor(unpack(isDesaturated and {1, 1, 1} or reg._origColor))
+            end
+        end
+    end
+end
+
+
 
 -- ============================================================
 -- POPUP WINDOW SCHEMA ENGINE
@@ -2455,56 +2412,54 @@ function GUI.BuildPanel(panelFrame, schema)
     --------------------------------------------------------
     -- POBLAR CARDS/SECCIONES DENTRO DE UN SCROLL CHILD
     --------------------------------------------------------
-    -- Wires a tab button to a parent checkbox:
-    -- desaturates icon + grays out label text when parent is OFF.
-    -- SelectCategory respects btn.isParentDisabled to keep label gray even when active.
-    local function WireTabToParent(parentCb, btn, iconFrame, tabWidgets)
+    local function SetTextEnabled(fs, enabled, defaultColor)
+        if fs then fs:SetTextColor(unpack(enabled and defaultColor or {0.45, 0.45, 0.45, 1})) end
+    end
+
+    -- Wires a tab button to a parent checkbox
+    local function WireTabToParent(parentCb, btn, iconFrame, tabWidgets, tabCards, tabHeaderFrame)
         if not parentCb then return end
         local function UpdateTabState()
             local enabled = parentCb:GetChecked() and (not parentCb.IsEnabled or parentCb:IsEnabled())
             btn.isParentDisabled = not enabled
-            -- Desaturate the icon frame textures
-            if iconFrame then SetSliderDesaturated(iconFrame, not enabled) end
-            -- Gray out / restore label text color
-            if btn.Text then
-                if enabled then
-                    btn.Text:SetTextColor(unpack(tt.textColor))
-                else
-                    btn.Text:SetTextColor(0.45, 0.45, 0.45, 1)
-                end
+            SetIconFrameDesaturated(iconFrame, not enabled)
+            SetTextEnabled(btn.Text, enabled, tt.textColor)
+
+            if tabHeaderFrame then
+                SetTextEnabled(tabHeaderFrame.titleFontString, enabled, {1, 0.82, 0})
+                SetIconFrameDesaturated(tabHeaderFrame.iconFrame, not enabled)
             end
-            -- Disable widgets inside the tab
+            if tabCards then
+                for _, card in ipairs(tabCards) do SetTextEnabled(card.titleLabel, enabled, T.Card.header.color) end
+            end
             if tabWidgets then
-                for _, w in ipairs(tabWidgets) do
-                    SetWidgetState(w, enabled)
-                end
+                for _, w in ipairs(tabWidgets) do SetWidgetState(w, enabled) end
             end
         end
         parentCb:HookScript("OnClick", UpdateTabState)
         UpdateTabState()
     end
 
-    -- Wires a card/section titleLabel to a parent checkbox: desaturates when parent is OFF
+    -- Wires a card/section titleLabel to a parent checkbox
     local function WireContainerToParent(parentCb, card, containerWidgets)
         if not parentCb then return end
         local function UpdateContainerState()
             local enabled = parentCb:GetChecked() and (not parentCb.IsEnabled or parentCb:IsEnabled())
-            if card.titleLabel and card.titleLabel.SetDesaturated then
-                card.titleLabel:SetDesaturated(not enabled)
-            end
+            SetTextEnabled(card.titleLabel, enabled, T.Card.header.color)
             if containerWidgets then
-                for _, w in ipairs(containerWidgets) do
-                    SetWidgetState(w, enabled)
-                end
+                for _, w in ipairs(containerWidgets) do SetWidgetState(w, enabled) end
             end
         end
         parentCb:HookScript("OnClick", UpdateContainerState)
         UpdateContainerState()
     end
 
+
     local function PopulateContainers(cf, containerList, parentSchema)
         local lastCard = nil
         local resolvedRefs = {}
+        local createdCards = {}
+        local topHeaderFrame = nil
 
         -- Render Top-Level Header & Divider if header/title is defined on parentSchema
         if parentSchema and (parentSchema.header or parentSchema.title) then
@@ -2527,12 +2482,15 @@ function GUI.BuildPanel(panelFrame, schema)
                 iconFrame:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
                 ApplyIconToFrame(iconFrame, parentSchema)
                 titleFontString:SetPoint("LEFT", iconFrame, "RIGHT", 6, 0)
+                headerFrame.iconFrame = iconFrame
             else
                 titleFontString:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
             end
 
             titleFontString:SetText(headerText)
             titleFontString:SetTextColor(1, 0.82, 0) -- Gold
+            headerFrame.titleFontString = titleFontString
+            topHeaderFrame = headerFrame
 
             local headerHeight = math.max(iconHeight, (titleFontString:GetStringHeight() or 24))
             headerFrame:SetHeight(headerHeight)
@@ -2556,6 +2514,7 @@ function GUI.BuildPanel(panelFrame, schema)
             local card = isSection
                 and BuildSection(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
                 or  BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
+            table.insert(createdCards, card)
 
             local cardWidgets = {}
             for _, optInfo in ipairs(containerDef.options or {}) do
@@ -2582,6 +2541,8 @@ function GUI.BuildPanel(panelFrame, schema)
         if lastCard then
             FinalizeCardLayout(cf, lastCard)
         end
+
+        return createdCards, topHeaderFrame
     end
 
     --------------------------------------------------------
@@ -2687,15 +2648,15 @@ function GUI.BuildPanel(panelFrame, schema)
                 end
             end
 
-            -- Collect widgets for this tab to disable when parent is OFF
+            -- Collect widgets and cards for this tab to disable when parent is OFF
             local widgetCountBefore = #panelFrame.allWidgets
-            PopulateContainers(cf, containers, tab)
+            local createdCards, tabHeaderFrame = PopulateContainers(cf, containers, tab)
             if tab.parent and panelRefs[tab.parent] then
                 local tabWidgets = {}
                 for i = widgetCountBefore + 1, #panelFrame.allWidgets do
                     table.insert(tabWidgets, panelFrame.allWidgets[i])
                 end
-                WireTabToParent(panelRefs[tab.parent], btn, iconFrame, tabWidgets)
+                WireTabToParent(panelRefs[tab.parent], btn, iconFrame, tabWidgets, createdCards, tabHeaderFrame)
             end
         end
 
