@@ -38,7 +38,7 @@ local schema = {
                     children = {
                         { type="checkbox", key="unitFrameValueFontColor", label=L["Color"], tooltip=L["Tooltip_UnitFrame_Numbers_Font_Color_Desc"], onChange=function(...) if BBF and BBF.FontColors then BBF.FontColors(...) end end, colorPickerKey="unitFrameValueFontColorRGB" },
                         { type="dropdown", key="unitFrameValueFont",        label=L["Font"],          kind="font", width=195, onChange=function(...) if BBF and BBF.SetCustomFonts then BBF.SetCustomFonts(...) end end },
-                        { type="dropdown", key="unitFrameValueFontOutline", label=L["Outline_Label"], width=195, options={"THICKOUTLINE", "OUTLINE", ""}, onChange=function(...) if BBF and BBF.SetCustomFonts then BBF.SetCustomFonts(...) end end },
+                        { type="dropdown", key="unitFrameValueFontOutline", label=L["Outline_Label"], width=195, options={"THICKOUTLINE", "OUTLINE"}, onChange=function(...) if BBF and BBF.SetCustomFonts then BBF.SetCustomFonts(...) end end },
                         { type="dropdown", key="unitFrameValueFontSize",    label=L["Size"],          width=195, options={"6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24"}, onChange=function(...) if BBF and BBF.SetCustomFonts then BBF.SetCustomFonts(...) end end },
                     }
                 },

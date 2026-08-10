@@ -270,10 +270,26 @@ end
 -- AUTONOMOUS WIDGET CONSTRUCTORS
 -- ============================================================
 
+local function SuppressCheckboxHoverVisual(cb)
+    if not cb then return end
+    if cb.GetHighlightTexture then
+        local hl = cb:GetHighlightTexture()
+        if hl then
+            hl:SetAlpha(0)
+            hl:Hide()
+        end
+    end
+    if cb.HoverBackground then
+        cb.HoverBackground:SetAlpha(0)
+        cb.HoverBackground:Hide()
+    end
+end
+
 local function CreateNativeCheckbox(parent, key, schema, onChange, extraOnClick)
     local cb = CreateFrame("CheckButton", nil, parent, "SettingsCheckboxTemplate")
     if StyleCheckbox then StyleCheckbox(cb) end
     cb:SetSize(28, 28)
+    SuppressCheckboxHoverVisual(cb)
 
     local initialVal = GetOptionValue(schema, key)
     cb:SetChecked(initialVal == true or initialVal == 1)
@@ -827,6 +843,69 @@ local function StyleCheckbox(cb)
     cb:SetSize(T.Row.checkbox.cbSize or 24, T.Row.checkbox.cbSize or 24)
 end
 
+local function ResolveHighlighted(localValue, inheritedValue)
+    if localValue ~= nil then
+        return localValue
+    end
+    return inheritedValue
+end
+
+local function AttachRowHighlight(rowFrame, highlighted, includeTargets, excludeTargets)
+    if not rowFrame or highlighted == false then return end
+    local cfg = T.Row and T.Row.highlight
+    if not cfg then return end
+
+    local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
+    rowHighlight:SetAllPoints()
+    rowHighlight:SetAtlas(cfg.atlas or "options-item-highlight")
+    if not rowHighlight:GetTexture() then
+        rowHighlight:SetColorTexture(1, 1, 1, 0.12)
+    end
+    rowHighlight:SetBlendMode(cfg.blendMode or "ADD")
+    rowHighlight:Hide()
+
+    includeTargets = includeTargets or {}
+    excludeTargets = excludeTargets or {}
+    local function IsHovered(frame)
+        return frame and frame.IsMouseOver and frame:IsMouseOver()
+    end
+    local function UpdateHighlight()
+        for _, frame in ipairs(excludeTargets) do
+            if IsHovered(frame) then
+                rowHighlight:Hide()
+                return
+            end
+        end
+
+        local show = IsHovered(rowFrame)
+        if not show then
+            for _, frame in ipairs(includeTargets) do
+                if IsHovered(frame) then
+                    show = true
+                    break
+                end
+            end
+        end
+        if show then rowHighlight:Show() else rowHighlight:Hide() end
+    end
+
+    rowFrame:EnableMouse(true)
+    rowFrame:HookScript("OnEnter", UpdateHighlight)
+    rowFrame:HookScript("OnLeave", UpdateHighlight)
+    for _, frame in ipairs(includeTargets) do
+        if frame and frame.HookScript then
+            frame:HookScript("OnEnter", UpdateHighlight)
+            frame:HookScript("OnLeave", UpdateHighlight)
+        end
+    end
+    for _, frame in ipairs(excludeTargets) do
+        if frame and frame.HookScript then
+            frame:HookScript("OnEnter", UpdateHighlight)
+            frame:HookScript("OnLeave", UpdateHighlight)
+        end
+    end
+end
+
 
 --- Trigger right-click action from schema onRightClick or popup or host addon fallback.
 local function TriggerRightClick(info, widget, keyOverride, labelOverride)
@@ -930,6 +1009,7 @@ local function BuildCheckboxRow(card, info, parentCb, schema)
             TriggerRightClick(info, titleFrame)
         end
     end)
+    AttachRowHighlight(row, info.highlighted, { cb, titleFrame })
 
     if info.tooltip and info.tooltip ~= "" then
         AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
@@ -1014,6 +1094,7 @@ local function BuildSliderRow(card, info, parentCb, schema)
             TriggerRightClick(info, titleFrame)
         end
     end)
+    AttachRowHighlight(row, info.highlighted, { titleFrame }, { slider })
 
     if info.tooltip and info.tooltip ~= "" then
         AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), ResolveText(schema, info.subText), nil, info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
@@ -1251,6 +1332,7 @@ local function BuildDropdownRow(card, info, parentCb, schema)
     if isChild then
         WireChildToParent(parentCb, dropdown, title, row, info)
     end
+    AttachRowHighlight(row, info.highlighted, { titleFrame }, { dropdown })
 
     if info.tooltip and info.tooltip ~= "" then
         AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
@@ -1329,6 +1411,7 @@ local function BuildDualChildCheckboxRow(card, info, parentCb, schema)
         if btn == "LeftButton" and cb2:IsEnabled() then cb2:Click("LeftButton")
         elseif btn == "RightButton" then TriggerRightClick(info, tf2, info.key2, info.label2) end
     end)
+    AttachRowHighlight(row, info.highlighted, { cb1, cb2, tf1, tf2 })
     if info.tooltip2 and info.tooltip2 ~= "" then
         AttachTooltip(tf2, ResolveText(schema, info.label2), ResolveText(schema, info.tooltip2), nil, "ANCHOR_RIGHT")
         AttachTooltip(cb2, ResolveText(schema, info.label2), ResolveText(schema, info.tooltip2), nil, "ANCHOR_RIGHT")
@@ -1378,6 +1461,7 @@ local function BuildMultiParentChildRow(card, info, parentCbs, schema)
         if btn == "LeftButton" and cb:IsEnabled() then cb:Click("LeftButton")
         elseif btn == "RightButton" then TriggerRightClick(info, titleFrame) end
     end)
+    AttachRowHighlight(row, info.highlighted, { cb, titleFrame })
     if info.tooltip and info.tooltip ~= "" then
         AttachTooltip(titleFrame, ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName, info.key, info)
         AttachTooltip(cb,         ResolveText(schema, info.label), ResolveText(schema, info.tooltip), nil, "ANCHOR_RIGHT", info.requiresReload or info.reload, info.tooltipExtra, info.cpuUsage, info.cvarName)
@@ -1550,6 +1634,13 @@ end
 -- ============================================================
 
 local function BuildOption(card, info, resolvedRefs, schema)
+    local resolvedHighlighted = ResolveHighlighted(info.highlighted, info._highlighted)
+    if resolvedHighlighted ~= info.highlighted then
+        local copy = {}
+        for k, v in pairs(info) do copy[k] = v end
+        copy.highlighted = resolvedHighlighted
+        info = copy
+    end
     local t = info.type
 
     if t == "checkbox" or t == "childcheckbox" or t == "multiparentchild" then
@@ -1598,6 +1689,7 @@ local function BuildOption(card, info, resolvedRefs, schema)
                 local merged = {}
                 for k, v in pairs(childInfo) do merged[k] = v end
                 merged._parentCb = cb
+                merged._highlighted = ResolveHighlighted(merged.highlighted, info.highlighted)
                 local cw1, cw2 = BuildOption(card, merged, resolvedRefs, schema)
                 local pf = card.panelFrame or (card:GetParent() and card:GetParent().panelFrame)
                 if pf and pf.allWidgets then
@@ -1849,7 +1941,8 @@ function GUI.OpenPopup(popupId, schema)
         local currentY = schema.scrollable and -10 or tp.startY
         local createdWidgets = {}
 
-        local function RenderPopupOption(opt, parentCb)
+        local function RenderPopupOption(opt, parentCb, inheritedHighlighted)
+            local resolvedHighlighted = ResolveHighlighted(opt.highlighted, inheritedHighlighted)
             local t = opt.type
             local mTop, mRight, mBottom, mLeft = ParseMargin(opt)
             if mTop > 0 then currentY = currentY - mTop end
@@ -1874,29 +1967,8 @@ function GUI.OpenPopup(popupId, schema)
                 rowFrame:SetPoint("TOPLEFT", contentParent, "TOPLEFT", 10 + indentX, currentY)
                 rowFrame:SetPoint("TOPRIGHT", contentParent, "TOPRIGHT", -10, currentY)
 
-                local rowHighlight = rowFrame:CreateTexture(nil, "BACKGROUND")
-                rowHighlight:SetAllPoints()
-                rowHighlight:SetAtlas(tp.highlightAtlas)
-                if not rowHighlight:GetTexture() then rowHighlight:SetColorTexture(1, 1, 1, 0.12) end
-                rowHighlight:SetBlendMode(tp.highlightBlend)
-                rowHighlight:Hide()
-
                 local cb = CreateFrame("CheckButton", nil, rowFrame, "SettingsCheckboxTemplate")
-                if cb:GetHighlightTexture() then
-                    cb:GetHighlightTexture():SetTexture("")
-                    cb:GetHighlightTexture():SetAlpha(0)
-                    cb:GetHighlightTexture():Hide()
-                    cb:GetHighlightTexture().Show = function() end
-                end
-                if cb.HoverBackground then
-                    cb.HoverBackground:SetAlpha(0)
-                    cb.HoverBackground:Hide()
-                    cb.HoverBackground.Show = function() end
-                end
-
-                local function UpdateHighlight()
-                    if MouseIsOver(rowFrame) then rowHighlight:Show() else rowHighlight:Hide() end
-                end
+                SuppressCheckboxHoverVisual(cb)
 
                 cb:SetSize(tp.checkboxSize, tp.checkboxSize)
                 cb:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
@@ -1930,6 +2002,7 @@ function GUI.OpenPopup(popupId, schema)
                     if _G.BBF and _G.BBF.UpdateFrames then _G.BBF.UpdateFrames() end
                     if _G.BBF and _G.BBF.HideFrames then _G.BBF.HideFrames() end
                 end)
+                AttachRowHighlight(rowFrame, resolvedHighlighted, { cb })
 
 
                 cb.indentX = indentX
@@ -1949,17 +2022,13 @@ function GUI.OpenPopup(popupId, schema)
                 end
 
                 rowFrame:EnableMouse(true)
-                rowFrame:SetScript("OnEnter", UpdateHighlight)
-                rowFrame:SetScript("OnLeave", UpdateHighlight)
                 rowFrame:SetScript("OnMouseDown", function() if cb:IsEnabled() then cb:Click() end end)
-                cb:HookScript("OnEnter", UpdateHighlight)
-                cb:HookScript("OnLeave", UpdateHighlight)
 
                 currentY = currentY - 32
 
                 if opt.children then
                     for _, childOpt in ipairs(opt.children) do
-                        RenderPopupOption(childOpt, cb)
+                        RenderPopupOption(childOpt, cb, resolvedHighlighted)
                     end
                 end
 
@@ -2269,14 +2338,14 @@ function GUI.OpenPopup(popupId, schema)
 
         end
 
-        local function RenderPopupOptionWrapper(opt, parentCb)
-            RenderPopupOption(opt, parentCb)
+        local function RenderPopupOptionWrapper(opt, parentCb, inheritedHighlighted)
+            RenderPopupOption(opt, parentCb, inheritedHighlighted)
             local _, _, mBottom = ParseMargin(opt)
             if mBottom > 0 then currentY = currentY - mBottom end
         end
 
         for i, opt in ipairs(schema.options or {}) do
-            RenderPopupOptionWrapper(opt, nil)
+            RenderPopupOptionWrapper(opt, nil, schema.highlighted)
         end
 
         if schema.scrollable and contentParent.SetHeight then
@@ -2332,6 +2401,7 @@ function GUI.BuildPanel(panelFrame, schema)
             local gap = tonumber(gridDef.gap or 12)
             local mTop, mRight, mBottom, mLeft = ParseMargin(gridDef)
             local opts = gridDef.options or {}
+            local gridHighlighted = ResolveHighlighted(gridDef.highlighted, schema.highlighted)
 
             currentGridY = currentGridY - mTop
 
@@ -2344,13 +2414,18 @@ function GUI.BuildPanel(panelFrame, schema)
                 local rowIdx = math.floor((oIdx - 1) / cols)
                 local posX   = mLeft + (col * (colWidth + gap))
                 local posY   = currentGridY - (rowIdx * 34)
+                local optHighlighted = ResolveHighlighted(opt.highlighted, gridHighlighted)
 
-                local cb = CreateNativeCheckbox(gridParent, opt.key, schema, opt.onChange, function(self, btn, val)
+                local rowFrame = CreateFrame("Frame", nil, gridParent)
+                rowFrame:SetSize(colWidth, 30)
+                rowFrame:SetPoint("TOPLEFT", gridParent, "TOPLEFT", posX, posY)
+
+                local cb = CreateNativeCheckbox(rowFrame, opt.key, schema, opt.onChange, function(self, btn, val)
                     if opt.requiresReload or opt.reload then
                         ShowReloadPrompt()
                     end
                 end)
-                cb:SetPoint("TOPLEFT", gridParent, "TOPLEFT", posX, posY)
+                cb:SetPoint("LEFT", rowFrame, "LEFT", 0, 0)
                 cb.dbKey = opt.key
 
                 local txt = cb.Text
@@ -2362,6 +2437,7 @@ function GUI.BuildPanel(panelFrame, schema)
                 end
                 txt:SetPoint("LEFT", cb, "RIGHT", 6, 0)
                 txt:SetText(ResolveText(schema, opt.label))
+                AttachRowHighlight(rowFrame, optHighlighted, { cb, txt })
 
                 if opt.tooltip and opt.tooltip ~= "" then
                     AttachTooltip(cb,  ResolveText(schema, opt.label), ResolveText(schema, opt.tooltip), nil, "ANCHOR_RIGHT", opt.requiresReload or opt.reload)
@@ -2515,10 +2591,14 @@ function GUI.BuildPanel(panelFrame, schema)
                 and BuildSection(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
                 or  BuildCard(cf, containerDef.title, lastCard, containerDef.yOffset, containerDef)
             table.insert(createdCards, card)
+            local containerHighlighted = ResolveHighlighted(containerDef.highlighted, parentSchema and parentSchema.highlighted)
 
             local cardWidgets = {}
             for _, optInfo in ipairs(containerDef.options or {}) do
-                local w1, w2 = BuildOption(card, optInfo, resolvedRefs, parentSchema or schema)
+                local mergedOptInfo = {}
+                for k, v in pairs(optInfo) do mergedOptInfo[k] = v end
+                mergedOptInfo._highlighted = ResolveHighlighted(mergedOptInfo.highlighted, containerHighlighted)
+                local w1, w2 = BuildOption(card, mergedOptInfo, resolvedRefs, parentSchema or schema)
                 if w1 then
                     table.insert(panelFrame.allWidgets, w1)
                     table.insert(cardWidgets, w1)
