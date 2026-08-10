@@ -2463,11 +2463,12 @@ function GUI.BuildPanel(panelFrame, schema)
 
                 -- Register in panelRefs for cross-level parent wiring
                 cb.associatedTitle = txt
+                cb.associatedRow = rowFrame
                 panelRefs[opt.key] = cb
 
                 -- Single-pass parent wiring (parent must appear before child in list)
                 if opt.parent and panelRefs[opt.parent] then
-                    WireChildToParent(panelRefs[opt.parent], cb, txt, nil, opt)
+                    WireChildToParent(panelRefs[opt.parent], cb, txt, rowFrame, opt)
                 end
             end
 

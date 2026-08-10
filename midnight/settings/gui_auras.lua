@@ -13,7 +13,7 @@ local schema = {
         {
             id           = "aurasMasterGrid",
             margin       = {0, 0, 8, 0},
-            gap          = 15,
+            gap          = 1,
             cols         = 2,
             overlayMode  = true,
             options = {
