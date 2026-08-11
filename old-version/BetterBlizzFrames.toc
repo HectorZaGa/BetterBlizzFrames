@@ -1,0 +1,84 @@
+## Interface: 120007, 120005
+## Title: Better|cff00c0ffBlizz|rFrames
+## Notes: More options for Blizzard frames. Aura filtering, Party castbars, Combat indicator, Dark Mode etc.
+## Author: Bodify
+## Version: v2.0.1b
+## SavedVariables: BetterBlizzFramesDB
+## IconAtlas: gmchat-icon-blizz
+## X-Curse-Project-ID: 940950
+## X-Wago-ID: qGZR02Gd
+
+init.lua
+locales\locales.xml
+embeds.xml
+
+temp_shared\ImportExport.lua
+temp_shared\functions.lua
+temp_shared\functions_classics.lua
+
+retail\temp_tww.lua
+
+retail\modules\darkmode.lua
+midnight\modules\darkmode.lua
+retail\modules\classicFrames.lua
+midnight\modules\classicFrames.lua
+retail\modules\nameFix.lua
+midnight\modules\nameFix.lua
+retail\modules\hideFrames.lua
+midnight\modules\hideFrames.lua
+retail\modules\auras.lua
+midnight\modules\auras.lua
+retail\modules\absorb.lua
+midnight\modules\absorb.lua
+retail\modules\combat.lua
+retail\modules\castbar.lua
+midnight\modules\castbar.lua
+retail\modules\healthbarColor.lua
+midnight\modules\healthbarColor.lua
+retail\modules\statusBarTextFormat.lua
+midnight\modules\statusBarTextFormat.lua
+retail\modules\arenaframes.lua
+retail\modules\profiles.lua
+retail\modules\chatFrame.lua
+retail\modules\overShields.lua
+midnight\modules\overShields.lua
+temp_shared\stealthIndicator.lua
+retail\modules\interruptIcon.lua
+midnight\modules\interruptIcon.lua
+retail\modules\queueTimer.lua
+retail\modules\druid\overcharges.lua
+midnight\modules\druid\overcharges.lua
+retail\modules\cdManager.lua
+midnight\modules\cdManager.lua
+midnight\modules\partyHighlight.lua
+retail\modules\healer.lua
+retail\modules\noPortrait.lua
+midnight\modules\bigPlayerHealthbar.lua
+midnight\modules\prd.lua
+
+retail\gui.lua
+retail\settings\gui_profiles.lua
+retail\settings\gui_general.lua
+retail\settings\gui_castbars.lua
+retail\settings\gui_advanced.lua
+retail\settings\gui_fonts.lua
+retail\settings\gui_auras.lua
+retail\settings\gui_misc.lua
+retail\settings\gui_chat.lua
+retail\settings\gui_cooldowns.lua
+retail\settings\gui_importexport.lua
+retail\settings\gui_customcode.lua
+retail\settings\gui_support.lua
+midnight\gui.lua
+midnight\settings\gui_profiles.lua
+midnight\settings\gui_general.lua
+midnight\settings\gui_castbars.lua
+midnight\settings\gui_advanced.lua
+midnight\settings\gui_fonts.lua
+midnight\settings\gui_auras.lua
+midnight\settings\gui_misc.lua
+midnight\settings\gui_importexport.lua
+midnight\settings\gui_customcode.lua
+midnight\settings\gui_support.lua
+retail\BetterBlizzFrames.lua
+midnight\BetterBlizzFrames.lua

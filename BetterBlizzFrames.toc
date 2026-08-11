@@ -1,8 +1,8 @@
-## Interface: 120007, 120005
+## Interface: 120100
 ## Title: Better|cff00c0ffBlizz|rFrames
 ## Notes: More options for Blizzard frames. Aura filtering, Party castbars, Combat indicator, Dark Mode etc.
 ## Author: Bodify
-## Version: v2.0.1b
+## Version: v2.0.2
 ## SavedVariables: BetterBlizzFramesDB
 ## IconAtlas: gmchat-icon-blizz
 ## X-Curse-Project-ID: 940950
@@ -45,6 +45,7 @@ midnight\modules\overShields.lua
 temp_shared\stealthIndicator.lua
 retail\modules\interruptIcon.lua
 midnight\modules\interruptIcon.lua
+midnight\modules\bigDebuffs.lua
 retail\modules\queueTimer.lua
 retail\modules\druid\overcharges.lua
 midnight\modules\druid\overcharges.lua
@@ -57,29 +58,20 @@ midnight\modules\bigPlayerHealthbar.lua
 midnight\modules\prd.lua
 
 retail\gui.lua
-retail\settings\gui_profiles.lua
-retail\settings\gui_general.lua
-retail\settings\gui_castbars.lua
-retail\settings\gui_advanced.lua
-retail\settings\gui_fonts.lua
-retail\settings\gui_auras.lua
-retail\settings\gui_misc.lua
-retail\settings\gui_chat.lua
-retail\settings\gui_cooldowns.lua
-retail\settings\gui_importexport.lua
-retail\settings\gui_customcode.lua
-retail\settings\gui_support.lua
 midnight\gui.lua
-midnight\gui_builder.lua
-midnight\settings\gui_profiles.lua
-midnight\settings\gui_general.lua
-midnight\settings\gui_castbars.lua
-midnight\settings\gui_advanced.lua
-midnight\settings\gui_fonts.lua
-midnight\settings\gui_auras.lua
-midnight\settings\gui_misc.lua
-midnight\settings\gui_importexport.lua
-midnight\settings\gui_customcode.lua
-midnight\settings\gui_support.lua
 retail\BetterBlizzFrames.lua
 midnight\BetterBlizzFrames.lua
+
+# Decoupled Modern GUI Builder & Schemas
+midnight\gui_builder.lua
+midnight\settings\gui_general.lua
+midnight\settings\gui_auras.lua
+midnight\settings\gui_castbars.lua
+midnight\settings\gui_fonts.lua
+midnight\settings\gui_misc.lua
+midnight\settings\gui_advanced.lua
+midnight\settings\gui_customcode.lua
+midnight\settings\gui_importexport.lua
+midnight\settings\gui_profiles.lua
+midnight\settings\gui_support.lua
+midnight\gui_override.lua
